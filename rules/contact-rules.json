@@ -1,0 +1,37 @@
+[
+  {
+    "symptomId": "breathing",
+    "conditions": { "present": true },
+    "action": "EMERGENCY_GUIDANCE",
+    "title": "긴급한 도움이 필요할 수 있어요",
+    "body": "호흡곤란, 의식 변화 등 긴급한 증상이 있으면 앱을 사용하지 말고 119 또는 응급실을 이용하세요."
+  },
+  {
+    "symptomId": "blister",
+    "conditions": { "present": true },
+    "action": "CONTACT_CLINIC_PROMPTLY",
+    "title": "시술받은 병원에 확인해 주세요",
+    "body": "입력하신 수포 항목은 병원에 전달하도록 안내가 설정되어 있습니다."
+  },
+  {
+    "symptomId": "swelling",
+    "conditions": { "present": true, "severity": "severe" },
+    "action": "CONTACT_CLINIC_PROMPTLY",
+    "title": "오늘 병원에 확인해 주세요",
+    "body": "심한 붓기로 입력되어 시술받은 병원에 빠르게 문의하도록 안내합니다."
+  },
+  {
+    "symptomId": "pain",
+    "conditions": { "present": true },
+    "action": "CONTACT_CLINIC",
+    "title": "병원에 문의해 보세요",
+    "body": "통증이 새로 생기거나 심해지면 시술받은 병원 또는 의료기관에 문의하세요."
+  },
+  {
+    "symptomId": "redness",
+    "conditions": { "present": true, "severity": "severe" },
+    "action": "CONTACT_CLINIC",
+    "title": "병원에 문의해 보세요",
+    "body": "붉음이 심해진 것으로 입력되어 병원에 확인하도록 안내합니다."
+  }
+]

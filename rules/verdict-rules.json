@@ -1,0 +1,82 @@
+[
+  {
+    "attributeId": "gentle-cleanser",
+    "periods": [
+      { "fromDay": 0, "toDay": null, "level": "go", "reason": "순한 세정 방식으로 분류된 제품입니다." }
+    ]
+  },
+  {
+    "attributeId": "oil-balm",
+    "periods": [
+      { "fromDay": 0, "toDay": 2, "level": "care", "resumeDay": 3, "reason": "초기에는 오래 문지르지 말고 짧게 사용하세요." },
+      { "fromDay": 3, "toDay": null, "level": "go", "reason": "현재 룰팩의 안내 범위에 들어왔습니다." }
+    ]
+  },
+  {
+    "attributeId": "scrub",
+    "periods": [
+      { "fromDay": 0, "toDay": null, "level": "stop", "reason": "물리적 마찰이 있는 제품은 현재 샘플 룰팩에서 중단으로 안내합니다." }
+    ]
+  },
+  {
+    "attributeId": "hydrating",
+    "periods": [
+      { "fromDay": 0, "toDay": null, "level": "go", "reason": "보습 중심 성분으로 분류된 제품입니다." }
+    ]
+  },
+  {
+    "attributeId": "niacinamide",
+    "periods": [
+      { "fromDay": 0, "toDay": 2, "level": "care", "resumeDay": 3, "reason": "초기에는 따가움이 없는지 소량으로 확인하세요." },
+      { "fromDay": 3, "toDay": null, "level": "go", "reason": "현재 룰팩의 안내 범위에 들어왔습니다." }
+    ]
+  },
+  {
+    "attributeId": "vitamin-c",
+    "periods": [
+      { "fromDay": 0, "toDay": 4, "level": "care", "resumeDay": 5, "reason": "초기에는 자극감이 있을 수 있어 재개일을 안내합니다." },
+      { "fromDay": 5, "toDay": null, "level": "go", "reason": "현재 룰팩의 안내 범위에 들어왔습니다." }
+    ]
+  },
+  {
+    "attributeId": "retinoid",
+    "periods": [
+      { "fromDay": 0, "toDay": 6, "level": "stop", "resumeDay": 7, "reason": "현재 샘플 룰팩에서는 D+7 전 사용을 중단으로 안내합니다." },
+      { "fromDay": 7, "toDay": null, "level": "care", "reason": "재개 시 소량부터 상태를 확인하세요." }
+    ]
+  },
+  {
+    "attributeId": "aha-bha",
+    "periods": [
+      { "fromDay": 0, "toDay": 6, "level": "stop", "resumeDay": 7, "reason": "각질 정돈 성분은 현재 샘플 룰팩에서 D+7 전 중단으로 안내합니다." },
+      { "fromDay": 7, "toDay": null, "level": "care", "reason": "재개 시 자극감이 없는지 확인하세요." }
+    ]
+  },
+  {
+    "attributeId": "fragrance",
+    "periods": [
+      { "fromDay": 0, "toDay": 2, "level": "care", "resumeDay": 3, "reason": "초기에는 향료가 자극으로 느껴질 수 있습니다." },
+      { "fromDay": 3, "toDay": null, "level": "go", "reason": "현재 룰팩의 안내 범위에 들어왔습니다." }
+    ]
+  },
+  {
+    "attributeId": "cream-sunscreen",
+    "periods": [
+      { "fromDay": 0, "toDay": null, "level": "go", "reason": "문지름이 적은 제형으로 분류된 제품입니다." }
+    ]
+  },
+  {
+    "attributeId": "stick-sunscreen",
+    "periods": [
+      { "fromDay": 0, "toDay": 4, "level": "stop", "resumeDay": 5, "reason": "직접 문지르는 제형은 초기 마찰을 줄이기 위해 중단으로 안내합니다." },
+      { "fromDay": 5, "toDay": null, "level": "care", "reason": "세게 문지르지 말고 상태를 확인하세요." }
+    ]
+  },
+  {
+    "attributeId": "tinted",
+    "periods": [
+      { "fromDay": 0, "toDay": 2, "level": "care", "resumeDay": 3, "reason": "세정 부담을 줄일 수 있는지 확인하세요." },
+      { "fromDay": 3, "toDay": null, "level": "go", "reason": "현재 룰팩의 안내 범위에 들어왔습니다." }
+    ]
+  }
+]
