@@ -1,0 +1,74 @@
+[
+  {
+    "id": "gentle-cleanser",
+    "category": "cleansing",
+    "name": "순한 세정제",
+    "description": "저자극 또는 약산성으로 표시된 세정제"
+  },
+  {
+    "id": "oil-balm",
+    "category": "cleansing",
+    "name": "오일·밤 타입",
+    "description": "오일 또는 밤 제형의 1차 세안 제품"
+  },
+  {
+    "id": "scrub",
+    "category": "cleansing",
+    "name": "스크럽·필링",
+    "description": "알갱이 또는 물리적 각질 제거 기능"
+  },
+  {
+    "id": "hydrating",
+    "category": "skincare",
+    "name": "보습 성분",
+    "description": "세라마이드·판테놀·히알루론산 등"
+  },
+  {
+    "id": "niacinamide",
+    "category": "skincare",
+    "name": "나이아신아마이드",
+    "description": "나이아신아마이드 함유"
+  },
+  {
+    "id": "vitamin-c",
+    "category": "skincare",
+    "name": "비타민 C",
+    "description": "순수 비타민 C 또는 유도체"
+  },
+  {
+    "id": "retinoid",
+    "category": "skincare",
+    "name": "레티노이드",
+    "description": "레티놀·레티날 등 비타민 A 계열"
+  },
+  {
+    "id": "aha-bha",
+    "category": "skincare",
+    "name": "AHA·BHA",
+    "description": "화학적 각질 정돈 성분"
+  },
+  {
+    "id": "fragrance",
+    "category": "skincare",
+    "name": "향료",
+    "description": "향료가 포함된 제품"
+  },
+  {
+    "id": "cream-sunscreen",
+    "category": "outing",
+    "name": "크림·로션 제형",
+    "description": "문지름이 적은 크림 또는 로션 타입"
+  },
+  {
+    "id": "stick-sunscreen",
+    "category": "outing",
+    "name": "스틱 제형",
+    "description": "피부에 직접 문질러 바르는 타입"
+  },
+  {
+    "id": "tinted",
+    "category": "outing",
+    "name": "톤업·색조 겸용",
+    "description": "색소 또는 커버 기능이 있는 제품"
+  }
+]

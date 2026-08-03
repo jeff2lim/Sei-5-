@@ -1,0 +1,324 @@
+{
+  "meta": {
+    "id": "picotoning-aftercare",
+    "version": "0.1.0-draft",
+    "status": "DRAFT_NOT_FOR_PATIENTS",
+    "source": {
+      "type": "placeholder",
+      "title": "MVP 검증용 샘플 룰팩"
+    }
+  },
+  "attributes": [
+    {
+      "id": "gentle-cleanser",
+      "category": "cleansing",
+      "name": "순한 세정제",
+      "description": "저자극 또는 약산성으로 표시된 세정제"
+    },
+    {
+      "id": "oil-balm",
+      "category": "cleansing",
+      "name": "오일·밤 타입",
+      "description": "오일 또는 밤 제형의 1차 세안 제품"
+    },
+    {
+      "id": "scrub",
+      "category": "cleansing",
+      "name": "스크럽·필링",
+      "description": "알갱이 또는 물리적 각질 제거 기능"
+    },
+    {
+      "id": "hydrating",
+      "category": "skincare",
+      "name": "보습 성분",
+      "description": "세라마이드·판테놀·히알루론산 등"
+    },
+    {
+      "id": "niacinamide",
+      "category": "skincare",
+      "name": "나이아신아마이드",
+      "description": "나이아신아마이드 함유"
+    },
+    {
+      "id": "vitamin-c",
+      "category": "skincare",
+      "name": "비타민 C",
+      "description": "순수 비타민 C 또는 유도체"
+    },
+    {
+      "id": "retinoid",
+      "category": "skincare",
+      "name": "레티노이드",
+      "description": "레티놀·레티날 등 비타민 A 계열"
+    },
+    {
+      "id": "aha-bha",
+      "category": "skincare",
+      "name": "AHA·BHA",
+      "description": "화학적 각질 정돈 성분"
+    },
+    {
+      "id": "fragrance",
+      "category": "skincare",
+      "name": "향료",
+      "description": "향료가 포함된 제품"
+    },
+    {
+      "id": "cream-sunscreen",
+      "category": "outing",
+      "name": "크림·로션 제형",
+      "description": "문지름이 적은 크림 또는 로션 타입"
+    },
+    {
+      "id": "stick-sunscreen",
+      "category": "outing",
+      "name": "스틱 제형",
+      "description": "피부에 직접 문질러 바르는 타입"
+    },
+    {
+      "id": "tinted",
+      "category": "outing",
+      "name": "톤업·색조 겸용",
+      "description": "색소 또는 커버 기능이 있는 제품"
+    }
+  ],
+  "verdictRules": [
+    {
+      "attributeId": "gentle-cleanser",
+      "periods": [
+        {
+          "fromDay": 0,
+          "toDay": null,
+          "level": "go",
+          "reason": "순한 세정 방식으로 분류된 제품입니다."
+        }
+      ]
+    },
+    {
+      "attributeId": "oil-balm",
+      "periods": [
+        {
+          "fromDay": 0,
+          "toDay": 2,
+          "level": "care",
+          "resumeDay": 3,
+          "reason": "초기에는 오래 문지르지 말고 짧게 사용하세요."
+        },
+        {
+          "fromDay": 3,
+          "toDay": null,
+          "level": "go",
+          "reason": "현재 룰팩의 안내 범위에 들어왔습니다."
+        }
+      ]
+    },
+    {
+      "attributeId": "scrub",
+      "periods": [
+        {
+          "fromDay": 0,
+          "toDay": null,
+          "level": "stop",
+          "reason": "물리적 마찰이 있는 제품은 현재 샘플 룰팩에서 중단으로 안내합니다."
+        }
+      ]
+    },
+    {
+      "attributeId": "hydrating",
+      "periods": [
+        {
+          "fromDay": 0,
+          "toDay": null,
+          "level": "go",
+          "reason": "보습 중심 성분으로 분류된 제품입니다."
+        }
+      ]
+    },
+    {
+      "attributeId": "niacinamide",
+      "periods": [
+        {
+          "fromDay": 0,
+          "toDay": 2,
+          "level": "care",
+          "resumeDay": 3,
+          "reason": "초기에는 따가움이 없는지 소량으로 확인하세요."
+        },
+        {
+          "fromDay": 3,
+          "toDay": null,
+          "level": "go",
+          "reason": "현재 룰팩의 안내 범위에 들어왔습니다."
+        }
+      ]
+    },
+    {
+      "attributeId": "vitamin-c",
+      "periods": [
+        {
+          "fromDay": 0,
+          "toDay": 4,
+          "level": "care",
+          "resumeDay": 5,
+          "reason": "초기에는 자극감이 있을 수 있어 재개일을 안내합니다."
+        },
+        {
+          "fromDay": 5,
+          "toDay": null,
+          "level": "go",
+          "reason": "현재 룰팩의 안내 범위에 들어왔습니다."
+        }
+      ]
+    },
+    {
+      "attributeId": "retinoid",
+      "periods": [
+        {
+          "fromDay": 0,
+          "toDay": 6,
+          "level": "stop",
+          "resumeDay": 7,
+          "reason": "현재 샘플 룰팩에서는 D+7 전 사용을 중단으로 안내합니다."
+        },
+        {
+          "fromDay": 7,
+          "toDay": null,
+          "level": "care",
+          "reason": "재개 시 소량부터 상태를 확인하세요."
+        }
+      ]
+    },
+    {
+      "attributeId": "aha-bha",
+      "periods": [
+        {
+          "fromDay": 0,
+          "toDay": 6,
+          "level": "stop",
+          "resumeDay": 7,
+          "reason": "각질 정돈 성분은 현재 샘플 룰팩에서 D+7 전 중단으로 안내합니다."
+        },
+        {
+          "fromDay": 7,
+          "toDay": null,
+          "level": "care",
+          "reason": "재개 시 자극감이 없는지 확인하세요."
+        }
+      ]
+    },
+    {
+      "attributeId": "fragrance",
+      "periods": [
+        {
+          "fromDay": 0,
+          "toDay": 2,
+          "level": "care",
+          "resumeDay": 3,
+          "reason": "초기에는 향료가 자극으로 느껴질 수 있습니다."
+        },
+        {
+          "fromDay": 3,
+          "toDay": null,
+          "level": "go",
+          "reason": "현재 룰팩의 안내 범위에 들어왔습니다."
+        }
+      ]
+    },
+    {
+      "attributeId": "cream-sunscreen",
+      "periods": [
+        {
+          "fromDay": 0,
+          "toDay": null,
+          "level": "go",
+          "reason": "문지름이 적은 제형으로 분류된 제품입니다."
+        }
+      ]
+    },
+    {
+      "attributeId": "stick-sunscreen",
+      "periods": [
+        {
+          "fromDay": 0,
+          "toDay": 4,
+          "level": "stop",
+          "resumeDay": 5,
+          "reason": "직접 문지르는 제형은 초기 마찰을 줄이기 위해 중단으로 안내합니다."
+        },
+        {
+          "fromDay": 5,
+          "toDay": null,
+          "level": "care",
+          "reason": "세게 문지르지 말고 상태를 확인하세요."
+        }
+      ]
+    },
+    {
+      "attributeId": "tinted",
+      "periods": [
+        {
+          "fromDay": 0,
+          "toDay": 2,
+          "level": "care",
+          "resumeDay": 3,
+          "reason": "세정 부담을 줄일 수 있는지 확인하세요."
+        },
+        {
+          "fromDay": 3,
+          "toDay": null,
+          "level": "go",
+          "reason": "현재 룰팩의 안내 범위에 들어왔습니다."
+        }
+      ]
+    }
+  ],
+  "contactRules": [
+    {
+      "symptomId": "breathing",
+      "conditions": {
+        "present": true
+      },
+      "action": "EMERGENCY_GUIDANCE",
+      "title": "긴급한 도움이 필요할 수 있어요",
+      "body": "호흡곤란, 의식 변화 등 긴급한 증상이 있으면 앱을 사용하지 말고 119 또는 응급실을 이용하세요."
+    },
+    {
+      "symptomId": "blister",
+      "conditions": {
+        "present": true
+      },
+      "action": "CONTACT_CLINIC_PROMPTLY",
+      "title": "시술받은 병원에 확인해 주세요",
+      "body": "입력하신 수포 항목은 병원에 전달하도록 안내가 설정되어 있습니다."
+    },
+    {
+      "symptomId": "swelling",
+      "conditions": {
+        "present": true,
+        "severity": "severe"
+      },
+      "action": "CONTACT_CLINIC_PROMPTLY",
+      "title": "오늘 병원에 확인해 주세요",
+      "body": "심한 붓기로 입력되어 시술받은 병원에 빠르게 문의하도록 안내합니다."
+    },
+    {
+      "symptomId": "pain",
+      "conditions": {
+        "present": true
+      },
+      "action": "CONTACT_CLINIC",
+      "title": "병원에 문의해 보세요",
+      "body": "통증이 새로 생기거나 심해지면 시술받은 병원 또는 의료기관에 문의하세요."
+    },
+    {
+      "symptomId": "redness",
+      "conditions": {
+        "present": true,
+        "severity": "severe"
+      },
+      "action": "CONTACT_CLINIC",
+      "title": "병원에 문의해 보세요",
+      "body": "붉음이 심해진 것으로 입력되어 병원에 확인하도록 안내합니다."
+    }
+  ]
+}

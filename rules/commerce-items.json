@@ -1,0 +1,28 @@
+[
+  {
+    "id": "sample-gentle-cleanser",
+    "name": "저자극 클렌저 샘플",
+    "brand": "데모 브랜드",
+    "category": "cleansing",
+    "compatibleAttributeIds": ["gentle-cleanser"],
+    "cautionAttributeIds": [],
+    "merchant": "other",
+    "externalUrl": "https://example.com",
+    "relationship": "affiliate",
+    "disclosureText": "제휴 링크 · 구매 시 수수료를 받을 수 있어요",
+    "isActive": true
+  },
+  {
+    "id": "sample-hydrating-cream",
+    "name": "보습 크림 샘플",
+    "brand": "데모 브랜드",
+    "category": "skincare",
+    "compatibleAttributeIds": ["hydrating"],
+    "cautionAttributeIds": [],
+    "merchant": "other",
+    "externalUrl": "https://example.com",
+    "relationship": "sponsored",
+    "disclosureText": "유료 광고 · 데모용 상품 정보",
+    "isActive": true
+  }
+]
