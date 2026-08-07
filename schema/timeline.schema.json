@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recovery-note.local/schema/timeline.schema.json",
+  "title": "Recovery Note v5 timeline",
+  "type": "object",
+  "required": [
+    "timeline_id",
+    "target_type",
+    "target_id",
+    "sensitivity",
+    "sensitivity_policy",
+    "phases",
+    "status",
+    "flags",
+    "evidence"
+  ],
+  "properties": {
+    "timeline_id": { "type": "string", "minLength": 1 },
+    "target_type": {
+      "enum": [
+        "ingredient_group",
+        "cleansing_method",
+        "sunscreen_type",
+        "base_makeup",
+        "product_category",
+        "behavior_warning"
+      ]
+    },
+    "target_id": { "type": "string", "minLength": 1 },
+    "sensitivity": { "enum": ["low", "normal", "high"] },
+    "sensitivity_policy": {
+      "type": ["string", "null"],
+      "enum": ["restorative", "pigment_rail", "irritant", null]
+    },
+    "phases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["from_d", "to_d", "verdict", "condition_text"],
+        "properties": {
+          "from_d": { "type": "integer", "minimum": 0, "maximum": 14 },
+          "to_d": { "type": "integer", "minimum": 0, "maximum": 14 },
+          "verdict": { "enum": ["go", "care", "stop", "consult"] },
+          "condition_text": { "type": ["string", "null"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "status": {
+      "enum": ["pending", "extrapolated", "team_provisional", "needs_review", "confirmed"]
+    },
+    "flags": { "type": "array", "items": { "type": "string" } },
+    "evidence": {
+      "type": "object",
+      "required": ["grade", "source_procedure", "citations"],
+      "properties": {
+        "grade": { "enum": ["direct", "indirect", "general", "none"] },
+        "source_procedure": { "enum": ["picotoning", "toning", "co2_fractional", "general"] },
+        "citations": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

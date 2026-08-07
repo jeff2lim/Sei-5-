@@ -9,6 +9,7 @@ import type { ProductCategory } from '@/domain/product';
 import { getProcedureDay } from '@/domain/procedure';
 import { evaluateProduct } from '@/rules/engine/evaluate';
 import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
+import { activeBehaviorWarnings } from '@/ruletable/resolve';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { Info, PackagePlus } from 'lucide-react';
 import Link from 'next/link';
@@ -43,8 +44,14 @@ export default function GuidePage() {
   const products = (session?.products ?? []).filter((product) => product.category === category);
   const details = products.map((product) => ({
     product,
-    verdict: evaluateProduct(product, day, bundledRulePack),
+    verdict: evaluateProduct(
+      product,
+      day,
+      bundledRulePack,
+      session?.profile.sensitivity ?? 'normal',
+    ),
   }));
+  const warnings = activeBehaviorWarnings(day, category);
 
   useEffect(() => {
     analytics.track({ name: 'category_guide_viewed', category });
@@ -92,8 +99,20 @@ export default function GuidePage() {
 
       <div className="notice section">
         <Info size={18} aria-hidden="true" />
-        <span>판정 정보가 없는 제품은 안전하다는 뜻이 아니라, 현재 룰이 연결되지 않은 상태입니다.</span>
+        <span>
+          판정 정보가 없는 제품은 안전하다는 뜻이 아니라, 현재 룰이 연결되지 않은 상태입니다.
+        </span>
       </div>
+      {warnings.length ? (
+        <section className="section stack" aria-label="오늘의 행동 안내">
+          {warnings.map((warning) => (
+            <div className="notice" key={warning.id}>
+              <Info size={18} aria-hidden="true" />
+              <span>{warning.text}</span>
+            </div>
+          ))}
+        </section>
+      ) : null}
     </AppShell>
   );
 }

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recovery-note.local/schema/ruletable.schema.json",
+  "title": "Recovery Note v5 generated rule table",
+  "type": "object",
+  "required": ["version", "generated_at", "range", "timelines", "cells", "warnings"],
+  "properties": {
+    "version": { "const": "5.0.0" },
+    "generated_at": { "type": "string" },
+    "range": { "type": "array", "prefixItems": [{ "const": 0 }, { "const": 14 }], "items": false },
+    "timelines": { "type": "array" },
+    "cells": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "timeline_id",
+          "target_type",
+          "target_id",
+          "sensitivity",
+          "d_day",
+          "phase_name",
+          "verdict",
+          "condition_text",
+          "status"
+        ],
+        "properties": {
+          "timeline_id": { "type": "string" },
+          "target_type": { "type": "string" },
+          "target_id": { "type": "string" },
+          "sensitivity": { "enum": ["low", "normal", "high"] },
+          "d_day": { "type": "integer", "minimum": 0, "maximum": 14 },
+          "phase_name": { "enum": ["recovery", "ramp_up"] },
+          "verdict": { "enum": ["go", "care", "stop", "consult"] },
+          "condition_text": { "type": ["string", "null"] },
+          "status": {
+            "enum": ["pending", "extrapolated", "team_provisional", "needs_review", "confirmed"]
+          }
+        }
+      }
+    },
+    "warnings": { "type": "array" }
+  }
+}

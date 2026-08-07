@@ -1,14 +1,20 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { validateRuleFiles } from '../src/rules/schema';
-import { readRuleFiles } from './rule-files';
+import { expandRuleTable } from '../src/ruletable/expand';
+import { assertValidRuleTable } from '../src/ruletable/validate';
 
 async function main() {
-  const rulePack = validateRuleFiles(await readRuleFiles());
-  const outputDirectory = path.join(process.cwd(), 'src', 'rules', 'generated');
+  assertValidRuleTable();
+  const rulePack = expandRuleTable();
+  const outputDirectory = path.join(process.cwd(), 'build');
   await mkdir(outputDirectory, { recursive: true });
-  await writeFile(path.join(outputDirectory, 'rulepack.json'), JSON.stringify(rulePack, null, 2));
-  console.log(`Built ${rulePack.meta.version} → src/rules/generated/rulepack.json`);
+  await writeFile(
+    path.join(outputDirectory, 'rules.generated.json'),
+    `${JSON.stringify(rulePack, null, 2)}\n`,
+  );
+  console.log(
+    `Built v${rulePack.version}: ${rulePack.timelines.length} timelines, ${rulePack.cells.length} cells → build/rules.generated.json`,
+  );
 }
 
 void main();

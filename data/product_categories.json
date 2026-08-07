@@ -1,0 +1,45 @@
+[
+  { "id": "toner", "label": "토너", "screen": "skincare", "timeline_id": null },
+  { "id": "essence", "label": "에센스", "screen": "skincare", "timeline_id": null },
+  { "id": "ampoule_serum", "label": "앰플·세럼", "screen": "skincare", "timeline_id": null },
+  { "id": "lotion", "label": "로션", "screen": "skincare", "timeline_id": null },
+  { "id": "cream_balm", "label": "크림·밤", "screen": "skincare", "timeline_id": null },
+  { "id": "mist", "label": "미스트", "screen": "skincare", "timeline_id": null },
+  { "id": "eye_cream", "label": "아이크림", "screen": "skincare", "timeline_id": null },
+  {
+    "id": "sheet_mask_soothing",
+    "label": "시트마스크 (진정형)",
+    "screen": "skincare",
+    "timeline_id": "cat.sheet_mask_soothing.normal",
+    "sensitivity_policy": "irritant"
+  },
+  {
+    "id": "sheet_mask_functional",
+    "label": "시트마스크 (기능성형)",
+    "screen": "skincare",
+    "timeline_id": "cat.sheet_mask_functional.normal",
+    "sensitivity_policy": "irritant"
+  },
+  {
+    "id": "pad",
+    "label": "패드형",
+    "screen": "skincare",
+    "timeline_id": "cat.pad.normal",
+    "sensitivity_policy": "irritant"
+  },
+  {
+    "id": "sleeping_pack",
+    "label": "슬리핑팩",
+    "screen": "skincare",
+    "timeline_id": "cat.sleeping_pack.normal",
+    "sensitivity_policy": "irritant",
+    "alternative": "평소 쓰던 재생·보습 크림을 조금 더 두껍게"
+  },
+  {
+    "id": "pore_clay_peeloff",
+    "label": "코팩·클레이팩·필오프팩",
+    "screen": "skincare",
+    "timeline_id": "cat.pore_clay_peeloff.normal",
+    "sensitivity_policy": "irritant"
+  }
+]

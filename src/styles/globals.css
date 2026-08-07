@@ -11,8 +11,7 @@ html {
 body {
   margin: 0;
   color: var(--ink);
-  background:
-    linear-gradient(0deg, rgb(14 124 107 / 1.5%), rgb(14 124 107 / 1.5%)), var(--paper);
+  background: linear-gradient(0deg, rgb(14 124 107 / 1.5%), rgb(14 124 107 / 1.5%)), var(--paper);
   font-family: var(--font-body), 'IBM Plex Sans KR', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -408,6 +407,11 @@ a {
   background: var(--stop-wash);
 }
 
+.badge.consult {
+  color: var(--consult);
+  background: var(--consult-wash);
+}
+
 .badge.unknown {
   color: var(--unknown);
   background: var(--unknown-wash);
@@ -487,6 +491,11 @@ a {
 .verdict-panel.stop {
   background: var(--stop-wash);
   border-color: #efc5c1;
+}
+
+.verdict-panel.consult {
+  background: var(--consult-wash);
+  border-color: #d8c8ea;
 }
 
 .verdict-panel.unknown {

@@ -7,12 +7,13 @@ import type { VerdictLevel } from '@/domain/product';
 import { getProcedureDay } from '@/domain/procedure';
 import { evaluateProduct } from '@/rules/engine/evaluate';
 import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
+import { ingredientGroups } from '@/ruletable/data';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { ChevronRight, PackagePlus, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
-const rank: Record<VerdictLevel, number> = { stop: 3, care: 2, unknown: 1, go: 0 };
+const rank: Record<VerdictLevel, number> = { consult: 4, stop: 3, care: 2, unknown: 1, go: 0 };
 
 export default function ProductsPage() {
   const hydrated = useRecoveryStore((state) => state.hydrated);
@@ -20,18 +21,24 @@ export default function ProductsPage() {
   const [view, setView] = useState<'products' | 'attributes'>('products');
   if (!hydrated) return <LoadingScreen />;
   const day = session?.procedure ? getProcedureDay(session.procedure.performedAt, new Date()) : 0;
+  const sensitivity = session?.profile.sensitivity ?? 'normal';
   const rows = (session?.products ?? [])
-    .map((product) => ({ product, verdict: evaluateProduct(product, day, bundledRulePack) }))
+    .map((product) => ({
+      product,
+      verdict: evaluateProduct(product, day, bundledRulePack, sensitivity),
+    }))
     .sort((a, b) => rank[b.verdict.level] - rank[a.verdict.level]);
-  const counts = (['stop', 'care', 'unknown', 'go'] as const).map(
+  const counts = (['consult', 'stop', 'care', 'unknown', 'go'] as const).map(
     (level) => rows.filter((row) => row.verdict.level === level).length,
   );
 
-  const grouped = bundledRulePack.attributes
+  const grouped = ingredientGroups
     .map((attribute) => {
-      const matching = rows.filter(({ product }) => product.attributeIds.includes(attribute.id));
-      const level = matching.sort((a, b) => rank[b.verdict.level] - rank[a.verdict.level])[0]?.verdict
-        .level;
+      const matching = rows.filter(({ verdict }) =>
+        verdict.details.some((detail) => detail.attributeId === attribute.id),
+      );
+      const level = matching.sort((a, b) => rank[b.verdict.level] - rank[a.verdict.level])[0]
+        ?.verdict.level;
       return { attribute, products: matching, level };
     })
     .filter((row) => row.products.length);
@@ -40,14 +47,15 @@ export default function ProductsPage() {
     <AppShell>
       <p className="eyebrow">My products · D+{day}</p>
       <h1 className="headline">내 제품</h1>
-      <p className="subcopy">판정은 중단 → 주의 → 정보 없음 → 가능 순서로 정렬돼요.</p>
+      <p className="subcopy">병원 확인 → 중단 → 주의 → 정보 없음 → 가능 순서로 정렬돼요.</p>
 
       <section className="section summary-grid" aria-label="제품 판정 요약">
         {[
-          ['중단', counts[0]],
-          ['주의', counts[1]],
-          ['정보 없음', counts[2]],
-          ['가능', counts[3]],
+          ['병원 확인', counts[0]],
+          ['중단', counts[1]],
+          ['주의', counts[2]],
+          ['정보 없음', counts[3]],
+          ['가능', counts[4]],
         ].map(([label, count]) => (
           <div className="summary-cell" key={label}>
             <strong>{count}</strong>
@@ -57,7 +65,11 @@ export default function ProductsPage() {
       </section>
 
       <div className="segmented section" aria-label="제품 보기 방식">
-        <button type="button" aria-pressed={view === 'products'} onClick={() => setView('products')}>
+        <button
+          type="button"
+          aria-pressed={view === 'products'}
+          onClick={() => setView('products')}
+        >
           제품별
         </button>
         <button
@@ -85,7 +97,10 @@ export default function ProductsPage() {
               <Link className="list-row" href={`/products/${product.id}`} key={product.id}>
                 <span className="list-row-main">
                   <strong>{product.name}</strong>
-                  <span>{product.attributeIds.length || 0}개 속성</span>
+                  <span>
+                    {verdict.details.filter((detail) => detail.level !== 'unknown').length}개 판정
+                    항목
+                  </span>
                 </span>
                 <VerdictBadge level={verdict.level} />
                 <ChevronRight size={17} aria-hidden="true" />
@@ -98,12 +113,14 @@ export default function ProductsPage() {
               <div className="card" key={attribute.id}>
                 <div className="list-row" style={{ paddingTop: 0 }}>
                   <span className="list-row-main">
-                    <strong>{attribute.name}</strong>
+                    <strong>{attribute.label}</strong>
                     <span>등록된 제품: {products.length}개</span>
                   </span>
                   {level ? <VerdictBadge level={level} /> : null}
                 </div>
-                <p className="subcopy">{products[0]?.verdict.details.find((d) => d.attributeId === attribute.id)?.reason}</p>
+                <p className="subcopy">
+                  {products[0]?.verdict.details.find((d) => d.attributeId === attribute.id)?.reason}
+                </p>
               </div>
             ))}
           </div>

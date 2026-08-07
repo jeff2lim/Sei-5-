@@ -58,3 +58,34 @@ test('draft warning and bottom navigation stay visible on mobile', async ({ page
   await page.getByRole('link', { name: '내 제품' }).click();
   await expect(page).toHaveURL(/\/products$/);
 });
+
+test('user can register a skincare product with a v5 ingredient group', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'recovery-note:v1',
+      JSON.stringify({
+        profile: { sensitivity: 'normal' },
+        procedure: {
+          id: 'p1',
+          procedureType: 'picotoning',
+          performedAt: new Date().toISOString().slice(0, 10),
+          createdAt: new Date().toISOString(),
+        },
+        products: [],
+        checkIns: [],
+        consent: null,
+      }),
+    );
+  });
+
+  await page.goto('/products/new/category');
+  await page.getByLabel('제품 이름').fill('비타민C 세럼');
+  await page.getByRole('radio', { name: /스킨케어/ }).check();
+  await page.getByRole('button', { name: '속성 선택하기' }).click();
+  await expect(page.getByRole('heading', { name: /전성분표/ })).toBeVisible();
+  await page.getByRole('checkbox', { name: /비타민C/ }).check();
+  await page.getByRole('button', { name: '제품 저장' }).click();
+  await expect(page).toHaveURL(/\/products$/);
+  await expect(page.getByText('비타민C 세럼')).toBeVisible();
+  await expect(page.getByText('중단', { exact: true }).first()).toBeVisible();
+});

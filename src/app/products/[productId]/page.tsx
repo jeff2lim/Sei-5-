@@ -22,7 +22,9 @@ export default function ProductDetailPage() {
   const deleteProduct = useRecoveryStore((state) => state.deleteProduct);
   const product = session?.products.find((item) => item.id === params.productId);
   const day = session?.procedure ? getProcedureDay(session.procedure.performedAt, new Date()) : 0;
-  const verdict = product ? evaluateProduct(product, day, bundledRulePack) : null;
+  const verdict = product
+    ? evaluateProduct(product, day, bundledRulePack, session?.profile.sensitivity ?? 'normal')
+    : null;
 
   useEffect(() => {
     if (verdict) analytics.track({ name: 'product_detail_viewed', verdict: verdict.level });
@@ -67,15 +69,14 @@ export default function ProductDetailPage() {
         {verdict.details.length ? (
           <div className="stack">
             {verdict.details.map((detail) => {
-              const attribute = bundledRulePack.attributes.find(
-                (item) => item.id === detail.attributeId,
-              );
               return (
                 <div className="card" key={detail.attributeId}>
                   <div className="list-row" style={{ paddingTop: 0 }}>
                     <span className="list-row-main">
-                      <strong>{attribute?.name ?? detail.attributeId}</strong>
-                      <span>{attribute?.description}</span>
+                      <strong>{detail.label ?? detail.attributeId}</strong>
+                      <span>
+                        {detail.targetType === 'ingredient_group' ? '성분 기준' : '제형·세정 기준'}
+                      </span>
                     </span>
                     <VerdictBadge level={detail.level} />
                   </div>
@@ -99,6 +100,13 @@ export default function ProductDetailPage() {
           재개일을 사용합니다.
         </span>
       </div>
+
+      {verdict.notes?.length ? (
+        <section className="section notice">
+          <Info size={18} aria-hidden="true" />
+          <span>{verdict.notes.join(' ')}</span>
+        </section>
+      ) : null}
 
       <button className="button danger full section" type="button" onClick={remove}>
         <Trash2 size={18} aria-hidden="true" /> 제품 삭제
