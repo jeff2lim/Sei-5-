@@ -4,7 +4,7 @@ import { AppShell } from '@/components/app-shell/app-shell';
 import { Topbar } from '@/components/common/topbar';
 import { LoadingScreen } from '@/components/common/loading-screen';
 import { useRecoveryStore } from '@/store/recovery-store';
-import { PackagePlus, Plus } from 'lucide-react';
+import { PackagePlus, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
 const categoryLabels = {
@@ -16,12 +16,25 @@ const categoryLabels = {
 export default function OnboardingProductsPage() {
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
+  const deleteProduct = useRecoveryStore((state) => state.deleteProduct);
+  const setProductDraft = useRecoveryStore((state) => state.setProductDraft);
   const products = session?.products ?? [];
+  async function removeProduct(productId: string, productName: string) {
+    const confirmed = window.confirm(`“${productName}” 제품을 삭제할까요?`);
+
+    if (!confirmed) return;
+
+    try {
+      await deleteProduct(productId);
+    } catch {
+      window.alert('제품을 삭제하지 못했어요. 다시 시도해 주세요.');
+    }
+  }
   if (!hydrated) return <LoadingScreen navigation={false} />;
 
   return (
     <AppShell navigation={false}>
-      <Topbar title="내 제품" />
+      <Topbar title="내 제품" backHref="/onboarding/procedure"/>
       <div className="progress" aria-label="4단계 중 2단계">
         <span className="done" />
         <span className="active" />
@@ -43,7 +56,13 @@ export default function OnboardingProductsPage() {
                     {categoryLabels[product.category]} · 속성 {product.attributeIds.length}개
                   </span>
                 </div>
-                <span className="badge">{categoryLabels[product.category]}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span className="badge">{categoryLabels[product.category]}</span>
+                  <button className="icon-button" type="button" aria-label={`${product.name} 삭제`}
+                    onClick={() => void removeProduct(product.id, product.name)}>
+                  <Trash2 size={17} aria-hidden="true" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -57,11 +76,11 @@ export default function OnboardingProductsPage() {
       </section>
 
       <div className="sticky-actions">
-        <Link className="button secondary full" href="/onboarding/products/new/category">
+        <Link className="button secondary full" href="/onboarding/products/new/category" onClick={() => setProductDraft({name: '', category: null,})}>
           <Plus size={18} aria-hidden="true" /> 제품 등록하기
         </Link>
-        <Link className="button full" href="/onboarding/cleansing">
-          {products.length ? '다음' : '제품 없이 다음'}
+        <Link className={products.length ? 'button full' : 'button product-skip full'} href="/onboarding/cleansing">
+          {products.length ? '다음' : '제품 없이 넘어가기'}
         </Link>
       </div>
     </AppShell>

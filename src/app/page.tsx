@@ -6,19 +6,26 @@ import { useRecoveryStore } from '@/store/recovery-store';
 import { ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function LandingPage() {
   const router = useRouter();
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
+  const [showLanding, setShowLanding] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (!hydrated || !session?.consent) return;
-    router.replace(session.procedure ? '/home' : '/onboarding/procedure');
-  }, [hydrated, router, session]);
+    const shouldShowLanding =
+      new URLSearchParams(window.location.search).get('showLanding') === '1';
 
-  if (!hydrated || session?.consent) return <LoadingScreen navigation={false} />;
+    setShowLanding(shouldShowLanding);
+  }, []);
+  useEffect(() => {
+    if (!hydrated || showLanding === null ||  showLanding || !session?.consent) return;
+    router.replace(session.procedure ? '/home' : '/onboarding/procedure');
+  }, [hydrated, router, session, showLanding]);
+
+  if (!hydrated || showLanding === null || (!showLanding && session?.consent)) return <LoadingScreen navigation={false} />;
 
   return (
     <AppShell navigation={false}>

@@ -34,7 +34,11 @@ export default function ProductsPage() {
         .level;
       return { attribute, products: matching, level };
     })
-    .filter((row) => row.products.length);
+    .filter((row) => row.products.length)
+    .sort(
+      (a, b) =>
+        rank[b.level ?? 'unknown'] - rank[a.level ?? 'unknown'],
+    );
 
   return (
     <AppShell>

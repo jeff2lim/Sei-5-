@@ -6,18 +6,36 @@ import { useRouter } from 'next/navigation';
 export function Topbar({
   title,
   closeHref,
+  backHref,
+  onClose,
 }: {
   title: string;
   closeHref?: string;
+  backHref?: string;
+  onClose?: () => void;
 }) {
   const router = useRouter();
+  function navigateBack() {
+    if (closeHref) {
+      onClose?.();
+      router.push(closeHref);
+      return;
+    }
+
+    if (backHref) {
+      router.push(backHref);
+      return;
+    }
+
+    router.back();
+  }
   return (
     <header className="topbar">
       <button
         className="icon-button"
         type="button"
         aria-label={closeHref ? '닫기' : '뒤로 가기'}
-        onClick={() => (closeHref ? router.push(closeHref) : router.back())}
+        onClick={navigateBack}
       >
         {closeHref ? <X aria-hidden="true" /> : <ChevronLeft aria-hidden="true" />}
       </button>

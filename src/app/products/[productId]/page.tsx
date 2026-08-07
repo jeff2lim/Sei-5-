@@ -12,7 +12,7 @@ import { useRecoveryStore } from '@/store/recovery-store';
 import { Info, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function ProductDetailPage() {
   const params = useParams<{ productId: string }>();
@@ -20,6 +20,7 @@ export default function ProductDetailPage() {
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const deleteProduct = useRecoveryStore((state) => state.deleteProduct);
+  const [deleting, setDeleting] = useState(false);
   const product = session?.products.find((item) => item.id === params.productId);
   const day = session?.procedure ? getProcedureDay(session.procedure.performedAt, new Date()) : 0;
   const verdict = product ? evaluateProduct(product, day, bundledRulePack) : null;
@@ -28,7 +29,7 @@ export default function ProductDetailPage() {
     if (verdict) analytics.track({ name: 'product_detail_viewed', verdict: verdict.level });
   }, [verdict]);
 
-  if (!hydrated) return <LoadingScreen />;
+  if (!hydrated || deleting) return <LoadingScreen />;
   if (!product || !verdict) {
     return (
       <AppShell>
@@ -46,8 +47,15 @@ export default function ProductDetailPage() {
 
   async function remove() {
     if (!window.confirm(`“${currentProduct.name}” 제품을 삭제할까요?`)) return;
-    await deleteProduct(currentProduct.id);
-    router.replace('/products');
+    setDeleting(true);
+
+    try {
+      await deleteProduct(currentProduct.id);
+      router.replace('/products');
+    } catch {
+        setDeleting(false);
+        window.alert('제품을 삭제하지 못했어요. 다시 시도해 주세요.');
+      }
   }
 
   return (

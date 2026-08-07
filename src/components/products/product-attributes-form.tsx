@@ -8,6 +8,7 @@ import { useRecoveryStore } from '@/store/recovery-store';
 import { Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { LoadingScreen } from '@/components/common/loading-screen';
 
 export function ProductAttributesForm({ successHref }: { successHref: string }) {
   const router = useRouter();
@@ -16,6 +17,10 @@ export function ProductAttributesForm({ successHref }: { successHref: string }) 
   const [selected, setSelected] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
+  if (saving) {
+    return <LoadingScreen navigation={false} />;
+  }
+  
   if (!draft.category) {
     return (
       <AppShell navigation={false}>

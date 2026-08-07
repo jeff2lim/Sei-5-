@@ -21,6 +21,8 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function ProcedurePage() {
   const router = useRouter();
+  const hydrated = useRecoveryStore((state) => state.hydrated);
+  const session = useRecoveryStore((state) => state.session);
   const saveProcedure = useRecoveryStore((state) => state.saveProcedure);
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -28,6 +30,14 @@ export default function ProcedurePage() {
   });
 
   useEffect(() => analytics.track({ name: 'onboarding_started' }), []);
+  useEffect(() => {
+    if (!hydrated) return;
+
+    form.reset({
+      performedAt: session?.procedure?.performedAt ?? today(),
+      sensitivity: session?.profile.sensitivity ?? 'normal',
+    });
+  }, [form, hydrated, session?.procedure?.performedAt, session?.profile.sensitivity,]);
 
   async function submit(values: FormValues) {
     if (values.performedAt > today()) {
@@ -44,7 +54,7 @@ export default function ProcedurePage() {
 
   return (
     <AppShell navigation={false}>
-      <Topbar title="시술 기록" closeHref="/" />
+      <Topbar title="시술 기록" closeHref="/consent?from=onboarding" />
       <div className="progress" aria-label="4단계 중 1단계">
         <span className="active" />
         <span />

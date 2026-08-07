@@ -49,7 +49,7 @@ export default function ProfilePage() {
       value: session?.procedure?.performedAt ?? '미등록',
       icon: CalendarDays,
     },
-    { href: '/consent', label: '동의 내역', value: '확인·변경', icon: ShieldCheck },
+    { href: '/consent?mode=edit', label: '동의 내역', value: '확인·변경', icon: ShieldCheck },
     { href: '/legal/privacy', label: '개인정보처리방침', value: '', icon: FileText },
     { href: '/legal/terms', label: '서비스 이용약관', value: '', icon: FileText },
   ];
