@@ -1,0 +1,19 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      development-dependencies:
+        dependency-type: development
+      production-dependencies:
+        dependency-type: production
+    # MVP 기간(~2026-08) 동안 메이저 버전 업그레이드는 제안하지 않는다.
+    # 보안 패치와 마이너/패치 업데이트는 계속 받는다.
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
