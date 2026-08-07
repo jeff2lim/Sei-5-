@@ -5,12 +5,14 @@ import { LoadingScreen } from '@/components/common/loading-screen';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { CalendarPlus, ChevronLeft, ChevronRight, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 
 
 const SHOW_NEXT_PROCEDURE = true;
 
 export default function RecordsPage() {
+  const searchParams = useSearchParams();
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const saveProfile = useRecoveryStore((state) => state.saveProfile);
@@ -25,8 +27,13 @@ export default function RecordsPage() {
       ? '피코토닝'
       : '-';
   const [nextDate, setNextDate] = useState(session?.profile.nextProcedureAt ?? '');
+  useEffect(() => {
+    if (!hydrated) return;
+    if (searchParams.get('addSchedule') === '1') {
+      dialogRef.current?.showModal();
+    }
+  }, [hydrated, searchParams]);
   if (!hydrated) return <LoadingScreen />;
-
   const now = new Date();
   const year = visibleMonth.getFullYear();
   const month = visibleMonth.getMonth();
