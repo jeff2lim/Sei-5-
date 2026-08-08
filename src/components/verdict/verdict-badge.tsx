@@ -1,10 +1,11 @@
 import type { VerdictLevel } from '@/domain/product';
-import { AlertTriangle, CircleCheck, CircleHelp, OctagonX } from 'lucide-react';
+import { AlertTriangle, CircleCheck, CircleHelp, Hospital, OctagonX } from 'lucide-react';
 
 const labels: Record<VerdictLevel, string> = {
   go: '가능',
   care: '주의',
   stop: '중단',
+  consult: '병원 확인',
   unknown: '판정 정보 없음',
 };
 
@@ -20,7 +21,9 @@ export function VerdictBadge({ level }: { level: VerdictLevel }) {
         ? AlertTriangle
         : level === 'stop'
           ? OctagonX
-          : CircleHelp;
+          : level === 'consult'
+            ? Hospital
+            : CircleHelp;
   return (
     <span className={`badge ${level}`}>
       <Icon size={14} aria-hidden="true" />

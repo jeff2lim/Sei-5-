@@ -1,0 +1,42 @@
+[
+  {
+    "id": "rubbing_wipe",
+    "screen": "skincare",
+    "text": "화장솜으로 닦지 말고 손으로 눌러 발라주세요",
+    "from_d": 0,
+    "to_d": 5,
+    "judgment_mode": "warning_text_only"
+  },
+  {
+    "id": "face_scrubbing",
+    "screen": "cleansing",
+    "text": "문지르지 말고 눌러서 씻어주세요",
+    "from_d": 0,
+    "to_d": 7,
+    "judgment_mode": "warning_text_only"
+  },
+  {
+    "id": "towel_rubbing",
+    "screen": "cleansing",
+    "text": "수건은 문지르지 말고 눌러서 물기만 흡수시켜주세요",
+    "from_d": 0,
+    "to_d": 7,
+    "judgment_mode": "warning_text_only"
+  },
+  {
+    "id": "hot_water",
+    "screen": "cleansing",
+    "text": "뜨거운 물 대신 미온수로 씻어주세요",
+    "from_d": 0,
+    "to_d": 7,
+    "judgment_mode": "warning_text_only"
+  },
+  {
+    "id": "peeling_crust",
+    "screen": "common",
+    "text": "각질이나 딱지는 절대 뜯지 마세요",
+    "from_d": 0,
+    "to_d": 14,
+    "judgment_mode": "warning_text_only"
+  }
+]

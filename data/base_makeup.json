@@ -1,0 +1,58 @@
+[
+  {
+    "id": "tone_up",
+    "label": "톤업크림",
+    "screen": "outing",
+    "cleansing_burden": 2,
+    "removal_priority": 5,
+    "sensitivity_policy": "irritant"
+  },
+  {
+    "id": "powder",
+    "label": "파우더",
+    "screen": "outing",
+    "cleansing_burden": 2,
+    "removal_priority": 2,
+    "sensitivity_policy": "irritant"
+  },
+  {
+    "id": "bb_cc",
+    "label": "BB·CC크림",
+    "screen": "outing",
+    "cleansing_burden": 3,
+    "removal_priority": 5,
+    "sensitivity_policy": "irritant"
+  },
+  {
+    "id": "primer",
+    "label": "프라이머",
+    "screen": "outing",
+    "cleansing_burden": 3,
+    "removal_priority": 1,
+    "sensitivity_policy": "irritant"
+  },
+  {
+    "id": "cushion",
+    "label": "쿠션·선쿠션",
+    "screen": "outing",
+    "cleansing_burden": 4,
+    "removal_priority": 4,
+    "sensitivity_policy": "irritant"
+  },
+  {
+    "id": "foundation",
+    "label": "파운데이션",
+    "screen": "outing",
+    "cleansing_burden": 4,
+    "removal_priority": 4,
+    "sensitivity_policy": "irritant"
+  },
+  {
+    "id": "concealer",
+    "label": "컨실러",
+    "screen": "outing",
+    "cleansing_burden": 4,
+    "removal_priority": 3,
+    "sensitivity_policy": "irritant"
+  }
+]

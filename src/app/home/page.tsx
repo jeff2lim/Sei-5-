@@ -35,9 +35,15 @@ export default function HomePage() {
       day === null
         ? []
         : categories.map((category) =>
-            evaluateCategory(category.id, session?.products ?? [], day, bundledRulePack),
+            evaluateCategory(
+              category.id,
+              session?.products ?? [],
+              day,
+              bundledRulePack,
+              session?.profile.sensitivity ?? 'normal',
+            ),
           ),
-    [day, session?.products],
+    [day, session?.products, session?.profile.sensitivity],
   );
 
   useEffect(() => {
@@ -64,6 +70,7 @@ export default function HomePage() {
       </AppShell>
     );
   }
+  const currentDay = day ?? 0;
 
   const todayCheck = session.checkIns.some(
     (checkIn) => checkIn.checkedAt.slice(0, 10) === new Date().toISOString().slice(0, 10),
@@ -72,17 +79,23 @@ export default function HomePage() {
   return (
     <AppShell>
       <header>
-        <p className="eyebrow">Picotoning · D+{day}</p>
-        <h1 className="headline">{day === 7 ? '한 주의 회복을 잘 기록했어요.' : '오늘의 회복 안내예요.'}</h1>
-        <p className="subcopy">
-          선택한 정보에 따라 오늘의 안내 항목이 달라졌습니다.
-        </p>
+        <p className="eyebrow">Picotoning · D+{currentDay}</p>
+        <h1 className="headline">
+          {currentDay === 7 ? '한 주의 회복을 잘 기록했어요.' : '오늘의 회복 안내예요.'}
+        </h1>
+        <p className="subcopy">선택한 정보에 따라 오늘의 안내 항목이 달라졌습니다.</p>
       </header>
 
       <section className="section hero-card">
-        <span className="badge">D+{day}</span>
+        <span className="badge">D+{currentDay}</span>
         <h2 className="headline" style={{ marginTop: 14 }}>
-          자극을 줄이고, 피부 느낌을 천천히 확인하세요.
+          {currentDay === 0
+            ? '오늘은 이것만 하면 돼요 — 미온수 세안 · 보습 · 외출 자제'
+            : currentDay === 7
+              ? '회복기를 마쳤어요. 이제 한꺼번에 말고 순서대로 다시 시작해요.'
+              : currentDay >= 14
+                ? '재개기를 마쳤어요. 남아 있는 주의 항목을 확인해 주세요.'
+                : '자극을 줄이고, 피부 느낌을 천천히 확인하세요.'}
         </h2>
         <p className="subcopy">
           이 안내는 입력한 속성과 룰팩 {bundledRulePack.meta.version}을 기준으로 표시됩니다.

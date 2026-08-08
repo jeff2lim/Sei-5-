@@ -1,0 +1,92 @@
+[
+  {
+    "id": "lukewarm_water",
+    "label": "미온수 세안",
+    "screen": "cleansing",
+    "friction": 1,
+    "removal_power": 1,
+    "barrier_stripping": 1,
+    "sensitivity_policy": "restorative"
+  },
+  {
+    "id": "gel_cleanser",
+    "label": "순한 젤클렌저",
+    "screen": "cleansing",
+    "friction": 2,
+    "removal_power": 3,
+    "barrier_stripping": 2,
+    "sensitivity_policy": "restorative"
+  },
+  {
+    "id": "mild_acidic_foam",
+    "label": "약산성 폼클렌저",
+    "screen": "cleansing",
+    "friction": 2,
+    "removal_power": 3,
+    "barrier_stripping": 2,
+    "sensitivity_policy": "restorative"
+  },
+  {
+    "id": "alkaline_foam",
+    "label": "일반(알칼리) 폼",
+    "screen": "cleansing",
+    "friction": 3,
+    "removal_power": 4,
+    "barrier_stripping": 4,
+    "sensitivity_policy": "irritant"
+  },
+  {
+    "id": "cleansing_water",
+    "label": "클렌징워터",
+    "screen": "cleansing",
+    "friction": 3,
+    "removal_power": 2,
+    "barrier_stripping": 2,
+    "sensitivity_policy": "irritant"
+  },
+  {
+    "id": "cleansing_oil",
+    "label": "클렌징오일",
+    "screen": "cleansing",
+    "friction": 3,
+    "removal_power": 5,
+    "barrier_stripping": 2,
+    "sensitivity_policy": "irritant"
+  },
+  {
+    "id": "cleansing_balm",
+    "label": "클렌징밤",
+    "screen": "cleansing",
+    "friction": 4,
+    "removal_power": 5,
+    "barrier_stripping": 2,
+    "sensitivity_policy": "irritant"
+  },
+  {
+    "id": "point_remover",
+    "label": "리무버",
+    "screen": "cleansing",
+    "friction": 3,
+    "removal_power": 4,
+    "barrier_stripping": 3,
+    "sensitivity_policy": "irritant"
+  },
+  {
+    "id": "double_cleanse",
+    "label": "이중세안",
+    "screen": "cleansing",
+    "friction": 4,
+    "removal_power": 5,
+    "barrier_stripping": 4,
+    "sensitivity_policy": "irritant"
+  },
+  {
+    "id": "scrub_deep",
+    "label": "스크럽·딥클렌징·브러시",
+    "screen": "cleansing",
+    "friction": 5,
+    "removal_power": 5,
+    "barrier_stripping": 5,
+    "sensitivity_policy": "irritant"
+  }
+]

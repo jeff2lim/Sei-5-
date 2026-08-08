@@ -4,6 +4,7 @@ import type { CheckIn } from '@/domain/check-in';
 import type { ProcedureRecord, Sensitivity, UserProfile } from '@/domain/procedure';
 import type { Product, ProductCategory } from '@/domain/product';
 import type { ConsentState, RecoverySession } from '@/domain/session';
+import type { ProductRuleSelection } from '@/ruletable/types';
 import { recoveryRepository } from '@/repositories';
 import { create } from 'zustand';
 
@@ -21,7 +22,7 @@ type RecoveryState = {
   saveProcedure: (performedAt: string, sensitivity: Sensitivity) => Promise<void>;
   saveProfile: (profile: UserProfile) => Promise<void>;
   setProductDraft: (draft: ProductDraft) => void;
-  saveProduct: (attributes: string[]) => Promise<Product>;
+  saveProduct: (selection: ProductRuleSelection) => Promise<Product>;
   updateProduct: (product: Product) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   saveCheckIn: (checkIn: CheckIn) => Promise<void>;
@@ -68,7 +69,7 @@ export const useRecoveryStore = create<RecoveryState>((set, get) => ({
     set({ productDraft });
   },
 
-  async saveProduct(attributes) {
+  async saveProduct(selection) {
     const { productDraft } = get();
     if (!productDraft.category || !productDraft.name.trim()) {
       throw new Error('제품 이름과 카테고리가 필요합니다.');
@@ -78,7 +79,8 @@ export const useRecoveryStore = create<RecoveryState>((set, get) => ({
       id: crypto.randomUUID(),
       name: productDraft.name.trim(),
       category: productDraft.category,
-      attributeIds: attributes,
+      ruleSelection: selection,
+      attributeIds: selection.ingredientGroupIds,
       createdAt: now,
       updatedAt: now,
     };

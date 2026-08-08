@@ -1,0 +1,35 @@
+[
+  {
+    "id": "physical_cover",
+    "label": "모자·마스크·양산",
+    "screen": "outing",
+    "required_removal_power": 0,
+    "removal_priority": 99,
+    "sensitivity_policy": "pigment_rail"
+  },
+  {
+    "id": "serum_lotion",
+    "label": "선세럼·선로션 (논워터프루프)",
+    "screen": "outing",
+    "required_removal_power": 2,
+    "removal_priority": 99,
+    "sensitivity_policy": "pigment_rail"
+  },
+  {
+    "id": "regular_non_waterproof",
+    "label": "일반 자차 (비방수)",
+    "screen": "outing",
+    "required_removal_power": 3,
+    "removal_priority": 99,
+    "sensitivity_policy": "pigment_rail"
+  },
+  {
+    "id": "waterproof_stick",
+    "label": "워터프루프·선스틱",
+    "screen": "outing",
+    "required_removal_power": 5,
+    "removal_priority": 99,
+    "sensitivity_policy": "pigment_rail",
+    "alternative": "선세럼·선로션으로 바꾸고 2~3시간마다 덧바르기 + 모자·마스크"
+  }
+]

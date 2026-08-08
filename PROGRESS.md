@@ -47,3 +47,12 @@
 - 위험: 실제 GitHub 원격과 Vercel 프로젝트는 아직 연결되지 않음
 - 테스트: ESLint, TypeScript, 룰 검증, Vitest 16개, Playwright E2E 2개, 프로덕션 빌드 통과
 - 다음: GitHub CLI 설치 및 원격 저장소 연결 후 게시
+
+## Phase 11 — 룰테이블 v5 통합
+
+- 변경: D+0~14 타임라인, 세 민감도 전개, 성분 이명, 제형·세정 결합, 2단 증상 모델
+- 구현: 41개 원본 → 123개 민감도 타임라인 → 1,845개 일별 셀 자동 생성
+- 제품 등록: 세안 토글, 스킨케어 성분군/대표 이명, 외출준비 제형 분기
+- 위험: `team_provisional`, `extrapolated`, `needs_review` 값은 임상 확정 전 실제 환자 안내 금지
+- 테스트: 룰 엔진 포함 Vitest 44개, 모바일 Playwright 3개, 프로덕션 빌드 통과
+- 다음: `needs_review` 8개 전문의 스팟 검수와 근거 인용 보강

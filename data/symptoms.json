@@ -1,0 +1,40 @@
+{
+  "section_a": [
+    {
+      "id": "redness",
+      "label": "붉은기",
+      "description": "시술 부위가 붉게 보임",
+      "expected_resolution_d": 2
+    },
+    {
+      "id": "heat",
+      "label": "열감",
+      "description": "화끈거리거나 뜨거움",
+      "expected_resolution_d": 1
+    },
+    {
+      "id": "stinging",
+      "label": "따가움",
+      "description": "쓰라리거나 화끈거림",
+      "expected_resolution_d": 2
+    },
+    {
+      "id": "dryness",
+      "label": "건조·각질",
+      "description": "당기거나 일어남",
+      "expected_resolution_d": 7
+    },
+    {
+      "id": "breakout",
+      "label": "트러블",
+      "description": "좁쌀·뾰루지가 올라옴",
+      "expected_resolution_d": 7
+    }
+  ],
+  "section_b": [
+    { "id": "discharge_pus", "label": "진물·고름", "urgency": "contact_now" },
+    { "id": "blister", "label": "수포·물집", "urgency": "contact_now" },
+    { "id": "worsening_pain", "label": "통증이 심해짐", "urgency": "contact_now" },
+    { "id": "hypopigmentation", "label": "색이 하얗게 빠짐", "urgency": "contact_soon" }
+  ]
+}

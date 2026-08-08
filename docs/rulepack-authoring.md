@@ -1,21 +1,25 @@
-# Rulepack authoring
+# Rule table v5 authoring
 
-## 파일
+## 원본과 생성물
 
-- `rules/meta.json`: 버전, 상태, 출처와 검수 정보
-- `rules/attributes.json`: 제품 카테고리별 속성 사전
-- `rules/verdict-rules.json`: 속성별 날짜 구간과 안내
-- `rules/contact-rules.json`: 체크 입력과 행동 안내의 직접 매핑
+사람이 수정하는 원본은 `data/*.json`과 `schema/*.json`입니다. `build/rules.generated.json`은 `pnpm rules:build`로 만들며 직접 편집하지 않습니다. 기존 `rules/*.json`은 v0.1 브라우저 데이터 호환과 앱 메타데이터를 위해 남겨 둔 레거시 어댑터입니다.
 
-수정 후 `pnpm rules:validate`와 `pnpm rules:build`를 실행합니다.
+## 변경 절차
 
-## 검증 규칙
+1. `data/timelines.json` 또는 해당 마스터 데이터를 수정합니다.
+2. `pnpm rules:validate`로 D+0~14 커버리지, 단조성, 민감도 정책과 클램프를 검사합니다.
+3. `pnpm rules:build`로 세 민감도와 15일 셀을 전개합니다.
+4. `pnpm test`에서 타임라인·커플링·증상 하향 회귀 테스트를 실행합니다.
 
-- 속성 ID와 판정 룰 ID는 중복될 수 없습니다.
-- 모든 판정 룰은 존재하는 속성을 참조해야 합니다.
-- 날짜 구간은 겹치거나 빠질 수 없습니다.
-- 허용된 판정은 `go`, `care`, `stop`입니다.
-- `PILOT` 또는 `APPROVED`는 `reviewedBy`, `reviewedAt`이 없으면 빌드에 실패합니다.
-- `DRAFT_NOT_FOR_PATIENTS`는 앱 셸에서 경고 배너를 강제로 표시합니다.
+## 강제 규칙
 
-임상적으로 검수되지 않은 값을 임의로 채우지 마세요. 근거가 없으면 룰을 추가하지 않고 앱에서 `unknown`으로 표시합니다.
+- `consult`는 severity 순서에 포함하지 않습니다.
+- `advisory`와 `warning_text_only`는 제품 판정 롤업에서 제외합니다.
+- `restorative`는 민감도나 증상으로 하향하지 않습니다.
+- `pigment_rail`은 낮은 민감도에서 재개일을 당기지 않습니다.
+- D+14를 넘는 재개일은 `deferred: true`, `reopen_d_day: null`로 유지합니다.
+- `care`에는 조건 문구가 필요합니다.
+- `confirmed`에는 근거 인용이 필요합니다.
+- `징크옥사이드`, `산화아연`, `Zinc Oxide`는 징크 성분군에서 제외합니다.
+
+현재 데이터는 임상 확정본이 아닙니다. `needs_review`와 `extrapolated` 항목을 전문의 검수 없이 `confirmed`로 바꾸지 마세요.
