@@ -7,6 +7,8 @@ import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { AlertTriangle, CheckCircle2, PhoneCall } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
 const symptomLabels: Record<string, string> = {
   redness: '붉음',
@@ -22,12 +24,15 @@ const severityLabels = {
   severe: '심함',
 };
 
-export default function CheckInResultPage() {
+function CheckInResultPageContent() {
+  const searchParams = useSearchParams();
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const checkIns = session?.checkIns ?? [];
   if (!hydrated) return <LoadingScreen navigation={false} />;
-  const checkIn = checkIns.at(-1);
+  const checkInId = searchParams.get('id');
+
+  const checkIn = checkInId ? checkIns.find((item) => item.id === checkInId) : checkIns.at(-1);
   if (!checkIn) {
     return (
       <AppShell navigation={false}>
@@ -83,5 +88,13 @@ export default function CheckInResultPage() {
         </Link>
       </div>
     </AppShell>
+  );
+}
+
+export default function CheckInResultPage() {
+  return (
+    <Suspense fallback={<LoadingScreen navigation={false} />}>
+      <CheckInResultPageContent />
+    </Suspense>
   );
 }

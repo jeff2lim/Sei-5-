@@ -71,34 +71,37 @@ export default function ConsentPage() {
 
   const [consentMode, setConsentMode] = useState<'onboarding' | 'edit' | null>(null);
   const isEditing = consentMode === 'edit';
-  const [values, setValues] =
-  useState<Record<ConsentKey, boolean>>(emptyConsentValues);
+  const [values, setValues] = useState<Record<ConsentKey, boolean>>(emptyConsentValues);
   const [draftLoaded, setDraftLoaded] = useState(false);
   useEffect(() => {
     if (!hydrated || draftLoaded) return;
-    const mode = new URLSearchParams(window.location.search).get('mode');
-    setConsentMode(mode === 'edit' ? 'edit' : 'onboarding');
-    const raw = window.sessionStorage.getItem(CONSENT_DRAFT_KEY);
 
-    if (raw) {
-      try {
-        const saved = JSON.parse(raw) as Partial<Record<ConsentKey, unknown>>;
+    const mode =
+      new URLSearchParams(window.location.search).get('mode') === 'edit' ? 'edit' : 'onboarding';
 
-        setValues({
-          terms: saved.terms === true,
-          privacy: saved.privacy === true,
-          healthData: saved.healthData === true,
-          photo: saved.photo === true,
-          marketing: saved.marketing === true,
-        });
+    setConsentMode(mode);
 
-        setDraftLoaded(true);
-        return;
-      } catch {
+    if (mode === 'onboarding') {
+      const raw = window.sessionStorage.getItem(CONSENT_DRAFT_KEY);
+
+      if (raw) {
+        try {
+          const saved = JSON.parse(raw) as Partial<Record<ConsentKey, unknown>>;
+
+          setValues({
+            terms: saved.terms === true,
+            privacy: saved.privacy === true,
+            healthData: saved.healthData === true,
+            photo: saved.photo === true,
+            marketing: saved.marketing === true,
+          });
+          setDraftLoaded(true);
+          return;
+        } catch {
           window.sessionStorage.removeItem(CONSENT_DRAFT_KEY);
         }
+      }
     }
-
     if (session?.consent) {
       setValues({
         terms: session.consent.terms,
@@ -108,17 +111,17 @@ export default function ConsentPage() {
         marketing: session.consent.marketing,
       });
     } else {
-        setValues(emptyConsentValues);
-      }
+      setValues(emptyConsentValues);
+    }
 
     setDraftLoaded(true);
   }, [draftLoaded, hydrated, session?.consent]);
 
   useEffect(() => {
-    if (!draftLoaded) return;
+    if (!draftLoaded || consentMode !== 'onboarding') return;
 
     window.sessionStorage.setItem(CONSENT_DRAFT_KEY, JSON.stringify(values));
-  }, [draftLoaded, values]);
+  }, [consentMode, draftLoaded, values]);
   const requiredComplete = values.terms && values.privacy && values.healthData;
 
   function toggleAll() {
@@ -138,13 +141,17 @@ export default function ConsentPage() {
     router.push(isEditing ? '/profile' : '/onboarding/procedure');
   }
 
-  if (!hydrated || !draftLoaded || isEditing === null) {
+  if (!hydrated || !draftLoaded || consentMode === null) {
     return <LoadingScreen navigation={false} />;
   }
 
   return (
     <AppShell navigation={false}>
-      <Topbar title={isEditing ? '동의 내역' : '동의 안내'} closeHref={isEditing ? '/profile' : '/?showLanding=1'} onClose={discardConsentDraft}/>
+      <Topbar
+        title={isEditing ? '동의 내역' : '동의 안내'}
+        closeHref={isEditing ? '/profile' : '/?showLanding=1'}
+        onClose={discardConsentDraft}
+      />
       <p className="eyebrow">Before we start</p>
       <h1 className="headline">필요한 동의를 하나씩 확인해 주세요.</h1>
       <p className="subcopy">선택 동의는 거부해도 핵심 기능을 사용할 수 있어요.</p>
@@ -177,7 +184,11 @@ export default function ConsentPage() {
                 <span>{item.description}</span>
               </span>
               {item.href ? (
-                <Link className="icon-button" href={item.href} aria-label={`${item.title} 전문 보기`}>
+                <Link
+                  className="icon-button"
+                  href={item.href}
+                  aria-label={`${item.title} 전문 보기`}
+                >
                   <ChevronRight size={18} aria-hidden="true" />
                 </Link>
               ) : null}
@@ -188,7 +199,9 @@ export default function ConsentPage() {
 
       <div className="notice section">
         <ShieldCheck size={19} aria-hidden="true" />
-        <span>동의를 거부하면 해당 선택 기능만 제한됩니다. 동의 내역은 마이에서 확인할 수 있어요.</span>
+        <span>
+          동의를 거부하면 해당 선택 기능만 제한됩니다. 동의 내역은 마이에서 확인할 수 있어요.
+        </span>
       </div>
 
       <div className="sticky-actions">

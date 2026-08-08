@@ -3,17 +3,21 @@
 import { ChevronLeft, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-export function Topbar({
-  title,
-  closeHref,
-  backHref,
-  onClose,
-}: {
-  title: string;
-  closeHref?: string;
-  backHref?: string;
-  onClose?: () => void;
-}) {
+type TopbarProps =
+  | {
+      title: string;
+      closeHref: string;
+      backHref?: never;
+      onClose?: () => void;
+    }
+  | {
+      title: string;
+      closeHref?: never;
+      backHref?: string;
+      onClose?: () => void;
+    };
+
+export function Topbar({ title, closeHref, backHref, onClose }: TopbarProps) {
   const router = useRouter();
   function navigateBack() {
     if (closeHref) {

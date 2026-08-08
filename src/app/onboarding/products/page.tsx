@@ -6,6 +6,7 @@ import { LoadingScreen } from '@/components/common/loading-screen';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { PackagePlus, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import { useRef, useState } from 'react';
 
 const categoryLabels = {
   cleansing: '세안',
@@ -19,22 +20,53 @@ export default function OnboardingProductsPage() {
   const deleteProduct = useRecoveryStore((state) => state.deleteProduct);
   const setProductDraft = useRecoveryStore((state) => state.setProductDraft);
   const products = session?.products ?? [];
-  async function removeProduct(productId: string, productName: string) {
-    const confirmed = window.confirm(`“${productName}” 제품을 삭제할까요?`);
 
-    if (!confirmed) return;
+  const deleteDialogRef = useRef<HTMLDialogElement>(null);
+  const [pendingDelete, setPendingDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  function openDeleteDialog(productId: string, productName: string) {
+    setPendingDelete({
+      id: productId,
+      name: productName,
+    });
+    setDeleteError(null);
+    deleteDialogRef.current?.showModal();
+  }
+
+  function closeDeleteDialog() {
+    if (deleting) return;
+
+    deleteDialogRef.current?.close();
+    setPendingDelete(null);
+    setDeleteError(null);
+  }
+
+  async function confirmDeleteProduct() {
+    if (!pendingDelete || deleting) return;
+
+    setDeleting(true);
+    setDeleteError(null);
 
     try {
-      await deleteProduct(productId);
+      await deleteProduct(pendingDelete.id);
+      deleteDialogRef.current?.close();
+      setPendingDelete(null);
     } catch {
-      window.alert('제품을 삭제하지 못했어요. 다시 시도해 주세요.');
+      setDeleteError('제품을 삭제하지 못했어요. 다시 시도해 주세요.');
+    } finally {
+      setDeleting(false);
     }
   }
   if (!hydrated) return <LoadingScreen navigation={false} />;
 
   return (
     <AppShell navigation={false}>
-      <Topbar title="내 제품" backHref="/onboarding/procedure"/>
+      <Topbar title="내 제품" backHref="/onboarding/procedure" />
       <div className="progress" aria-label="4단계 중 2단계">
         <span className="done" />
         <span className="active" />
@@ -58,9 +90,13 @@ export default function OnboardingProductsPage() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span className="badge">{categoryLabels[product.category]}</span>
-                  <button className="icon-button" type="button" aria-label={`${product.name} 삭제`}
-                    onClick={() => void removeProduct(product.id, product.name)}>
-                  <Trash2 size={17} aria-hidden="true" />
+                  <button
+                    className="icon-button"
+                    type="button"
+                    aria-label={`${product.name} 삭제`}
+                    onClick={() => openDeleteDialog(product.id, product.name)}
+                  >
+                    <Trash2 size={17} aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -76,13 +112,65 @@ export default function OnboardingProductsPage() {
       </section>
 
       <div className="sticky-actions">
-        <Link className="button secondary full" href="/onboarding/products/new/category" onClick={() => setProductDraft({name: '', category: null,})}>
+        <Link
+          className="button secondary full"
+          href="/onboarding/products/new/category"
+          onClick={() => setProductDraft({ name: '', category: null })}
+        >
           <Plus size={18} aria-hidden="true" /> 제품 등록하기
         </Link>
-        <Link className={products.length ? 'button full' : 'button product-skip full'} href="/onboarding/cleansing">
+        <Link
+          className={products.length ? 'button full' : 'button product-skip full'}
+          href="/onboarding/cleansing"
+        >
           {products.length ? '다음' : '제품 없이 넘어가기'}
         </Link>
       </div>
+      <dialog
+        ref={deleteDialogRef}
+        onClose={() => {
+          setPendingDelete(null);
+          setDeleteError(null);
+        }}
+        onCancel={(event) => {
+          if (deleting) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <div className="stack">
+          <div>
+            <h2>제품을 삭제할까요?</h2>
+            <p className="subcopy">
+              {pendingDelete ? `“${pendingDelete.name}” 제품을 삭제합니다.` : ''}
+            </p>
+          </div>
+
+          {deleteError ? (
+            <div className="notice">
+              <span>{deleteError}</span>
+            </div>
+          ) : null}
+
+          <button
+            className="button full"
+            type="button"
+            disabled={deleting}
+            onClick={() => void confirmDeleteProduct()}
+          >
+            {deleting ? '삭제 중...' : '삭제하기'}
+          </button>
+
+          <button
+            className="button secondary full"
+            type="button"
+            disabled={deleting}
+            onClick={closeDeleteDialog}
+          >
+            취소
+          </button>
+        </div>
+      </dialog>
     </AppShell>
   );
 }

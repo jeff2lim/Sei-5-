@@ -8,24 +8,31 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+const CONSENT_DRAFT_KEY = 'recovery-note:consent-draft';
+
 export default function LandingPage() {
   const router = useRouter();
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const [showLanding, setShowLanding] = useState<boolean | null>(null);
 
+  // 데모 전용: ?showLanding=1이면 저장된 동의 상태와 관계없이 랜딩 화면을 표시합니다.
   useEffect(() => {
     const shouldShowLanding =
       new URLSearchParams(window.location.search).get('showLanding') === '1';
-
     setShowLanding(shouldShowLanding);
   }, []);
   useEffect(() => {
-    if (!hydrated || showLanding === null ||  showLanding || !session?.consent) return;
+    if (!hydrated || showLanding === null || showLanding || !session?.consent) return;
     router.replace(session.procedure ? '/home' : '/onboarding/procedure');
   }, [hydrated, router, session, showLanding]);
 
-  if (!hydrated || showLanding === null || (!showLanding && session?.consent)) return <LoadingScreen navigation={false} />;
+  if (!hydrated || showLanding === null || (!showLanding && session?.consent))
+    return <LoadingScreen navigation={false} />;
+
+  function handleStart() {
+    window.sessionStorage.removeItem(CONSENT_DRAFT_KEY);
+  }
 
   return (
     <AppShell navigation={false}>
@@ -44,11 +51,11 @@ export default function LandingPage() {
         <div className="notice">
           <ShieldCheck aria-hidden="true" size={20} />
           <span>
-            이 앱은 진단이나 치료를 제공하지 않으며 의료진의 판단을 대신하지 않습니다. 현재
-            룰팩은 내부 검증용입니다.
+            이 앱은 진단이나 치료를 제공하지 않으며 의료진의 판단을 대신하지 않습니다. 현재 룰팩은
+            내부 검증용입니다.
           </span>
         </div>
-        <Link className="button full" href="/consent">
+        <Link className="button full" href="/consent" onClick={handleStart}>
           시작하기 <ArrowRight size={18} aria-hidden="true" />
         </Link>
       </section>

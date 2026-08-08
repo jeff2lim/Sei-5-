@@ -6,12 +6,11 @@ import { useRecoveryStore } from '@/store/recovery-store';
 import { CalendarPlus, ChevronLeft, ChevronRight, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
-
+import { Suspense, useEffect, useRef, useState } from 'react';
 
 const SHOW_NEXT_PROCEDURE = true;
 
-export default function RecordsPage() {
+function RecordsPageContent() {
   const searchParams = useSearchParams();
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
@@ -22,10 +21,7 @@ export default function RecordsPage() {
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
   const scheduleDetailDialogRef = useRef<HTMLDialogElement>(null);
-  const procedureTypeLabel =
-    session?.procedure?.procedureType === 'picotoning'
-      ? '피코토닝'
-      : '-';
+  const procedureTypeLabel = session?.procedure?.procedureType === 'picotoning' ? '피코토닝' : '-';
   const [nextDate, setNextDate] = useState(session?.profile.nextProcedureAt ?? '');
   useEffect(() => {
     if (!hydrated) return;
@@ -37,15 +33,12 @@ export default function RecordsPage() {
   const now = new Date();
   const year = visibleMonth.getFullYear();
   const month = visibleMonth.getMonth();
-  const isCurrentMonth =
-    year === now.getFullYear() &&
-    month === now.getMonth();
+  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
   const todayDay = isCurrentMonth ? now.getDate() : null;
   const dayCount = new Date(year, month + 1, 0).getDate();
   const firstDayOffset = new Date(year, month, 1).getDay();
   const calendarCellCount = 42;
-  const trailingBlankCount =
-    calendarCellCount - firstDayOffset - dayCount;
+  const trailingBlankCount = calendarCellCount - firstDayOffset - dayCount;
 
   const checkedDays = new Set(
     (session?.checkIns ?? [])
@@ -69,12 +62,6 @@ export default function RecordsPage() {
   async function deleteNextProcedure() {
     if (!session?.profile.nextProcedureAt) return;
 
-    const confirmed = window.confirm(
-      '등록한 다음 시술 일정을 삭제할까요?',
-    );
-
-    if (!confirmed) return;
-
     await saveProfile({
       ...session.profile,
       nextProcedureAt: undefined,
@@ -94,25 +81,11 @@ export default function RecordsPage() {
   }
 
   function goToPreviousMonth() {
-    setVisibleMonth(
-      (current) =>
-        new Date(
-          current.getFullYear(),
-          current.getMonth() - 1,
-          1,
-        ),
-    );
+    setVisibleMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1));
   }
 
   function goToNextMonth() {
-    setVisibleMonth(
-      (current) =>
-        new Date(
-          current.getFullYear(),
-          current.getMonth() + 1,
-          1,
-        ),
-    );
+    setVisibleMonth((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1));
   }
 
   return (
@@ -165,7 +138,9 @@ export default function RecordsPage() {
               {day}
             </span>
           ))}
-          {Array.from({ length: firstDayOffset }, (_, index) => (<span key={`blank-start-${index}`} />))}
+          {Array.from({ length: firstDayOffset }, (_, index) => (
+            <span key={`blank-start-${index}`} />
+          ))}
           {Array.from({ length: dayCount }, (_, index) => index + 1).map((day) => {
             const isProcedureDay = day === procedureDay;
             const isCheckedDay = checkedDays.has(day);
@@ -182,12 +157,10 @@ export default function RecordsPage() {
             return (
               <span
                 key={day}
-                className={[
-                    isToday ? 'today' : '',
-                    isNextProcedureDay ? 'next-procedure' : '',
-                  ]
-                  .filter(Boolean)
-                  .join(' ') || undefined
+                className={
+                  [isToday ? 'today' : '', isNextProcedureDay ? 'next-procedure' : '']
+                    .filter(Boolean)
+                    .join(' ') || undefined
                 }
 
                 onClick={
@@ -198,11 +171,11 @@ export default function RecordsPage() {
                 onKeyDown={
                   isNextProcedureDay
                     ? (event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        scheduleDetailDialogRef.current?.showModal();
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          scheduleDetailDialogRef.current?.showModal();
+                        }
                       }
-                    }
                     : undefined
                 }
                 role={isNextProcedureDay ? 'button' : undefined}
@@ -210,17 +183,14 @@ export default function RecordsPage() {
 
                 aria-label={`${month + 1}월 ${day}일${
                   descriptions.length ? `, ${descriptions.join(', ')}` : ''
-                  }`}>
+                }`}
+              >
                 <span className="calendar-day-number">{day}</span>
 
                 <span className="calendar-dots" aria-hidden="true">
-                  {isProcedureDay ? (
-                   <i className="calendar-dot procedure-dot" />
-                   ) : null}
+                  {isProcedureDay ? <i className="calendar-dot procedure-dot" /> : null}
 
-                  {isCheckedDay ? (
-                    <i className="calendar-dot check-dot" />
-                   ) : null}
+                  {isCheckedDay ? <i className="calendar-dot check-dot" /> : null}
                 </span>
               </span>
             );
@@ -256,7 +226,11 @@ export default function RecordsPage() {
         {session?.checkIns.length ? (
           <div className="card">
             {[...session.checkIns].reverse().map((checkIn) => (
-              <Link className="list-row" href="/check-in/result" key={checkIn.id}>
+              <Link
+                className="list-row"
+                href={`/check-in/result?id=${checkIn.id}`}
+                key={checkIn.id}
+              >
                 <span className="list-row-main">
                   <strong>
                     {new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium' }).format(
@@ -335,11 +309,7 @@ export default function RecordsPage() {
       >
         <div className="card stack">
           <div className="list-row" style={{ paddingTop: 0 }}>
-            <h2
-              id="schedule-detail-title"
-              className="section-title"
-              style={{ margin: 0 }}
-            >
+            <h2 id="schedule-detail-title" className="section-title" style={{ margin: 0 }}>
               다음 시술 일정
             </h2>
 
@@ -354,16 +324,12 @@ export default function RecordsPage() {
           </div>
 
           <div className="stack" style={{ gap: 6 }}>
-            <span style={{ color: 'var(--ink-soft)', fontSize: 13 }}>
-              시술 종류
-            </span>
+            <span style={{ color: 'var(--ink-soft)', fontSize: 13 }}>시술 종류</span>
             <strong>{procedureTypeLabel}</strong>
           </div>
 
           <div className="stack" style={{ gap: 6 }}>
-            <span style={{ color: 'var(--ink-soft)', fontSize: 13 }}>
-              예정 날짜
-            </span>
+            <span style={{ color: 'var(--ink-soft)', fontSize: 13 }}>예정 날짜</span>
             <strong>{session?.profile.nextProcedureAt}</strong>
           </div>
 
@@ -378,5 +344,13 @@ export default function RecordsPage() {
         </div>
       </dialog>
     </AppShell>
+  );
+}
+
+export default function RecordsPage() {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <RecordsPageContent />
+    </Suspense>
   );
 }
