@@ -10,7 +10,7 @@ import { getProcedureDay } from '@/domain/procedure';
 import { evaluateProduct } from '@/rules/engine/evaluate';
 import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
 import { useRecoveryStore } from '@/store/recovery-store';
-import { Info, PackagePlus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info, PackagePlus } from 'lucide-react';
 import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
 import { useEffect } from 'react';
@@ -33,10 +33,23 @@ const content = {
   },
 } satisfies Record<ProductCategory, { title: string; headline: string; guidance: string }>;
 
+const guideOrder: ProductCategory[] = [
+  'cleansing',
+  'skincare',
+  'outing',
+];
+
 export default function GuidePage() {
   const params = useParams<{ category: string }>();
   const category = params.category as ProductCategory;
   if (!(category in content)) notFound();
+  const currentIndex = guideOrder.indexOf(category);
+  const previousCategory =
+    currentIndex > 0 ? guideOrder[currentIndex - 1] : null;
+  const nextCategory =
+    currentIndex < guideOrder.length - 1
+      ? guideOrder[currentIndex + 1]
+      : null;
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const day = session?.procedure ? getProcedureDay(session.procedure.performedAt, new Date()) : 0;
@@ -55,6 +68,50 @@ export default function GuidePage() {
   return (
     <AppShell>
       <Topbar title={content[category].title} closeHref="/home" />
+
+      <nav className="guide-pager" aria-label="행동안내 이동">
+        {previousCategory ? (
+        <Link
+          className="icon-button"
+          href={`/guide/${previousCategory}`}
+          aria-label={`${content[previousCategory].title}으로 이동`}
+        >
+          <ChevronLeft size={20} aria-hidden="true" />
+        </Link>
+        ) : (
+          <span
+            className="guide-pager-disabled"
+            aria-hidden="true"
+          >
+            <ChevronLeft size={20} />
+          </span>
+        )}
+
+          <div className="guide-pager-label">
+            <strong>{content[category].title}</strong>
+            <span>
+              {currentIndex + 1} / {guideOrder.length}
+            </span>
+          </div>
+
+          {nextCategory ? (
+            <Link
+              className="icon-button"
+              href={`/guide/${nextCategory}`}
+              aria-label={`${content[nextCategory].title}으로 이동`}
+            >
+              <ChevronRight size={20} aria-hidden="true" />
+            </Link>
+          ) : (
+            <span
+              className="guide-pager-disabled"
+              aria-hidden="true"
+            >
+              <ChevronRight size={20} />
+            </span>
+          )}
+      </nav>
+
       <div className="verdict-panel unknown">
         <span className="badge">D+{day} 일반 안내</span>
         <h2>{content[category].headline}</h2>
@@ -94,6 +151,22 @@ export default function GuidePage() {
         <Info size={18} aria-hidden="true" />
         <span>판정 정보가 없는 제품은 안전하다는 뜻이 아니라, 현재 룰이 연결되지 않은 상태입니다.</span>
       </div>
+
+      <div
+        className="guide-pager-dots"
+        aria-label={`${currentIndex + 1} / ${guideOrder.length} 단계`}
+      >
+        {guideOrder.map((item, index) => (
+        <Link
+          key={item}
+          href={`/guide/${item}`}
+          className={index === currentIndex ? 'active' : undefined}
+          aria-label={`${content[item].title}으로 이동`}
+          aria-current={index === currentIndex ? 'page' : undefined}
+        />
+        ))}
+      </div>
+
     </AppShell>
   );
 }

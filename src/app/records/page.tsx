@@ -3,22 +3,43 @@
 import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
 import { useRecoveryStore } from '@/store/recovery-store';
-import { CalendarPlus, ChevronRight, X } from 'lucide-react';
+import { CalendarPlus, ChevronLeft, ChevronRight, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useRef, useState } from 'react';
 
-export default function RecordsPage() {
+const SHOW_NEXT_PROCEDURE = true;
+
+function RecordsPageContent() {
+  const searchParams = useSearchParams();
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const saveProfile = useRecoveryStore((state) => state.saveProfile);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [visibleMonth, setVisibleMonth] = useState(() => {
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth(), 1);
+  });
+  const scheduleDetailDialogRef = useRef<HTMLDialogElement>(null);
+  const procedureTypeLabel = session?.procedure?.procedureType === 'picotoning' ? '피코토닝' : '-';
   const [nextDate, setNextDate] = useState(session?.profile.nextProcedureAt ?? '');
+  useEffect(() => {
+    if (!hydrated) return;
+    if (searchParams.get('addSchedule') === '1') {
+      dialogRef.current?.showModal();
+    }
+  }, [hydrated, searchParams]);
   if (!hydrated) return <LoadingScreen />;
-
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  const year = visibleMonth.getFullYear();
+  const month = visibleMonth.getMonth();
+  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+  const todayDay = isCurrentMonth ? now.getDate() : null;
   const dayCount = new Date(year, month + 1, 0).getDate();
+  const firstDayOffset = new Date(year, month, 1).getDay();
+  const calendarCellCount = 42;
+  const trailingBlankCount = calendarCellCount - firstDayOffset - dayCount;
+
   const checkedDays = new Set(
     (session?.checkIns ?? [])
       .filter((item) => {
@@ -27,12 +48,28 @@ export default function RecordsPage() {
       })
       .map((item) => new Date(item.checkedAt).getDate()),
   );
-  const procedureDay = session?.procedure ? Number(session.procedure.performedAt.slice(8, 10)) : null;
+  const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+  const procedureDay =
+    session?.procedure?.performedAt.slice(0, 7) === monthKey
+      ? Number(session.procedure.performedAt.slice(8, 10))
+      : null;
   const nextProcedureDay =
-    session?.profile.nextProcedureAt?.slice(0, 7) ===
-    `${year}-${String(month + 1).padStart(2, '0')}`
+    session?.profile.nextProcedureAt?.slice(0, 7) === monthKey
       ? Number(session.profile.nextProcedureAt.slice(8, 10))
       : null;
+
+  async function deleteNextProcedure() {
+    if (!session?.profile.nextProcedureAt) return;
+
+    await saveProfile({
+      ...session.profile,
+      nextProcedureAt: undefined,
+    });
+
+    setNextDate('');
+    scheduleDetailDialogRef.current?.close();
+  }
 
   async function saveNextDate(event: React.FormEvent) {
     event.preventDefault();
@@ -41,6 +78,14 @@ export default function RecordsPage() {
       nextProcedureAt: nextDate || undefined,
     });
     dialogRef.current?.close();
+  }
+
+  function goToPreviousMonth() {
+    setVisibleMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1));
+  }
+
+  function goToNextMonth() {
+    setVisibleMonth((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1));
   }
 
   return (
@@ -53,9 +98,7 @@ export default function RecordsPage() {
 
       <section className="section card">
         <div className="list-row" style={{ paddingTop: 0 }}>
-          <strong>
-            {year}년 {month + 1}월
-          </strong>
+          <strong>달력</strong>
           <button
             className="button secondary"
             type="button"
@@ -64,38 +107,117 @@ export default function RecordsPage() {
             <CalendarPlus size={17} aria-hidden="true" /> 일정 추가
           </button>
         </div>
+
+        <div className="calendar-month-nav">
+          <button
+            className="icon-button"
+            type="button"
+            aria-label="이전 달"
+            onClick={goToPreviousMonth}
+          >
+            <ChevronLeft size={20} aria-hidden="true" />
+          </button>
+
+          <strong aria-live="polite">
+            {year}년 {month + 1}월
+          </strong>
+
+          <button
+            className="icon-button"
+            type="button"
+            aria-label="다음 달"
+            onClick={goToNextMonth}
+          >
+            <ChevronRight size={20} aria-hidden="true" />
+          </button>
+        </div>
+
         <div className="calendar" aria-label={`${year}년 ${month + 1}월 달력`}>
           {'일월화수목금토'.split('').map((day) => (
             <span key={day} style={{ color: 'var(--ink-soft)', fontWeight: 700 }}>
               {day}
             </span>
           ))}
-          {Array.from({ length: new Date(year, month, 1).getDay() }, (_, index) => (
-            <span key={`blank-${index}`} />
+          {Array.from({ length: firstDayOffset }, (_, index) => (
+            <span key={`blank-start-${index}`} />
           ))}
-          {Array.from({ length: dayCount }, (_, index) => index + 1).map((day) => (
-            <span
-              key={day}
-              className={
-                day === procedureDay || day === nextProcedureDay
-                  ? 'procedure'
-                  : checkedDays.has(day)
-                    ? 'checked'
+          {Array.from({ length: dayCount }, (_, index) => index + 1).map((day) => {
+            const isProcedureDay = day === procedureDay;
+            const isCheckedDay = checkedDays.has(day);
+            const isNextProcedureDay = SHOW_NEXT_PROCEDURE && day === nextProcedureDay;
+            const isToday = day === todayDay;
+
+            const descriptions: string[] = [];
+
+            if (isToday) descriptions.push('오늘');
+            if (isProcedureDay) descriptions.push('시술일');
+            if (isCheckedDay) descriptions.push('피부 체크한 날');
+            if (isNextProcedureDay) descriptions.push('다음 시술 예정');
+
+            return (
+              <span
+                key={day}
+                className={
+                  [isToday ? 'today' : '', isNextProcedureDay ? 'next-procedure' : '']
+                    .filter(Boolean)
+                    .join(' ') || undefined
+                }
+
+                onClick={
+                  isNextProcedureDay
+                    ? () => scheduleDetailDialogRef.current?.showModal()
                     : undefined
-              }
-              aria-label={`${month + 1}월 ${day}일${
-                day === procedureDay
-                  ? ', 시술일'
-                  : day === nextProcedureDay
-                    ? ', 다음 시술 예정'
-                    : checkedDays.has(day)
-                      ? ', 체크 완료'
-                      : ''
-              }`}
-            >
-              {day}
-            </span>
+                }
+                onKeyDown={
+                  isNextProcedureDay
+                    ? (event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          scheduleDetailDialogRef.current?.showModal();
+                        }
+                      }
+                    : undefined
+                }
+                role={isNextProcedureDay ? 'button' : undefined}
+                tabIndex={isNextProcedureDay ? 0 : undefined}
+
+                aria-label={`${month + 1}월 ${day}일${
+                  descriptions.length ? `, ${descriptions.join(', ')}` : ''
+                }`}
+              >
+                <span className="calendar-day-number">{day}</span>
+
+                <span className="calendar-dots" aria-hidden="true">
+                  {isProcedureDay ? <i className="calendar-dot procedure-dot" /> : null}
+
+                  {isCheckedDay ? <i className="calendar-dot check-dot" /> : null}
+                </span>
+              </span>
+            );
+          })}
+          {Array.from({ length: trailingBlankCount }, (_, index) => (
+            <span key={`blank-end-${index}`} />
           ))}
+        </div>
+        <div className="calendar-legend" aria-label="달력 표시 안내">
+          <span>
+            <i className="calendar-dot procedure-dot" aria-hidden="true" />
+            시술일
+          </span>
+          <span>
+            <i className="calendar-dot check-dot" aria-hidden="true" />
+            피부 체크한 날
+          </span>
+          <span>
+            <i className="calendar-today-marker" aria-hidden="true" />
+            오늘
+          </span>
+          {SHOW_NEXT_PROCEDURE ? (
+            <span>
+              <i className="next-procedure-marker" aria-hidden="true" />
+              다음 시술 예정
+            </span>
+          ) : null}
         </div>
       </section>
 
@@ -104,7 +226,11 @@ export default function RecordsPage() {
         {session?.checkIns.length ? (
           <div className="card">
             {[...session.checkIns].reverse().map((checkIn) => (
-              <Link className="list-row" href="/check-in/result" key={checkIn.id}>
+              <Link
+                className="list-row"
+                href={`/check-in/result?id=${checkIn.id}`}
+                key={checkIn.id}
+              >
                 <span className="list-row-main">
                   <strong>
                     {new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium' }).format(
@@ -170,6 +296,61 @@ export default function RecordsPage() {
           </button>
         </form>
       </dialog>
+      <dialog
+        ref={scheduleDetailDialogRef}
+        aria-labelledby="schedule-detail-title"
+        style={{
+          width: 'min(390px, calc(100% - 32px))',
+          padding: 0,
+          border: 0,
+          borderRadius: 20,
+          boxShadow: 'var(--shadow)',
+        }}
+      >
+        <div className="card stack">
+          <div className="list-row" style={{ paddingTop: 0 }}>
+            <h2 id="schedule-detail-title" className="section-title" style={{ margin: 0 }}>
+              다음 시술 일정
+            </h2>
+
+            <button
+              className="icon-button"
+              type="button"
+              aria-label="닫기"
+              onClick={() => scheduleDetailDialogRef.current?.close()}
+            >
+              <X aria-hidden="true" />
+            </button>
+          </div>
+
+          <div className="stack" style={{ gap: 6 }}>
+            <span style={{ color: 'var(--ink-soft)', fontSize: 13 }}>시술 종류</span>
+            <strong>{procedureTypeLabel}</strong>
+          </div>
+
+          <div className="stack" style={{ gap: 6 }}>
+            <span style={{ color: 'var(--ink-soft)', fontSize: 13 }}>예정 날짜</span>
+            <strong>{session?.profile.nextProcedureAt}</strong>
+          </div>
+
+          <button
+            className="button danger full"
+            type="button"
+            onClick={() => void deleteNextProcedure()}
+          >
+            <Trash2 size={18} aria-hidden="true" />
+            삭제하기
+          </button>
+        </div>
+      </dialog>
     </AppShell>
+  );
+}
+
+export default function RecordsPage() {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <RecordsPageContent />
+    </Suspense>
   );
 }

@@ -1,13 +1,14 @@
 'use client';
 
 import { AppShell } from '@/components/app-shell/app-shell';
+import { LoadingScreen } from '@/components/common/loading-screen';
 import { Topbar } from '@/components/common/topbar';
 import type { ConsentState } from '@/domain/session';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { ChevronRight, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type ConsentKey = 'terms' | 'privacy' | 'healthData' | 'photo' | 'marketing';
 
@@ -52,16 +53,75 @@ const consentItems: Array<{
   },
 ];
 
+const CONSENT_DRAFT_KEY = 'recovery-note:consent-draft';
+
+const emptyConsentValues: Record<ConsentKey, boolean> = {
+  terms: false,
+  privacy: false,
+  healthData: false,
+  photo: false,
+  marketing: false,
+};
+
 export default function ConsentPage() {
   const router = useRouter();
+  const hydrated = useRecoveryStore((state) => state.hydrated);
+  const session = useRecoveryStore((state) => state.session);
   const saveConsent = useRecoveryStore((state) => state.saveConsent);
-  const [values, setValues] = useState<Record<ConsentKey, boolean>>({
-    terms: false,
-    privacy: false,
-    healthData: false,
-    photo: false,
-    marketing: false,
-  });
+
+  const [consentMode, setConsentMode] = useState<'onboarding' | 'edit' | null>(null);
+  const isEditing = consentMode === 'edit';
+  const [values, setValues] = useState<Record<ConsentKey, boolean>>(emptyConsentValues);
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  useEffect(() => {
+    if (!hydrated || draftLoaded) return;
+
+    const mode =
+      new URLSearchParams(window.location.search).get('mode') === 'edit' ? 'edit' : 'onboarding';
+
+    setConsentMode(mode);
+
+    if (mode === 'onboarding') {
+      const raw = window.sessionStorage.getItem(CONSENT_DRAFT_KEY);
+
+      if (raw) {
+        try {
+          const saved = JSON.parse(raw) as Partial<Record<ConsentKey, unknown>>;
+
+          setValues({
+            terms: saved.terms === true,
+            privacy: saved.privacy === true,
+            healthData: saved.healthData === true,
+            photo: saved.photo === true,
+            marketing: saved.marketing === true,
+          });
+          setDraftLoaded(true);
+          return;
+        } catch {
+          window.sessionStorage.removeItem(CONSENT_DRAFT_KEY);
+        }
+      }
+    }
+    if (session?.consent) {
+      setValues({
+        terms: session.consent.terms,
+        privacy: session.consent.privacy,
+        healthData: session.consent.healthData,
+        photo: session.consent.photo,
+        marketing: session.consent.marketing,
+      });
+    } else {
+      setValues(emptyConsentValues);
+    }
+
+    setDraftLoaded(true);
+  }, [draftLoaded, hydrated, session?.consent]);
+
+  useEffect(() => {
+    if (!draftLoaded || consentMode !== 'onboarding') return;
+
+    window.sessionStorage.setItem(CONSENT_DRAFT_KEY, JSON.stringify(values));
+  }, [consentMode, draftLoaded, values]);
   const requiredComplete = values.terms && values.privacy && values.healthData;
 
   function toggleAll() {
@@ -69,16 +129,29 @@ export default function ConsentPage() {
     setValues({ terms: next, privacy: next, healthData: next, photo: next, marketing: next });
   }
 
+  function discardConsentDraft() {
+    window.sessionStorage.removeItem(CONSENT_DRAFT_KEY);
+  }
+
   async function submit() {
     if (!requiredComplete) return;
     const consent: ConsentState = { ...values, updatedAt: new Date().toISOString() };
     await saveConsent(consent);
-    router.push('/onboarding/procedure');
+    window.sessionStorage.removeItem(CONSENT_DRAFT_KEY);
+    router.push(isEditing ? '/profile' : '/onboarding/procedure');
+  }
+
+  if (!hydrated || !draftLoaded || consentMode === null) {
+    return <LoadingScreen navigation={false} />;
   }
 
   return (
     <AppShell navigation={false}>
-      <Topbar title="동의 안내" closeHref="/" />
+      <Topbar
+        title={isEditing ? '동의 내역' : '동의 안내'}
+        closeHref={isEditing ? '/profile' : '/?showLanding=1'}
+        onClose={discardConsentDraft}
+      />
       <p className="eyebrow">Before we start</p>
       <h1 className="headline">필요한 동의를 하나씩 확인해 주세요.</h1>
       <p className="subcopy">선택 동의는 거부해도 핵심 기능을 사용할 수 있어요.</p>
@@ -111,7 +184,11 @@ export default function ConsentPage() {
                 <span>{item.description}</span>
               </span>
               {item.href ? (
-                <Link className="icon-button" href={item.href} aria-label={`${item.title} 전문 보기`}>
+                <Link
+                  className="icon-button"
+                  href={item.href}
+                  aria-label={`${item.title} 전문 보기`}
+                >
                   <ChevronRight size={18} aria-hidden="true" />
                 </Link>
               ) : null}
@@ -122,12 +199,14 @@ export default function ConsentPage() {
 
       <div className="notice section">
         <ShieldCheck size={19} aria-hidden="true" />
-        <span>동의를 거부하면 해당 선택 기능만 제한됩니다. 동의 내역은 마이에서 확인할 수 있어요.</span>
+        <span>
+          동의를 거부하면 해당 선택 기능만 제한됩니다. 동의 내역은 마이에서 확인할 수 있어요.
+        </span>
       </div>
 
       <div className="sticky-actions">
         <button className="button full" type="button" disabled={!requiredComplete} onClick={submit}>
-          동의하고 계속
+          {isEditing ? '동의 내역 저장' : '동의하고 계속'}
         </button>
       </div>
     </AppShell>
