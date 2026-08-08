@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@hookform/resolvers':
-        specifier: ^5.2.2
-        version: 5.5.7(react-hook-form@7.83.0(react@19.2.8))(zod@4.4.3)
+        specifier: ^5.7.1
+        version: 5.7.1(react-hook-form@7.84.0(react@19.2.8))(zod@4.4.3)
       lucide-react:
-        specifier: ^0.548.0
-        version: 0.548.0(react@19.2.8)
+        specifier: ^0.577.0
+        version: 0.577.0(react@19.2.8)
       next:
         specifier: ^15.5.0
         version: 15.5.22(@babel/core@7.29.7)(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -24,8 +24,8 @@ importers:
         specifier: ^19.1.1
         version: 19.2.8(react@19.2.8)
       react-hook-form:
-        specifier: ^7.65.0
-        version: 7.83.0(react@19.2.8)
+        specifier: ^7.84.0
+        version: 7.84.0(react@19.2.8)
       zod:
         specifier: ^4.1.12
         version: 4.4.3
@@ -434,18 +434,18 @@ packages:
       '@noble/hashes':
         optional: true
 
-  '@hookform/resolvers@5.5.7':
-    resolution: {integrity: sha512-CyPCYV8/KlXfEXLWj8HHHhVsR/IZ6Ckm3b/a4fWtO/lRnRK1huqncb8LlAWrmpPRsse5glF5aVuDRMHEr3UGag==}
+  '@hookform/resolvers@5.7.1':
+    resolution: {integrity: sha512-8wS/P4UDr5sQDe4nFaV51TVyfDPrWgNIXweqG0Bs9Z5LSuzKLb+RQNPvkN2oHM5SRrJyWrVH/F+LOUcFjUyvwQ==}
     peerDependencies:
       '@sinclair/typebox': '>=0.25.24'
       '@standard-schema/spec': ^1.0.0
       '@typeschema/main': '>=0.13.7'
-      '@vinejs/vine': ^2.0.0 || ^3.0.0
+      '@vinejs/vine': ^2.0.0 || ^3.0.0 || ^4.0.0
       ajv: ^8.12.0
       ajv-errors: ^3.0.0
       ajv-formats: ^2.1.1
       arktype: ^2.0.0
-      ata-validator: ^0.7.0
+      ata-validator: ^1.2.0
       class-transformer: '>=0.4.0'
       class-validator: '>=0.12.0'
       computed-types: ^1.0.0
@@ -2065,8 +2065,8 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-react@0.548.0:
-    resolution: {integrity: sha512-63b16z63jM9yc1MwxajHeuu0FRZFsDtljtDjYm26Kd86UQ5HQzu9ksEtoUUw4RBuewodw/tGFmvipePvRsKeDA==}
+  lucide-react@0.577.0:
+    resolution: {integrity: sha512-4LjoFv2eEPwYDPg/CUdBJQSDfPyzXCRrVW1X7jrx/trgxnxkHFjnVZINbzvzxjN70dxychOfg+FTYwBiS3pQ5A==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -2290,8 +2290,8 @@ packages:
     peerDependencies:
       react: ^19.2.8
 
-  react-hook-form@7.83.0:
-    resolution: {integrity: sha512-AXt8cMCmx5a7u4uvpb2uRFVrWQhllI4pV+LSykxIac/hjt44TnQkmX9BKuQi2i+LDC62esmiLpilkav+kjVf/A==}
+  react-hook-form@7.84.0:
+    resolution: {integrity: sha512-+hWvQP6GLco56mDwrbU4XnHix8t1z90ltZsDIrREl+jnQFQxYLX8oAzqe/Xn8nHpmoXTY5M6oEXrAhbP1qevNQ==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
@@ -3081,10 +3081,10 @@ snapshots:
 
   '@exodus/bytes@1.15.1': {}
 
-  '@hookform/resolvers@5.5.7(react-hook-form@7.83.0(react@19.2.8))(zod@4.4.3)':
+  '@hookform/resolvers@5.7.1(react-hook-form@7.84.0(react@19.2.8))(zod@4.4.3)':
     dependencies:
       '@standard-schema/utils': 0.3.0
-      react-hook-form: 7.83.0(react@19.2.8)
+      react-hook-form: 7.84.0(react@19.2.8)
     optionalDependencies:
       zod: 4.4.3
 
@@ -4702,7 +4702,7 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-react@0.548.0(react@19.2.8):
+  lucide-react@0.577.0(react@19.2.8):
     dependencies:
       react: 19.2.8
 
@@ -4915,7 +4915,7 @@ snapshots:
       react: 19.2.8
       scheduler: 0.27.0
 
-  react-hook-form@7.83.0(react@19.2.8):
+  react-hook-form@7.84.0(react@19.2.8):
     dependencies:
       react: 19.2.8
 
