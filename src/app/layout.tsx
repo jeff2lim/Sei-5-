@@ -6,22 +6,22 @@ import { StoreHydrator } from '@/components/common/store-hydrator';
 const bodyFont = localFont({
   src: [
     {
-      path: '../fonts/IBMPlexSansKR-Regular.ttf',
+      path: '../fonts/IBMPlexSansKR-Regular.woff2',
       weight: '400',
       style: 'normal',
     },
     {
-      path: '../fonts/IBMPlexSansKR-Medium.ttf',
+      path: '../fonts/IBMPlexSansKR-Medium.woff2',
       weight: '500',
       style: 'normal',
     },
     {
-      path: '../fonts/IBMPlexSansKR-SemiBold.ttf',
+      path: '../fonts/IBMPlexSansKR-SemiBold.woff2',
       weight: '600',
       style: 'normal',
     },
     {
-      path: '../fonts/IBMPlexSansKR-Bold.ttf',
+      path: '../fonts/IBMPlexSansKR-Bold.woff2',
       weight: '700',
       style: 'normal',
     },
@@ -31,7 +31,7 @@ const bodyFont = localFont({
 });
 
 const titleFont = localFont({
-  src: '../fonts/GowunDodum-Regular.ttf',
+  src: '../fonts/GowunDodum-Regular.woff2',
   weight: '400',
   style: 'normal',
   variable: '--font-title',
@@ -41,17 +41,17 @@ const titleFont = localFont({
 const monoFont = localFont({
   src: [
     {
-      path: '../fonts/IBMPlexMono-Regular.ttf',
+      path: '../fonts/IBMPlexMono-Regular.woff2',
       weight: '400',
       style: 'normal',
     },
     {
-      path: '../fonts/IBMPlexMono-Medium.ttf',
+      path: '../fonts/IBMPlexMono-Medium.woff2',
       weight: '500',
       style: 'normal',
     },
     {
-      path: '../fonts/IBMPlexMono-SemiBold.ttf',
+      path: '../fonts/IBMPlexMono-SemiBold.woff2',
       weight: '600',
       style: 'normal',
     },

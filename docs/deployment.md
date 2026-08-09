@@ -3,10 +3,20 @@
 ## Vercel
 
 1. GitHub 저장소를 Vercel 프로젝트에 연결합니다.
-2. Framework Preset은 Next.js, Install Command는 `pnpm install --frozen-lockfile`을 사용합니다.
+2. Framework Preset은 Next.js를 사용하고, Install Command와 Output Directory는 덮어쓰지 않습니다. Vercel이 `pnpm-lock.yaml`과 `packageManager`를 자동 감지하게 둡니다.
 3. `.env.example`의 네 환경 변수를 Preview와 Production에 설정합니다.
 4. `main`을 Production Branch로 지정하고 PR Preview를 활성화합니다.
 5. 배포 전 GitHub branch protection에서 CI의 `validate` job을 필수로 설정합니다.
+
+### Vercel 필수 설정
+
+- Node.js Version: `22.x`
+- `NEXT_PUBLIC_DATA_MODE=local`
+- `NEXT_PUBLIC_RULEPACK_SOURCE=bundled`
+- `NEXT_PUBLIC_ENABLE_COMMERCE=true` 또는 `false`
+- `NEXT_PUBLIC_ENABLE_PHOTO=false`
+
+환경변수는 Preview와 Production에 각각 설정합니다. 지원되지 않는 값은 `pnpm deploy:validate`가 빌드 전에 명확한 오류로 차단합니다.
 
 현재 초기 MVP는 Vercel Hobby 범위에서 실행 가능한 정적·클라이언트 중심 구조입니다. 수익 또는 상업 트래픽이 시작되거나 Hobby 정책 범위를 벗어나면 적합한 유료 플랜으로 전환해야 합니다. 플랜 조건은 배포 시점의 Vercel 공식 정책을 다시 확인하세요.
 

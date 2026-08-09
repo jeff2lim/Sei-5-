@@ -2,18 +2,20 @@
   "name": "recovery-note-b2c-mvp",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@11.9.0",
+  "packageManager": "pnpm@10.34.5",
   "engines": {
-    "node": ">=22.13.0",
-    "pnpm": ">=11.9.0"
+    "node": "22.x",
+    "pnpm": "10.x"
   },
   "scripts": {
     "dev": "next dev",
-    "build": "pnpm rules:validate && pnpm rules:build && next build",
+    "build": "pnpm deploy:validate && pnpm rules:validate && pnpm rules:build && next build",
+    "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "deploy:validate": "tsx scripts/validate-deployment.ts",
     "rules:validate": "tsx scripts/validate-rules.ts",
     "rules:build": "tsx scripts/build-rulepack.ts",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",

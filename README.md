@@ -6,7 +6,7 @@
 
 ## 실행
 
-Node.js 22 이상과 pnpm 11을 권장합니다.
+Node.js 22와 pnpm 10을 사용합니다. Vercel과 CI도 같은 메이저 버전으로 고정합니다.
 
 ```bash
 pnpm install
