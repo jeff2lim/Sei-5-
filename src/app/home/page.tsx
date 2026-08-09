@@ -24,6 +24,9 @@ const categories: Array<{
   { id: 'outing', label: '외출준비', description: '제형과 자외선 차단 안내', icon: ShieldCheck },
 ];
 
+/** 룰테이블 v5가 D+0~14를 커버합니다. 이후 날짜는 D+14 판정으로 고정됩니다. */
+const RECOVERY_WINDOW_DAYS = 14;
+
 function getRecoveryCompleteLabel(level: VerdictLevel) {
   switch (level) {
     case 'consult':
@@ -92,6 +95,22 @@ export default function HomePage() {
     (checkIn) => checkIn.checkedAt.slice(0, 10) === new Date().toISOString().slice(0, 10),
   );
 
+  // 회복기와 회복 완료 화면 양쪽에서 같은 진입점을 씁니다.
+  const checkInCard = (
+    <section className="section card">
+      <div className="list-row" style={{ paddingTop: 0 }}>
+        <div className="list-row-main">
+          <strong>오늘 피부 상태 체크</strong>
+          <span>{todayCheck ? '오늘 기록을 완료했어요.' : '최대 5개 항목을 직접 확인해요.'}</span>
+        </div>
+        {todayCheck ? <VerdictBadge level="go" /> : <ClipboardCheck color="var(--teal)" />}
+      </div>
+      <Link className="button full" href="/check-in" style={{ marginTop: 12 }}>
+        {todayCheck ? '다시 체크하기' : '상태 체크 시작'}
+      </Link>
+    </section>
+  );
+
   {
     /*}
   const allAttributeVerdicts = categoryVerdicts.flatMap((categoryVerdict) =>
@@ -144,13 +163,15 @@ export default function HomePage() {
 
   const unknownItems = recoveryItems.filter(({ verdict }) => verdict.level === 'unknown');
 
-  if (day !== null && day >= 7) {
+  if (day !== null && day > RECOVERY_WINDOW_DAYS) {
     return (
       <AppShell>
         <header>
           <p className="eyebrow">Picotoning · D+{day}</p>
-          <h1 className="headline">한 주의 회복을 잘 기록했어요.</h1>
-          <p className="subcopy">피코토닝 후 첫 주 회복 기간을 마쳤어요.</p>
+          <h1 className="headline">2주 회복 과정을 잘 기록했어요.</h1>
+          <p className="subcopy">
+            피코토닝 후 D+{RECOVERY_WINDOW_DAYS}까지의 회복·재개 기간을 마쳤어요.
+          </p>
         </header>
 
         <section className="section hero-card">
@@ -163,7 +184,8 @@ export default function HomePage() {
           </h2>
 
           <p className="subcopy">
-            제품별 안내는 등록한 정보와 현재 룰팩을 기준으로 계속 확인할 수 있어요.
+            아래 안내는 룰테이블의 마지막 날인 D+{RECOVERY_WINDOW_DAYS} 기준으로 계속
+            표시됩니다.
           </p>
         </section>
 
@@ -348,6 +370,8 @@ export default function HomePage() {
         </div>
         */}
 
+        {checkInCard}
+
         <section className="section stack">
           <Link className="button full" href="/records?addSchedule=1">
             다음 시술 일정 잡기
@@ -415,18 +439,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section card">
-        <div className="list-row" style={{ paddingTop: 0 }}>
-          <div className="list-row-main">
-            <strong>오늘 피부 상태 체크</strong>
-            <span>{todayCheck ? '오늘 기록을 완료했어요.' : '최대 5개 항목을 직접 확인해요.'}</span>
-          </div>
-          {todayCheck ? <VerdictBadge level="go" /> : <ClipboardCheck color="var(--teal)" />}
-        </div>
-        <Link className="button full" href="/check-in" style={{ marginTop: 12 }}>
-          {todayCheck ? '다시 체크하기' : '상태 체크 시작'}
-        </Link>
-      </section>
+      {checkInCard}
 
       <div className="notice section">
         <Info size={18} aria-hidden="true" />

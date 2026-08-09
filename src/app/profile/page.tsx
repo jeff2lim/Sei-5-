@@ -8,6 +8,7 @@ import {
   Bell,
   CalendarDays,
   ChevronRight,
+  ClipboardList,
   Download,
   FileText,
   Package,
@@ -74,10 +75,18 @@ export default function ProfilePage() {
       icon: Package,
     },
     {
-      href: '/records',
+      href: '/onboarding/procedure?mode=edit',
       label: '시술 정보',
-      value: session?.procedure?.performedAt ?? '미등록',
+      value: session?.procedure
+        ? `${session.procedure.performedAt} · 수정`
+        : '미등록 · 시술일 입력',
       icon: CalendarDays,
+    },
+    {
+      href: '/records',
+      label: '회복 기록',
+      value: `체크 ${session?.checkIns.length ?? 0}회`,
+      icon: ClipboardList,
     },
     { href: '/consent?mode=edit', label: '동의 내역', value: '확인·변경', icon: ShieldCheck },
     { href: '/legal/privacy', label: '개인정보처리방침', value: '', icon: FileText },

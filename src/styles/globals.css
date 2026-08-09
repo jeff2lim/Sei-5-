@@ -753,6 +753,15 @@ a {
   outline-offset: 2px;
 }
 
+.calendar > span.calendar-day-interactive {
+  cursor: pointer;
+}
+
+.calendar > span.calendar-day-interactive:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
 .calendar > span.today {
   color: white;
   background: var(--teal);
