@@ -1,23 +1,61 @@
 import '@/styles/globals.css';
 import type { Metadata, Viewport } from 'next';
-import { Gowun_Dodum, IBM_Plex_Mono, IBM_Plex_Sans_KR } from 'next/font/google';
+import localFont from 'next/font/local';
 import { StoreHydrator } from '@/components/common/store-hydrator';
 
-const bodyFont = IBM_Plex_Sans_KR({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+const bodyFont = localFont({
+  src: [
+    {
+      path: '../fonts/IBMPlexSansKR-Regular.ttf',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: '../fonts/IBMPlexSansKR-Medium.ttf',
+      weight: '500',
+      style: 'normal',
+    },
+    {
+      path: '../fonts/IBMPlexSansKR-SemiBold.ttf',
+      weight: '600',
+      style: 'normal',
+    },
+    {
+      path: '../fonts/IBMPlexSansKR-Bold.ttf',
+      weight: '700',
+      style: 'normal',
+    },
+  ],
   variable: '--font-body',
   display: 'swap',
 });
-const titleFont = Gowun_Dodum({
-  subsets: ['latin'],
+
+const titleFont = localFont({
+  src: '../fonts/GowunDodum-Regular.ttf',
   weight: '400',
+  style: 'normal',
   variable: '--font-title',
   display: 'swap',
 });
-const monoFont = IBM_Plex_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
+
+const monoFont = localFont({
+  src: [
+    {
+      path: '../fonts/IBMPlexMono-Regular.ttf',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: '../fonts/IBMPlexMono-Medium.ttf',
+      weight: '500',
+      style: 'normal',
+    },
+    {
+      path: '../fonts/IBMPlexMono-SemiBold.ttf',
+      weight: '600',
+      style: 'normal',
+    },
+  ],
   variable: '--font-mono',
   display: 'swap',
 });

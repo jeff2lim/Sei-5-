@@ -1,6 +1,7 @@
 'use client';
 
 import { AppShell } from '@/components/app-shell/app-shell';
+import { LoadingScreen } from '@/components/common/loading-screen';
 import { Topbar } from '@/components/common/topbar';
 import { analytics } from '@/domain/analytics';
 import { ingredientGroups, ingredientSynonyms, sunscreenTypes } from '@/ruletable/data';
@@ -35,6 +36,10 @@ export function ProductAttributesForm({ successHref }: { successHref: string }) 
       (selection.sunscreenTypeId ? 1 : 0),
     [selection],
   );
+
+  if (saving) {
+    return <LoadingScreen navigation={false} />;
+  }
 
   if (!draft.category) {
     return (
