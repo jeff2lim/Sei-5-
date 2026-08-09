@@ -168,7 +168,7 @@ const unknownItems = recoveryItems.filter(
         </section>
 
         <section className="section verdict-panel care">
-          <span className="badge care">계속 관리</span>
+          <span className="badge care">필수</span>
             <h2>☀️ 자외선 차단은 계속!</h2>
             <p>
               시술 부위는 색소침착(PIH)에 몇 주간 예민해요. 외출 시 선크림 SPF 50+는 앞으로도 꼭 발라주세요.
