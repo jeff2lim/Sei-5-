@@ -1,0 +1,651 @@
+[
+  {
+    "timeline_id": "ing.ceramide.normal",
+    "target_type": "ingredient_group",
+    "target_id": "ceramide",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [{ "from_d": 0, "to_d": 14, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "ing.hyaluronic_acid.normal",
+    "target_type": "ingredient_group",
+    "target_id": "hyaluronic_acid",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [{ "from_d": 0, "to_d": 14, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "ing.panthenol.normal",
+    "target_type": "ingredient_group",
+    "target_id": "panthenol",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [{ "from_d": 0, "to_d": 14, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "ing.cica.normal",
+    "target_type": "ingredient_group",
+    "target_id": "cica",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [{ "from_d": 0, "to_d": 14, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "ing.egf.normal",
+    "target_type": "ingredient_group",
+    "target_id": "egf",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [
+      { "from_d": 0, "to_d": 2, "verdict": "stop", "condition_text": null },
+      { "from_d": 3, "to_d": 4, "verdict": "care", "condition_text": "소량부터 시작하세요" },
+      { "from_d": 5, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "ing.pdrn.normal",
+    "target_type": "ingredient_group",
+    "target_id": "pdrn",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [
+      { "from_d": 0, "to_d": 2, "verdict": "stop", "condition_text": null },
+      { "from_d": 3, "to_d": 4, "verdict": "care", "condition_text": "소량부터 시작하세요" },
+      { "from_d": 5, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "ing.exosome.normal",
+    "target_type": "ingredient_group",
+    "target_id": "exosome",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [
+      { "from_d": 0, "to_d": 4, "verdict": "stop", "condition_text": null },
+      {
+        "from_d": 5,
+        "to_d": 6,
+        "verdict": "care",
+        "condition_text": "소량 · 무향 저자극 제품으로"
+      },
+      { "from_d": 7, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "ing.zinc.normal",
+    "target_type": "ingredient_group",
+    "target_id": "zinc",
+    "sensitivity": "normal",
+    "sensitivity_policy": "pigment_rail",
+    "phases": [
+      { "from_d": 0, "to_d": 3, "verdict": "stop", "condition_text": null },
+      { "from_d": 4, "to_d": 4, "verdict": "care", "condition_text": "소량부터 시작하세요" },
+      { "from_d": 5, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "ing.niacinamide.normal",
+    "target_type": "ingredient_group",
+    "target_id": "niacinamide",
+    "sensitivity": "normal",
+    "sensitivity_policy": "pigment_rail",
+    "phases": [
+      { "from_d": 0, "to_d": 3, "verdict": "stop", "condition_text": null },
+      { "from_d": 4, "to_d": 4, "verdict": "care", "condition_text": "소량부터 시작하세요" },
+      { "from_d": 5, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "ing.brightening_functional.normal",
+    "target_type": "ingredient_group",
+    "target_id": "brightening_functional",
+    "sensitivity": "normal",
+    "sensitivity_policy": "pigment_rail",
+    "phases": [
+      { "from_d": 0, "to_d": 5, "verdict": "stop", "condition_text": null },
+      {
+        "from_d": 6,
+        "to_d": 7,
+        "verdict": "care",
+        "condition_text": "소량부터 · 자극 느껴지면 중단"
+      },
+      { "from_d": 8, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "ing.vitamin_c.normal",
+    "target_type": "ingredient_group",
+    "target_id": "vitamin_c",
+    "sensitivity": "normal",
+    "sensitivity_policy": "pigment_rail",
+    "phases": [
+      { "from_d": 0, "to_d": 6, "verdict": "stop", "condition_text": null },
+      { "from_d": 7, "to_d": 8, "verdict": "care", "condition_text": "소량 · 저농도부터" },
+      { "from_d": 9, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "ing.acne_active.normal",
+    "target_type": "ingredient_group",
+    "target_id": "acne_active",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 6, "verdict": "stop", "condition_text": null },
+      { "from_d": 7, "to_d": 8, "verdict": "care", "condition_text": "해당 부위에만 소량" },
+      { "from_d": 9, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "ing.retinoid.normal",
+    "target_type": "ingredient_group",
+    "target_id": "retinoid",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 10, "verdict": "stop", "condition_text": null },
+      { "from_d": 11, "to_d": 13, "verdict": "care", "condition_text": "주 2회부터, 소량으로" },
+      { "from_d": 14, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "ing.exfoliating_acid.normal",
+    "target_type": "ingredient_group",
+    "target_id": "exfoliating_acid",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 11, "verdict": "stop", "condition_text": null },
+      { "from_d": 12, "to_d": 13, "verdict": "care", "condition_text": "주 1회부터" },
+      { "from_d": 14, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "ing.clinic_provided.normal",
+    "target_type": "ingredient_group",
+    "target_id": "clinic_provided",
+    "sensitivity": "normal",
+    "sensitivity_policy": null,
+    "phases": [
+      {
+        "from_d": 0,
+        "to_d": 14,
+        "verdict": "consult",
+        "condition_text": "병원에서 받은 안내를 우선해 주세요"
+      }
+    ],
+    "status": "team_provisional",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+
+  {
+    "timeline_id": "cleanse.lukewarm_water.normal",
+    "target_type": "cleansing_method",
+    "target_id": "lukewarm_water",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [
+      {
+        "from_d": 0,
+        "to_d": 0,
+        "verdict": "care",
+        "condition_text": "시술 후 몇 시간 뒤 저녁에, 물로만 가볍게"
+      },
+      { "from_d": 1, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "cleanse.mild_acidic_foam.normal",
+    "target_type": "cleansing_method",
+    "target_id": "mild_acidic_foam",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [
+      { "from_d": 0, "to_d": 0, "verdict": "stop", "condition_text": null },
+      { "from_d": 1, "to_d": 1, "verdict": "care", "condition_text": "거품만 얹고 빠르게" },
+      { "from_d": 2, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "cleanse.gel_cleanser.normal",
+    "target_type": "cleansing_method",
+    "target_id": "gel_cleanser",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [
+      { "from_d": 0, "to_d": 0, "verdict": "stop", "condition_text": null },
+      { "from_d": 1, "to_d": 1, "verdict": "care", "condition_text": "거품만 얹고 빠르게" },
+      { "from_d": 2, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "cleanse.cleansing_water.normal",
+    "target_type": "cleansing_method",
+    "target_id": "cleansing_water",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 2, "verdict": "stop", "condition_text": null },
+      {
+        "from_d": 3,
+        "to_d": 5,
+        "verdict": "care",
+        "condition_text": "화장솜으로 문지르지 말고 짧게"
+      },
+      { "from_d": 6, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "cleanse.point_remover.normal",
+    "target_type": "cleansing_method",
+    "target_id": "point_remover",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 3, "verdict": "stop", "condition_text": null },
+      { "from_d": 4, "to_d": 5, "verdict": "care", "condition_text": "필요한 부위에만 짧게" },
+      { "from_d": 6, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "cleanse.cleansing_oil.normal",
+    "target_type": "cleansing_method",
+    "target_id": "cleansing_oil",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 4, "verdict": "stop", "condition_text": null },
+      { "from_d": 5, "to_d": 6, "verdict": "care", "condition_text": "짧게 1회, 문지르지 말고" },
+      { "from_d": 7, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "needs_review",
+    "flags": ["wireframe_v20_mismatch"],
+    "evidence": { "grade": "indirect", "source_procedure": "general", "citations": [] }
+  },
+  {
+    "timeline_id": "cleanse.cleansing_balm.normal",
+    "target_type": "cleansing_method",
+    "target_id": "cleansing_balm",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 4, "verdict": "stop", "condition_text": null },
+      { "from_d": 5, "to_d": 6, "verdict": "care", "condition_text": "짧게 1회, 문지르지 말고" },
+      { "from_d": 7, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "needs_review",
+    "flags": ["wireframe_v20_mismatch"],
+    "evidence": { "grade": "indirect", "source_procedure": "general", "citations": [] }
+  },
+  {
+    "timeline_id": "cleanse.double_cleanse.normal",
+    "target_type": "cleansing_method",
+    "target_id": "double_cleanse",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 4, "verdict": "stop", "condition_text": null },
+      { "from_d": 5, "to_d": 6, "verdict": "care", "condition_text": "짧게 1회, 문지르지 말고" },
+      { "from_d": 7, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "needs_review",
+    "flags": ["wireframe_v20_mismatch"],
+    "evidence": { "grade": "indirect", "source_procedure": "general", "citations": [] }
+  },
+  {
+    "timeline_id": "cleanse.alkaline_foam.normal",
+    "target_type": "cleansing_method",
+    "target_id": "alkaline_foam",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 4, "verdict": "stop", "condition_text": null },
+      { "from_d": 5, "to_d": 6, "verdict": "care", "condition_text": "거품만 얹고 빠르게" },
+      { "from_d": 7, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "cleanse.scrub_deep.normal",
+    "target_type": "cleansing_method",
+    "target_id": "scrub_deep",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 11, "verdict": "stop", "condition_text": null },
+      { "from_d": 12, "to_d": 13, "verdict": "care", "condition_text": "약하게 1회만" },
+      { "from_d": 14, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+
+  {
+    "timeline_id": "sun.physical_cover.normal",
+    "target_type": "sunscreen_type",
+    "target_id": "physical_cover",
+    "sensitivity": "normal",
+    "sensitivity_policy": "pigment_rail",
+    "phases": [{ "from_d": 0, "to_d": 14, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "sun.serum_lotion.normal",
+    "target_type": "sunscreen_type",
+    "target_id": "serum_lotion",
+    "sensitivity": "normal",
+    "sensitivity_policy": "pigment_rail",
+    "phases": [
+      {
+        "from_d": 0,
+        "to_d": 0,
+        "verdict": "care",
+        "condition_text": "얇게 · 문지르지 말고 눌러 바르기"
+      },
+      { "from_d": 1, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "indirect", "source_procedure": "general", "citations": [] }
+  },
+  {
+    "timeline_id": "sun.regular_non_waterproof.normal",
+    "target_type": "sunscreen_type",
+    "target_id": "regular_non_waterproof",
+    "sensitivity": "normal",
+    "sensitivity_policy": "pigment_rail",
+    "phases": [
+      { "from_d": 0, "to_d": 1, "verdict": "stop", "condition_text": null },
+      {
+        "from_d": 2,
+        "to_d": 2,
+        "verdict": "care",
+        "condition_text": "얇게 · 문지르지 말고 눌러 바르기"
+      },
+      { "from_d": 3, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "indirect", "source_procedure": "general", "citations": [] }
+  },
+  {
+    "timeline_id": "sun.waterproof_stick.normal",
+    "target_type": "sunscreen_type",
+    "target_id": "waterproof_stick",
+    "sensitivity": "normal",
+    "sensitivity_policy": "pigment_rail",
+    "phases": [
+      { "from_d": 0, "to_d": 7, "verdict": "stop", "condition_text": null },
+      { "from_d": 8, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "needs_review",
+    "flags": ["wireframe_v20_mismatch", "stop_to_go_by_coupling"],
+    "evidence": { "grade": "indirect", "source_procedure": "general", "citations": [] }
+  },
+
+  {
+    "timeline_id": "makeup.tone_up.normal",
+    "target_type": "base_makeup",
+    "target_id": "tone_up",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 1, "verdict": "stop", "condition_text": null },
+      { "from_d": 2, "to_d": 4, "verdict": "care", "condition_text": "얇게 한 겹만" },
+      { "from_d": 5, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "makeup.powder.normal",
+    "target_type": "base_makeup",
+    "target_id": "powder",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 2, "verdict": "stop", "condition_text": null },
+      { "from_d": 3, "to_d": 4, "verdict": "care", "condition_text": "얇게 한 겹만" },
+      { "from_d": 5, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "makeup.bb_cc.normal",
+    "target_type": "base_makeup",
+    "target_id": "bb_cc",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 3, "verdict": "stop", "condition_text": null },
+      { "from_d": 4, "to_d": 5, "verdict": "care", "condition_text": "얇게 한 겹만" },
+      { "from_d": 6, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "makeup.primer.normal",
+    "target_type": "base_makeup",
+    "target_id": "primer",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 4, "verdict": "stop", "condition_text": null },
+      { "from_d": 5, "to_d": 6, "verdict": "care", "condition_text": "필요한 부위에만 얇게" },
+      { "from_d": 7, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "needs_review",
+    "flags": ["wireframe_v20_mismatch"],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "makeup.cushion.normal",
+    "target_type": "base_makeup",
+    "target_id": "cushion",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 4, "verdict": "stop", "condition_text": null },
+      { "from_d": 5, "to_d": 6, "verdict": "care", "condition_text": "얇게 한 겹만" },
+      { "from_d": 7, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "needs_review",
+    "flags": ["wireframe_v20_mismatch"],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "makeup.foundation.normal",
+    "target_type": "base_makeup",
+    "target_id": "foundation",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 4, "verdict": "stop", "condition_text": null },
+      { "from_d": 5, "to_d": 6, "verdict": "care", "condition_text": "얇게 한 겹만" },
+      { "from_d": 7, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "needs_review",
+    "flags": ["wireframe_v20_mismatch"],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "makeup.concealer.normal",
+    "target_type": "base_makeup",
+    "target_id": "concealer",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 4, "verdict": "stop", "condition_text": null },
+      { "from_d": 5, "to_d": 6, "verdict": "care", "condition_text": "필요한 부위에만 얇게" },
+      { "from_d": 7, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "needs_review",
+    "flags": ["wireframe_v20_mismatch"],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+
+  {
+    "timeline_id": "cat.sheet_mask_soothing.normal",
+    "target_type": "product_category",
+    "target_id": "sheet_mask_soothing",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 1, "verdict": "stop", "condition_text": null },
+      {
+        "from_d": 2,
+        "to_d": 3,
+        "verdict": "care",
+        "condition_text": "짧게 사용하고 자극을 확인하세요"
+      },
+      { "from_d": 4, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "cat.sheet_mask_functional.normal",
+    "target_type": "product_category",
+    "target_id": "sheet_mask_functional",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 5, "verdict": "stop", "condition_text": null },
+      {
+        "from_d": 6,
+        "to_d": 9,
+        "verdict": "care",
+        "condition_text": "짧게 사용하고 자극을 확인하세요"
+      },
+      { "from_d": 10, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "cat.pad.normal",
+    "target_type": "product_category",
+    "target_id": "pad",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 2, "verdict": "stop", "condition_text": null },
+      {
+        "from_d": 3,
+        "to_d": 4,
+        "verdict": "care",
+        "condition_text": "잠시 얹었다 떼고, 문질러 닦지 마세요"
+      },
+      { "from_d": 5, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "cat.sleeping_pack.normal",
+    "target_type": "product_category",
+    "target_id": "sleeping_pack",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 1, "verdict": "stop", "condition_text": null },
+      {
+        "from_d": 2,
+        "to_d": 3,
+        "verdict": "care",
+        "condition_text": "짧게 사용하고 자극을 확인하세요"
+      },
+      { "from_d": 4, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  },
+  {
+    "timeline_id": "cat.pore_clay_peeloff.normal",
+    "target_type": "product_category",
+    "target_id": "pore_clay_peeloff",
+    "sensitivity": "normal",
+    "sensitivity_policy": "irritant",
+    "phases": [
+      { "from_d": 0, "to_d": 11, "verdict": "stop", "condition_text": null },
+      { "from_d": 12, "to_d": 13, "verdict": "care", "condition_text": "약하게 1회만" },
+      { "from_d": 14, "to_d": 14, "verdict": "go", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "flags": [],
+    "evidence": { "grade": "none", "source_procedure": "picotoning", "citations": [] }
+  }
+]

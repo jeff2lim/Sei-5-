@@ -9,6 +9,7 @@ import type { ProductCategory } from '@/domain/product';
 import { getProcedureDay } from '@/domain/procedure';
 import { evaluateProduct } from '@/rules/engine/evaluate';
 import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
+import { activeBehaviorWarnings } from '@/ruletable/resolve';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { ChevronLeft, ChevronRight, Info, PackagePlus } from 'lucide-react';
 import Link from 'next/link';
@@ -33,31 +34,29 @@ const content = {
   },
 } satisfies Record<ProductCategory, { title: string; headline: string; guidance: string }>;
 
-const guideOrder: ProductCategory[] = [
-  'cleansing',
-  'skincare',
-  'outing',
-];
+const guideOrder: ProductCategory[] = ['cleansing', 'skincare', 'outing'];
 
 export default function GuidePage() {
   const params = useParams<{ category: string }>();
   const category = params.category as ProductCategory;
   if (!(category in content)) notFound();
   const currentIndex = guideOrder.indexOf(category);
-  const previousCategory =
-    currentIndex > 0 ? guideOrder[currentIndex - 1] : null;
-  const nextCategory =
-    currentIndex < guideOrder.length - 1
-      ? guideOrder[currentIndex + 1]
-      : null;
+  const previousCategory = currentIndex > 0 ? guideOrder[currentIndex - 1] : null;
+  const nextCategory = currentIndex < guideOrder.length - 1 ? guideOrder[currentIndex + 1] : null;
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const day = session?.procedure ? getProcedureDay(session.procedure.performedAt, new Date()) : 0;
   const products = (session?.products ?? []).filter((product) => product.category === category);
   const details = products.map((product) => ({
     product,
-    verdict: evaluateProduct(product, day, bundledRulePack),
+    verdict: evaluateProduct(
+      product,
+      day,
+      bundledRulePack,
+      session?.profile.sensitivity ?? 'normal',
+    ),
   }));
+  const warnings = activeBehaviorWarnings(day, category);
 
   useEffect(() => {
     analytics.track({ name: 'category_guide_viewed', category });
@@ -71,45 +70,39 @@ export default function GuidePage() {
 
       <nav className="guide-pager" aria-label="행동안내 이동">
         {previousCategory ? (
-        <Link
-          className="icon-button"
-          href={`/guide/${previousCategory}`}
-          aria-label={`${content[previousCategory].title}으로 이동`}
-        >
-          <ChevronLeft size={20} aria-hidden="true" />
-        </Link>
-        ) : (
-          <span
-            className="guide-pager-disabled"
-            aria-hidden="true"
+          <Link
+            className="icon-button"
+            href={`/guide/${previousCategory}`}
+            aria-label={`${content[previousCategory].title}으로 이동`}
           >
+            <ChevronLeft size={20} aria-hidden="true" />
+          </Link>
+        ) : (
+          <span className="guide-pager-disabled" aria-hidden="true">
             <ChevronLeft size={20} />
           </span>
         )}
 
-          <div className="guide-pager-label">
-            <strong>{content[category].title}</strong>
-            <span>
-              {currentIndex + 1} / {guideOrder.length}
-            </span>
-          </div>
+        <div className="guide-pager-label">
+          <strong>{content[category].title}</strong>
+          <span>
+            {currentIndex + 1} / {guideOrder.length}
+          </span>
+        </div>
 
-          {nextCategory ? (
-            <Link
-              className="icon-button"
-              href={`/guide/${nextCategory}`}
-              aria-label={`${content[nextCategory].title}으로 이동`}
-            >
-              <ChevronRight size={20} aria-hidden="true" />
-            </Link>
-          ) : (
-            <span
-              className="guide-pager-disabled"
-              aria-hidden="true"
-            >
-              <ChevronRight size={20} />
-            </span>
-          )}
+        {nextCategory ? (
+          <Link
+            className="icon-button"
+            href={`/guide/${nextCategory}`}
+            aria-label={`${content[nextCategory].title}으로 이동`}
+          >
+            <ChevronRight size={20} aria-hidden="true" />
+          </Link>
+        ) : (
+          <span className="guide-pager-disabled" aria-hidden="true">
+            <ChevronRight size={20} />
+          </span>
+        )}
       </nav>
 
       <div className="verdict-panel unknown">
@@ -149,24 +142,35 @@ export default function GuidePage() {
 
       <div className="notice section">
         <Info size={18} aria-hidden="true" />
-        <span>판정 정보가 없는 제품은 안전하다는 뜻이 아니라, 현재 룰이 연결되지 않은 상태입니다.</span>
+        <span>
+          판정 정보가 없는 제품은 안전하다는 뜻이 아니라, 현재 룰이 연결되지 않은 상태입니다.
+        </span>
       </div>
+      {warnings.length ? (
+        <section className="section stack" aria-label="오늘의 행동 안내">
+          {warnings.map((warning) => (
+            <div className="notice" key={warning.id}>
+              <Info size={18} aria-hidden="true" />
+              <span>{warning.text}</span>
+            </div>
+          ))}
+        </section>
+      ) : null}
 
       <div
         className="guide-pager-dots"
         aria-label={`${currentIndex + 1} / ${guideOrder.length} 단계`}
       >
         {guideOrder.map((item, index) => (
-        <Link
-          key={item}
-          href={`/guide/${item}`}
-          className={index === currentIndex ? 'active' : undefined}
-          aria-label={`${content[item].title}으로 이동`}
-          aria-current={index === currentIndex ? 'page' : undefined}
-        />
+          <Link
+            key={item}
+            href={`/guide/${item}`}
+            className={index === currentIndex ? 'active' : undefined}
+            aria-label={`${content[item].title}으로 이동`}
+            aria-current={index === currentIndex ? 'page' : undefined}
+          />
         ))}
       </div>
-
     </AppShell>
   );
 }

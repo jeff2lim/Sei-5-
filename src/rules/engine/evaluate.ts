@@ -1,98 +1,146 @@
 import type { CheckIn, ContactAction } from '@/domain/check-in';
 import type { Product, ProductCategory, VerdictLevel } from '@/domain/product';
+import type { Sensitivity } from '@/domain/procedure';
 import type { RulePack } from '@/domain/rule-pack';
 import type { AttributeVerdict, CategoryVerdict, ProductVerdict } from '@/domain/verdict';
+import { baseMakeup, cleansingMethods, ingredientGroups, sunscreenTypes } from '@/ruletable/data';
+import { evaluateSymptoms, resolveProduct, resolveTarget, v5RuleTable } from '@/ruletable/resolve';
+import type { ProductRuleSelection, TargetType } from '@/ruletable/types';
 
-const rank: Record<VerdictLevel, number> = { unknown: 0, go: 1, care: 2, stop: 3 };
+const rank: Record<VerdictLevel, number> = {
+  unknown: 0,
+  go: 1,
+  care: 2,
+  stop: 3,
+  consult: 4,
+};
+
+const legacyAliases: Record<string, { type: TargetType; id: string }> = {
+  'gentle-cleanser': { type: 'cleansing_method', id: 'mild_acidic_foam' },
+  'oil-balm': { type: 'cleansing_method', id: 'cleansing_oil' },
+  scrub: { type: 'cleansing_method', id: 'scrub_deep' },
+  hydrating: { type: 'ingredient_group', id: 'ceramide' },
+  niacinamide: { type: 'ingredient_group', id: 'niacinamide' },
+  'vitamin-c': { type: 'ingredient_group', id: 'vitamin_c' },
+  retinoid: { type: 'ingredient_group', id: 'retinoid' },
+  'aha-bha': { type: 'ingredient_group', id: 'exfoliating_acid' },
+  fragrance: { type: 'ingredient_group', id: 'fragrance' },
+  'cream-sunscreen': { type: 'sunscreen_type', id: 'serum_lotion' },
+  'stick-sunscreen': { type: 'sunscreen_type', id: 'waterproof_stick' },
+  tinted: { type: 'base_makeup', id: 'cushion' },
+};
+
+function inferTarget(attributeId: string): { type: TargetType; id: string } {
+  if (legacyAliases[attributeId]) return legacyAliases[attributeId];
+  if (ingredientGroups.some((item) => item.id === attributeId)) {
+    return { type: 'ingredient_group', id: attributeId };
+  }
+  if (cleansingMethods.some((item) => item.id === attributeId)) {
+    return { type: 'cleansing_method', id: attributeId };
+  }
+  if (sunscreenTypes.some((item) => item.id === attributeId)) {
+    return { type: 'sunscreen_type', id: attributeId };
+  }
+  if (baseMakeup.some((item) => item.id === attributeId)) {
+    return { type: 'base_makeup', id: attributeId };
+  }
+  return { type: 'ingredient_group', id: attributeId };
+}
 
 export function evaluateAttribute(
   attributeId: string,
   procedureDay: number,
-  rulePack: RulePack,
+  _rulePack?: RulePack,
+  sensitivity: Sensitivity = 'normal',
 ): AttributeVerdict {
-  const rule = rulePack.verdictRules.find((item) => item.attributeId === attributeId);
-  if (!rule) {
-    return {
-      attributeId,
-      level: 'unknown',
-      reason: '이 속성에 연결된 안내 정보가 아직 없습니다.',
-    };
-  }
-
-  const period = rule.periods.find(
-    (item) =>
-      procedureDay >= item.fromDay && (item.toDay === null || procedureDay <= item.toDay),
-  );
-  if (!period) {
-    return {
-      attributeId,
-      level: 'unknown',
-      reason: '현재 날짜에 연결된 안내 정보가 아직 없습니다.',
-    };
-  }
-
+  const target = inferTarget(attributeId);
+  const detail = resolveTarget(target.type, target.id, procedureDay, sensitivity);
   return {
-    attributeId,
-    level: period.level,
-    resumeDay: period.resumeDay,
-    reason: period.reason,
+    attributeId: detail.targetId,
+    targetType: detail.targetType,
+    label: detail.label,
+    level: detail.verdict,
+    reason: detail.conditionText ?? `${detail.label}: ${detail.verdict}`,
   };
+}
+
+function migrateLegacySelection(product: Product): ProductRuleSelection {
+  const selection: ProductRuleSelection = {
+    ingredientGroupIds: [],
+    cleansingMethodIds: [],
+    baseMakeupIds: [],
+  };
+  for (const attributeId of product.attributeIds) {
+    const target = inferTarget(attributeId);
+    if (target.type === 'ingredient_group') selection.ingredientGroupIds.push(target.id);
+    if (target.type === 'cleansing_method') selection.cleansingMethodIds.push(target.id);
+    if (target.type === 'base_makeup') selection.baseMakeupIds.push(target.id);
+    if (target.type === 'sunscreen_type') selection.sunscreenTypeId = target.id;
+  }
+  return selection;
 }
 
 export function evaluateProduct(
   product: Product,
   procedureDay: number,
-  rulePack: RulePack,
+  _rulePack?: RulePack,
+  sensitivity: Sensitivity = 'normal',
 ): ProductVerdict {
-  if (product.attributeIds.length === 0) {
-    return {
+  const selection = product.ruleSelection ?? migrateLegacySelection(product);
+  const resolved = resolveProduct(
+    {
       productId: product.id,
-      level: 'unknown',
-      details: [],
-      rulePackVersion: rulePack.meta.version,
-    };
-  }
-
-  const details = product.attributeIds.map((attributeId) =>
-    evaluateAttribute(attributeId, procedureDay, rulePack),
+      productName: product.name,
+      ...selection,
+    },
+    procedureDay,
+    sensitivity,
   );
-  const level = details.reduce<VerdictLevel>(
-    (current, detail) => (rank[detail.level] > rank[current] ? detail.level : current),
-    'unknown',
+  const decisiveTimeline = v5RuleTable.timelines.find(
+    (timeline) =>
+      timeline.target_id === resolved.decidingTarget && timeline.sensitivity === sensitivity,
   );
-  const decisive = details
-    .filter((detail) => detail.level === level)
-    .sort((a, b) => (b.resumeDay ?? -1) - (a.resumeDay ?? -1))[0];
-
   return {
     productId: product.id,
-    level,
-    resumeDay:
-      level === 'care'
-        ? Math.max(...details.filter((detail) => detail.level === 'care').map((d) => d.resumeDay ?? 0))
-        : decisive?.resumeDay,
-    decisiveAttributeId: decisive?.attributeId,
-    details: details.sort((a, b) => rank[b.level] - rank[a.level]),
-    rulePackVersion: rulePack.meta.version,
+    level: resolved.verdict,
+    resumeDay: decisiveTimeline?.reopen_d_day ?? undefined,
+    decisiveAttributeId: resolved.decidingTarget ?? undefined,
+    decidingAxis: resolved.decidingAxis,
+    notes: resolved.notes,
+    details: resolved.details.map((detail) => ({
+      attributeId: detail.targetId,
+      targetType: detail.targetType,
+      label: detail.label,
+      level: detail.verdict,
+      resumeDay:
+        v5RuleTable.timelines.find(
+          (timeline) =>
+            timeline.target_id === detail.targetId && timeline.sensitivity === sensitivity,
+        )?.reopen_d_day ?? undefined,
+      reason: detail.conditionText ?? resolved.primaryText,
+    })),
+    rulePackVersion: v5RuleTable.version,
   };
 }
 
 export function evaluateProducts(
   products: Product[],
   procedureDay: number,
-  rulePack: RulePack,
+  rulePack?: RulePack,
+  sensitivity: Sensitivity = 'normal',
 ): ProductVerdict[] {
-  return products.map((product) => evaluateProduct(product, procedureDay, rulePack));
+  return products.map((product) => evaluateProduct(product, procedureDay, rulePack, sensitivity));
 }
 
 export function evaluateCategory(
   category: ProductCategory,
   products: Product[],
   procedureDay: number,
-  rulePack: RulePack,
+  rulePack?: RulePack,
+  sensitivity: Sensitivity = 'normal',
 ): CategoryVerdict {
   const matchingProducts = products.filter((product) => product.category === category);
-  const verdicts = evaluateProducts(matchingProducts, procedureDay, rulePack);
+  const verdicts = evaluateProducts(matchingProducts, procedureDay, rulePack, sensitivity);
   const level = verdicts.reduce<VerdictLevel>(
     (current, verdict) => (rank[verdict.level] > rank[current] ? verdict.level : current),
     'unknown',
@@ -100,29 +148,35 @@ export function evaluateCategory(
   return { category, level, products: verdicts };
 }
 
-const actionRank = {
-  CONTINUE_GUIDE: 0,
-  CONTACT_CLINIC: 1,
-  CONTACT_CLINIC_PROMPTLY: 2,
-  EMERGENCY_GUIDANCE: 3,
-} as const;
-
-export function evaluateCheckIn(checkIn: CheckIn, rulePack: RulePack): ContactAction {
-  const matched = rulePack.contactRules
-    .filter((rule) => {
-      const answer = checkIn.answers.find((item) => item.symptomId === rule.symptomId);
-      return (
-        answer?.present === true &&
-        (!rule.conditions.severity || answer.severity === rule.conditions.severity)
-      );
-    })
-    .sort((a, b) => actionRank[b.action] - actionRank[a.action])[0];
-
-  return matched
-    ? { type: matched.action, title: matched.title, body: matched.body }
-    : {
-        type: 'CONTINUE_GUIDE',
-        title: '입력하신 항목에서 별도 연락 안내는 없어요',
-        body: '오늘 안내를 이어가세요. 증상이 새로 생기거나 심해지면 시술받은 병원 또는 의료기관에 문의하세요.',
-      };
+export function evaluateCheckIn(checkIn: CheckIn, _rulePack?: RulePack): ContactAction {
+  void _rulePack;
+  const result = evaluateSymptoms(
+    Math.max(0, Math.min(14, checkIn.procedureDay ?? 0)),
+    checkIn.answers.map((answer) => ({
+      id: answer.symptomId,
+      present: answer.present,
+      severity: answer.severity,
+    })),
+  );
+  if (result.overallUrgency === 'contact_now') {
+    return {
+      type: 'CONTACT_CLINIC_PROMPTLY',
+      title: '병원 확인이 필요해 보여요',
+      body: '오늘은 진정과 보호를 이어가고, 기능성 제품과 메이크업은 중단한 뒤 시술받은 병원에 확인해 주세요.',
+    };
+  }
+  if (result.overallUrgency === 'contact_soon') {
+    return {
+      type: 'CONTACT_CLINIC',
+      title: '시술받은 병원에 확인해 주세요',
+      body: '기본 보습과 자외선 차단은 이어가면서 입력한 변화를 병원에 확인해 주세요.',
+    };
+  }
+  return {
+    type: 'CONTINUE_GUIDE',
+    title: '오늘 안내를 이어가세요',
+    body:
+      result.notes[0] ??
+      '입력한 경과를 기록했습니다. 증상이 새로 생기거나 심해지면 시술받은 병원에 문의하세요.',
+  };
 }

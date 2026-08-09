@@ -2,11 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Product } from '@/domain/product';
 import type { CheckIn } from '@/domain/check-in';
 import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
-import {
-  evaluateAttribute,
-  evaluateCheckIn,
-  evaluateProduct,
-} from '@/rules/engine/evaluate';
+import { evaluateAttribute, evaluateCheckIn, evaluateProduct } from '@/rules/engine/evaluate';
 
 const product = (attributeIds: string[]): Product => ({
   id: 'product-1',
@@ -29,13 +25,9 @@ describe('deterministic rule engine', () => {
   });
 
   it('uses the latest resume day among equally ranked care rules', () => {
-    const verdict = evaluateProduct(
-      product(['niacinamide', 'vitamin-c']),
-      1,
-      bundledRulePack,
-    );
+    const verdict = evaluateProduct(product(['niacinamide', 'vitamin-c']), 7, bundledRulePack);
     expect(verdict.level).toBe('care');
-    expect(verdict.resumeDay).toBe(5);
+    expect(verdict.resumeDay).toBe(9);
   });
 
   it('keeps missing attributes unknown instead of treating them as go', () => {
@@ -48,8 +40,8 @@ describe('deterministic rule engine', () => {
       id: 'check-1',
       checkedAt: '2026-07-02T00:00:00.000Z',
       answers: [
-        { symptomId: 'pain', present: true, severity: 'mild' },
-        { symptomId: 'blister', present: true, severity: 'mild' },
+        { symptomId: 'redness', present: true, severity: 2 },
+        { symptomId: 'blister', present: true },
       ],
       rulePackVersion: bundledRulePack.meta.version,
     };
@@ -58,7 +50,7 @@ describe('deterministic rule engine', () => {
 
   it('preserves the rule pack version on every product verdict', () => {
     expect(evaluateProduct(product(['hydrating']), 0, bundledRulePack).rulePackVersion).toBe(
-      bundledRulePack.meta.version,
+      '5.0.0',
     );
   });
 });

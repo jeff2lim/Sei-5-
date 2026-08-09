@@ -1,9 +1,9 @@
 {
   "id": "picotoning-aftercare",
-  "version": "0.1.0-draft",
+  "version": "5.0.0-team-provisional",
   "status": "DRAFT_NOT_FOR_PATIENTS",
   "source": {
-    "type": "placeholder",
-    "title": "MVP 검증용 샘플 룰팩"
+    "type": "team_protocol",
+    "title": "회복노트 룰테이블 JSON 스펙 v5"
   }
 }

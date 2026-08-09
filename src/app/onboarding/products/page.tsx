@@ -85,7 +85,14 @@ export default function OnboardingProductsPage() {
                 <div className="list-row-main">
                   <strong>{product.name}</strong>
                   <span>
-                    {categoryLabels[product.category]} · 속성 {product.attributeIds.length}개
+                    {categoryLabels[product.category]} · 판정 항목{' '}
+                    {product.ruleSelection
+                      ? product.ruleSelection.ingredientGroupIds.length +
+                        product.ruleSelection.cleansingMethodIds.length +
+                        product.ruleSelection.baseMakeupIds.length +
+                        (product.ruleSelection.sunscreenTypeId ? 1 : 0)
+                      : product.attributeIds.length}
+                    개
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

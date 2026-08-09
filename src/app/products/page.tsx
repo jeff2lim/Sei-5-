@@ -7,12 +7,13 @@ import type { VerdictLevel } from '@/domain/product';
 import { getProcedureDay } from '@/domain/procedure';
 import { evaluateProduct } from '@/rules/engine/evaluate';
 import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
+import { ingredientGroups } from '@/ruletable/data';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { ChevronRight, PackagePlus, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
-const rank: Record<VerdictLevel, number> = { stop: 3, care: 2, unknown: 1, go: 0 };
+const rank: Record<VerdictLevel, number> = { consult: 4, stop: 3, care: 2, unknown: 1, go: 0 };
 
 export default function ProductsPage() {
   const hydrated = useRecoveryStore((state) => state.hydrated);
@@ -20,37 +21,43 @@ export default function ProductsPage() {
   const [view, setView] = useState<'products' | 'attributes'>('products');
   if (!hydrated) return <LoadingScreen />;
   const day = session?.procedure ? getProcedureDay(session.procedure.performedAt, new Date()) : 0;
+  const sensitivity = session?.profile.sensitivity ?? 'normal';
   const rows = (session?.products ?? [])
-    .map((product) => ({ product, verdict: evaluateProduct(product, day, bundledRulePack) }))
+    .map((product) => ({
+      product,
+      verdict: evaluateProduct(product, day, bundledRulePack, sensitivity),
+    }))
     .sort((a, b) => rank[b.verdict.level] - rank[a.verdict.level]);
-  const counts = (['stop', 'care', 'unknown', 'go'] as const).map(
+  const counts = (['consult', 'stop', 'care', 'unknown', 'go'] as const).map(
     (level) => rows.filter((row) => row.verdict.level === level).length,
   );
   const productGroups = [
-  {
-    level: 'stop',
-    label: '지금은 멈춰주세요',
-  },
-  {
-    level: 'care',
-    label: '아직 기다려주세요',
-  },
-  {
-    level: 'unknown',
-    label: '연결된 판정 정보가 부족해요',
-  },
-  {
-    level: 'go',
-    label: '계속 쓰셔도 돼요',
-  },
-] as const;
+    {
+      level: 'consult',
+      label: '병원 확인이 필요해요',
+    },
+    {
+      level: 'stop',
+      label: '지금은 멈춰주세요',
+    },
+    {
+      level: 'care',
+      label: '아직 기다려주세요',
+    },
+    {
+      level: 'unknown',
+      label: '연결된 판정 정보가 부족해요',
+    },
+    {
+      level: 'go',
+      label: '계속 쓰셔도 돼요',
+    },
+  ] as const;
 
-  const grouped = bundledRulePack.attributes
+  const grouped = ingredientGroups
     .map((attribute) => {
       const matching = rows.flatMap(({ product, verdict }) => {
-        const detail = verdict.details.find(
-         (item) => item.attributeId === attribute.id,
-        );
+        const detail = verdict.details.find((item) => item.attributeId === attribute.id);
 
         return detail ? [{ product, detail }] : [];
       });
@@ -67,31 +74,25 @@ export default function ProductsPage() {
       };
     })
     .filter((row) => row.products.length > 0)
-    .sort(
-      (a, b) =>
-        rank[b.level ?? 'unknown'] - rank[a.level ?? 'unknown'],
-    );
+    .sort((a, b) => rank[b.level ?? 'unknown'] - rank[a.level ?? 'unknown']);
 
-  const flaggedAttributes = grouped.filter(
-  ({ level }) => level !== 'go',
-  );
+  const flaggedAttributes = grouped.filter(({ level }) => level !== 'go');
 
-  const safeAttributes = grouped.filter(
-    ({ level }) => level === 'go',
-  );
-    
+  const safeAttributes = grouped.filter(({ level }) => level === 'go');
+
   return (
     <AppShell>
       <p className="eyebrow">My products · D+{day}</p>
       <h1 className="headline">내 제품</h1>
-      <p className="subcopy">판정은 중단 → 주의 → 정보 없음 → 가능 순서로 정렬돼요.</p>
+      <p className="subcopy">병원 확인 → 중단 → 주의 → 정보 없음 → 가능 순서로 정렬돼요.</p>
 
       <section className="section summary-grid" aria-label="제품 판정 요약">
         {[
-          { label: '중단', count: counts[0], level: 'stop' },
-          { label: '주의', count: counts[1], level: 'care' },
-          { label: '정보 없음', count: counts[2], level: 'unknown' },
-          { label: '가능', count: counts[3], level: 'go' },
+          { label: '병원 확인', count: counts[0], level: 'consult' },
+          { label: '중단', count: counts[1], level: 'stop' },
+          { label: '주의', count: counts[2], level: 'care' },
+          { label: '정보 없음', count: counts[3], level: 'unknown' },
+          { label: '가능', count: counts[4], level: 'go' },
         ].map(({ label, count, level }) => (
           <div className={`summary-cell ${level}`} key={label}>
             <strong>{count}</strong>
@@ -101,7 +102,11 @@ export default function ProductsPage() {
       </section>
 
       <div className="segmented section" aria-label="제품 보기 방식">
-        <button type="button" aria-pressed={view === 'products'} onClick={() => setView('products')}>
+        <button
+          type="button"
+          aria-pressed={view === 'products'}
+          onClick={() => setView('products')}
+        >
           제품별
         </button>
         <button
@@ -125,11 +130,8 @@ export default function ProductsPage() {
           </div>
         ) : view === 'products' ? (
           <div>
-
             {productGroups.map(({ level, label }) => {
-              const products = rows.filter(
-              ({ verdict }) => verdict.level === level,
-              );
+              const products = rows.filter(({ verdict }) => verdict.level === level);
               if (products.length === 0) {
                 return null;
               }
@@ -141,16 +143,24 @@ export default function ProductsPage() {
                     <i aria-hidden="true" />
                   </div>
                   {products.map(({ product, verdict }) => (
-                    <Link className="product-status-row" href={`/products/${product.id}`} key={product.id}>
+                    <Link
+                      className="product-status-row"
+                      href={`/products/${product.id}`}
+                      key={product.id}
+                    >
                       <span className="product-status-main">
                         <strong>{product.name}</strong>
-                        <span className="product-attribute-count">{product.attributeIds.length || 0}개 속성</span>
+                        <span className="product-attribute-count">
+                          {verdict.details.filter((detail) => detail.level !== 'unknown').length}개
+                          판정 항목
+                        </span>
                       </span>
                       <span className="product-status-badge">
                         <VerdictBadge level={verdict.level} />
                       </span>
-                      <span className="product-status-open" aria-hidden="true"><ChevronRight size={18} aria-hidden="true" /></span>
-                      
+                      <span className="product-status-open" aria-hidden="true">
+                        <ChevronRight size={18} aria-hidden="true" />
+                      </span>
                     </Link>
                   ))}
                 </div>
@@ -160,51 +170,49 @@ export default function ProductsPage() {
         ) : (
           <div className="stack">
             <>
-            {flaggedAttributes.length > 0 ? (
-              <>
-              <div className="attribute-group-label">
-                지금 걸린 성분 ({flaggedAttributes.length})
-              </div>
+              {flaggedAttributes.length > 0 ? (
+                <>
+                  <div className="attribute-group-label">
+                    지금 걸린 성분 ({flaggedAttributes.length})
+                  </div>
 
-              {flaggedAttributes.map(({ attribute, products, level, reason }) => (
-                <div className="card" key={attribute.id}>
-                    <div className="list-row" style={{ paddingTop: 0 }}>
-                      <span className="list-row-main">
-                        <strong>{attribute.name}</strong>
-                        <span>등록된 제품: {products.length}개</span>
-                        <span className="attribute-product-list">
-                          {products.map(({ product }) => product.name).join(' · ')}
+                  {flaggedAttributes.map(({ attribute, products, level, reason }) => (
+                    <div className="card" key={attribute.id}>
+                      <div className="list-row" style={{ paddingTop: 0 }}>
+                        <span className="list-row-main">
+                          <strong>{attribute.label}</strong>
+                          <span>등록된 제품: {products.length}개</span>
+                          <span className="attribute-product-list">
+                            {products.map(({ product }) => product.name).join(' · ')}
+                          </span>
                         </span>
-                      </span>
-                      {level ? <VerdictBadge level={level} /> : null}
+                        {level ? <VerdictBadge level={level} /> : null}
+                      </div>
+                      {reason ? <p className="subcopy">{reason}</p> : null}
                     </div>
-                    {reason ? <p className="subcopy">{reason}</p> : null}
-                </div>
-              ))}
-            </>
-            ) : null}
-            {safeAttributes.length > 0 ? (
-              <>
-              <div className="attribute-group-label">
-                문제 없는 성분
-              </div>
+                  ))}
+                </>
+              ) : null}
+              {safeAttributes.length > 0 ? (
+                <>
+                  <div className="attribute-group-label">문제 없는 성분</div>
 
-              {safeAttributes.map(({ attribute, products, level, reason }) => (
-                <div className="card" key={attribute.id}>
-                    <div className="list-row" style={{ paddingTop: 0 }}>
-                      <span className="list-row-main">
-                        <strong>{attribute.name}</strong>
-                        <span>등록된 제품: {products.length}개</span>
-                      </span>
-                      {level ? <VerdictBadge level={level} /> : null}
+                  {safeAttributes.map(({ attribute, products, level, reason }) => (
+                    <div className="card" key={attribute.id}>
+                      <div className="list-row" style={{ paddingTop: 0 }}>
+                        <span className="list-row-main">
+                          <strong>{attribute.label}</strong>
+                          <span>등록된 제품: {products.length}개</span>
+                        </span>
+                        {level ? <VerdictBadge level={level} /> : null}
+                      </div>
+                      {reason ? <p className="subcopy">{reason}</p> : null}
                     </div>
-                    {reason ? <p className="subcopy">{reason}</p> : null}
-                </div>
-              ))}
+                  ))}
+                </>
+              ) : null}
             </>
-            ) : null}
-          </>    
-        </div>
+          </div>
         )}
       </section>
 

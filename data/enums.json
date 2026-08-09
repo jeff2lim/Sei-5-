@@ -1,0 +1,23 @@
+{
+  "verdict": ["go", "care", "stop", "consult"],
+  "severity_order": { "go": 0, "care": 1, "stop": 2 },
+  "sensitivity": ["low", "normal", "high"],
+  "d_day_range": [0, 14],
+  "phase_name": ["recovery", "ramp_up"],
+  "evidence_grade": ["direct", "indirect", "general", "none"],
+  "source_procedure": ["picotoning", "toning", "co2_fractional", "general"],
+  "status": ["pending", "extrapolated", "team_provisional", "needs_review", "confirmed"],
+  "screen": ["cleansing", "skincare", "outing"],
+  "judgment_mode": ["judged", "advisory", "consult_only", "warning_text_only"],
+  "sensitivity_policy": ["restorative", "pigment_rail", "irritant"],
+  "target_type": [
+    "ingredient_group",
+    "cleansing_method",
+    "sunscreen_type",
+    "base_makeup",
+    "product_category",
+    "behavior_warning"
+  ],
+  "urgency": ["contact_now", "contact_soon", "monitor"],
+  "severity_level": [1, 2, 3]
+}

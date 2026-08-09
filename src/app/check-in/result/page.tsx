@@ -4,6 +4,7 @@ import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
 import { evaluateCheckIn } from '@/rules/engine/evaluate';
 import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
+import { consecutiveDowngradeDays, hasDowngradeTrigger } from '@/ruletable/resolve';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { AlertTriangle, CheckCircle2, PhoneCall } from 'lucide-react';
 import Link from 'next/link';
@@ -11,23 +12,28 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 
 const symptomLabels: Record<string, string> = {
-  redness: '붉음',
-  swelling: '붓기',
-  blister: '수포',
-  pain: '통증',
+  redness: '붉은기',
   heat: '열감',
+  stinging: '따가움',
+  dryness: '건조·각질',
+  breakout: '트러블',
+  discharge_pus: '진물·고름',
+  blister: '수포·물집',
+  worsening_pain: '통증이 심해짐',
+  hypopigmentation: '색이 하얗게 빠짐',
 };
 
 const severityLabels = {
-  mild: '가벼움',
-  moderate: '중간',
-  severe: '심함',
+  1: '약간',
+  2: '보통',
+  3: '심함',
 };
 
 function CheckInResultPageContent() {
   const searchParams = useSearchParams();
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
+  const saveProfile = useRecoveryStore((state) => state.saveProfile);
   const checkIns = session?.checkIns ?? [];
   if (!hydrated) return <LoadingScreen navigation={false} />;
   const checkInId = searchParams.get('id');
@@ -51,6 +57,19 @@ function CheckInResultPageContent() {
   const urgent = action.type !== 'CONTINUE_GUIDE';
   const Icon = urgent ? AlertTriangle : CheckCircle2;
   const level = action.type === 'CONTACT_CLINIC_PROMPTLY' ? 'stop' : urgent ? 'care' : 'go';
+  const consecutiveDays = consecutiveDowngradeDays(
+    checkIns.map((entry) => ({
+      date: entry.checkedAt.slice(0, 10),
+      downgraded: hasDowngradeTrigger(
+        entry.procedureDay ?? 0,
+        entry.answers.map((answer) => ({
+          id: answer.symptomId,
+          present: answer.present,
+          severity: answer.severity,
+        })),
+      ),
+    })),
+  );
 
   return (
     <AppShell navigation={false}>
@@ -81,6 +100,26 @@ function CheckInResultPageContent() {
           <PhoneCall size={18} aria-hidden="true" />
           <span>이 결과는 위험도 점수나 진단이 아닙니다. 룰팩에 연결된 행동 안내입니다.</span>
         </div>
+      ) : null}
+      {consecutiveDays >= 3 && session?.profile.sensitivity !== 'high' ? (
+        <section className="section card">
+          <h2 className="section-title">3일째 반응이 있으시네요</h2>
+          <p className="subcopy">
+            민감도를 ‘높음’으로 바꾸면 앞으로 더 여유 있게 안내합니다. 일부 항목이 다시 ‘주의’로
+            바뀔 수 있어요.
+          </p>
+          <div className="segmented" style={{ marginTop: 12 }}>
+            <button
+              type="button"
+              onClick={() =>
+                session ? saveProfile({ ...session.profile, sensitivity: 'high' }) : undefined
+              }
+            >
+              바꾸기
+            </button>
+            <Link href="/home">그대로 둘게요</Link>
+          </div>
+        </section>
       ) : null}
       <div className="sticky-actions">
         <Link className="button full" href="/home">

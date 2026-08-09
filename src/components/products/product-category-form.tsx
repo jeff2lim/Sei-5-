@@ -16,7 +16,7 @@ const categories: Array<{
   icon: typeof Droplets;
 }> = [
   { id: 'cleansing', title: '세안', description: '클렌저, 오일, 밤, 스크럽', icon: Droplets },
-  { id: 'skincare', title: '스킨케어', description: '토너, 앰플, 크림, 연고형 화장품', icon: Sparkles },
+  { id: 'skincare', title: '스킨케어', description: '토너, 앰플, 세럼, 크림', icon: Sparkles },
   {
     id: 'outing',
     title: '외출준비',
@@ -46,7 +46,9 @@ export function ProductCategoryForm({ cancelHref }: { cancelHref: string }) {
       return;
     }
     setDraft({ name: name.trim(), category });
-    router.push(`${cancelHref.startsWith('/onboarding') ? '/onboarding' : ''}/products/new/attributes`);
+    router.push(
+      `${cancelHref.startsWith('/onboarding') ? '/onboarding' : ''}/products/new/attributes`,
+    );
   }
 
   return (

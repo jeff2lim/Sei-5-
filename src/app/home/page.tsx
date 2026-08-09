@@ -4,7 +4,7 @@ import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
 import { VerdictBadge } from '@/components/verdict/verdict-badge';
 import { analytics } from '@/domain/analytics';
-import type { ProductCategory } from '@/domain/product';
+import type { ProductCategory, VerdictLevel } from '@/domain/product';
 import { getProcedureDay } from '@/domain/procedure';
 import { evaluateCategory } from '@/rules/engine/evaluate';
 import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
@@ -24,21 +24,21 @@ const categories: Array<{
   { id: 'outing', label: '외출준비', description: '제형과 자외선 차단 안내', icon: ShieldCheck },
 ];
 
-function getRecoveryCompleteLabel(
-  level: 'go' | 'care' | 'stop' | 'unknown',
-) {
-    switch (level) {
-      case 'go':
-        return '재개 가능';
-      case 'care':
-        return '천천히';
-      case 'stop':
-        return '계속 주의';
-      case 'unknown':
-      default:
-        return '확인 필요';
-    }
+function getRecoveryCompleteLabel(level: VerdictLevel) {
+  switch (level) {
+    case 'consult':
+      return '병원 확인';
+    case 'go':
+      return '재개 가능';
+    case 'care':
+      return '천천히';
+    case 'stop':
+      return '계속 주의';
+    case 'unknown':
+    default:
+      return '확인 필요';
   }
+}
 
 export default function HomePage() {
   const hydrated = useRecoveryStore((state) => state.hydrated);
@@ -51,9 +51,15 @@ export default function HomePage() {
       day === null
         ? []
         : categories.map((category) =>
-            evaluateCategory(category.id, session?.products ?? [], day, bundledRulePack),
+            evaluateCategory(
+              category.id,
+              session?.products ?? [],
+              day,
+              bundledRulePack,
+              session?.profile.sensitivity ?? 'normal',
+            ),
           ),
-    [day, session?.products],
+    [day, session?.products, session?.profile.sensitivity],
   );
 
   useEffect(() => {
@@ -80,12 +86,14 @@ export default function HomePage() {
       </AppShell>
     );
   }
+  const currentDay = day ?? 0;
 
   const todayCheck = session.checkIns.some(
     (checkIn) => checkIn.checkedAt.slice(0, 10) === new Date().toISOString().slice(0, 10),
   );
 
-  {/*}
+  {
+    /*}
   const allAttributeVerdicts = categoryVerdicts.flatMap((categoryVerdict) =>
   categoryVerdict.products.flatMap((productVerdict) =>
     productVerdict.details
@@ -116,31 +124,25 @@ export default function HomePage() {
   const unknownItems = recoveryAttributes.filter(
     ({ verdict }) => verdict.level === 'unknown',
   );
-*/}
- 
+*/
+  }
+
   const recoveryItems = categoryVerdicts.flatMap((categoryVerdict) =>
-  categoryVerdict.products.flatMap((verdict) => {
-    const product = session.products.find(
-      (item) => item.id === verdict.productId,
-    );
+    categoryVerdict.products.flatMap((verdict) => {
+      const product = session.products.find((item) => item.id === verdict.productId);
 
-    return product ? [{ product, verdict }] : [];
-  }),
-);
+      return product ? [{ product, verdict }] : [];
+    }),
+  );
 
-const resumableItems = recoveryItems.filter(
-  ({ verdict }) => verdict.level === 'go',
-);
+  const resumableItems = recoveryItems.filter(({ verdict }) => verdict.level === 'go');
 
-const cautionItems = recoveryItems.filter(
-  ({ verdict }) =>
-    verdict.level === 'care' || verdict.level === 'stop',
-);
+  const cautionItems = recoveryItems.filter(
+    ({ verdict }) =>
+      verdict.level === 'consult' || verdict.level === 'care' || verdict.level === 'stop',
+  );
 
-const unknownItems = recoveryItems.filter(
-  ({ verdict }) => verdict.level === 'unknown',
-);
-
+  const unknownItems = recoveryItems.filter(({ verdict }) => verdict.level === 'unknown');
 
   if (day !== null && day >= 7) {
     return (
@@ -148,9 +150,7 @@ const unknownItems = recoveryItems.filter(
         <header>
           <p className="eyebrow">Picotoning · D+{day}</p>
           <h1 className="headline">한 주의 회복을 잘 기록했어요.</h1>
-          <p className="subcopy">
-            피코토닝 후 첫 주 회복 기간을 마쳤어요.
-          </p>
+          <p className="subcopy">피코토닝 후 첫 주 회복 기간을 마쳤어요.</p>
         </header>
 
         <section className="section hero-card">
@@ -169,35 +169,36 @@ const unknownItems = recoveryItems.filter(
 
         <section className="section verdict-panel care">
           <span className="badge care">필수</span>
-            <h2>☀️ 자외선 차단은 계속!</h2>
-            <p>
-              시술 부위는 색소침착(PIH)에 몇 주간 예민해요. 외출 시 선크림 SPF 50+는 앞으로도 꼭 발라주세요.
-            </p>
+          <h2>☀️ 자외선 차단은 계속!</h2>
+          <p>
+            시술 부위는 색소침착(PIH)에 몇 주간 예민해요. 외출 시 선크림 SPF 50+는 앞으로도 꼭
+            발라주세요.
+          </p>
         </section>
 
         <section className="section">
           <h2 className="section-title">이제부터</h2>
-          
+
           <div className="recovery-summary">
-              {resumableItems.length > 0 ? (
-                resumableItems.map(({ product, verdict }) => (
-                  <div className="list-row" key={product.id}>
-                    <div className="list-row-main">
-                      <strong>{product.name}</strong>
-                      <span>현재 룰 기준으로 재개할 수 있어요.</span>
-                    </div>
-                    <span className={`badge ${verdict.level}`}>
-                      {getRecoveryCompleteLabel(verdict.level)}
-                    </span>
+            {resumableItems.length > 0 ? (
+              resumableItems.map(({ product, verdict }) => (
+                <div className="list-row" key={product.id}>
+                  <div className="list-row-main">
+                    <strong>{product.name}</strong>
+                    <span>현재 룰 기준으로 재개할 수 있어요.</span>
                   </div>
-                ))
-              ) : (
+                  <span className={`badge ${verdict.level}`}>
+                    {getRecoveryCompleteLabel(verdict.level)}
+                  </span>
+                </div>
+              ))
+            ) : (
               <p className="recovery-summary-empty">
                 현재 재개 가능으로 표시된 등록 제품이 없어요.
               </p>
-              )}
-              
-              {/*}
+            )}
+
+            {/*}
               {resumableItems.length > 0 ? (
                 resumableItems.map(({ attribute, verdict }) => (
                 <div className="list-row" key={attribute.id}>
@@ -214,31 +215,31 @@ const unknownItems = recoveryItems.filter(
                   현재 재개 가능으로 표시된 성분·속성이 없어요.
                 </p>
               )}
-              */}  
-              
-              {cautionItems.length > 0 ? (
-                cautionItems.map(({ product, verdict }) => (
-                  <div className="list-row" key={product.id}>
-                    <div className="list-row-main">
-                      <strong>{product.name}</strong>
-                      <span>
-                        {verdict.level === 'stop'
+              */}
+
+            {cautionItems.length > 0 ? (
+              cautionItems.map(({ product, verdict }) => (
+                <div className="list-row" key={product.id}>
+                  <div className="list-row-main">
+                    <strong>{product.name}</strong>
+                    <span>
+                      {verdict.level === 'consult'
+                        ? '사용 전에 병원 확인이 필요한 항목이에요.'
+                        : verdict.level === 'stop'
                           ? '아직은 사용을 쉬어가는 항목이에요.'
                           : '무리하지 말고 천천히 재개하세요.'}
-                      </span>
-                    </div>
-
-                    <span className={`badge ${verdict.level}`}>
-                      {getRecoveryCompleteLabel(verdict.level)}
                     </span>
                   </div>
-                ))
-                ) : (
-                <p className="recovery-summary-empty">
-                  현재 주의가 필요한 등록 제품이 없어요.
-                </p>
-              )}
-              
+
+                  <span className={`badge ${verdict.level}`}>
+                    {getRecoveryCompleteLabel(verdict.level)}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="recovery-summary-empty">현재 주의가 필요한 등록 제품이 없어요.</p>
+            )}
+
             {/*}
               {cautionItems.length > 0 ? (
                 cautionItems.map(({ attribute, verdict }) => (
@@ -257,7 +258,7 @@ const unknownItems = recoveryItems.filter(
                 </p>
               )}
             */}
-            
+
             {unknownItems.map(({ product, verdict }) => (
               <div className="list-row" key={product.id}>
                 <div className="list-row-main">
@@ -268,9 +269,8 @@ const unknownItems = recoveryItems.filter(
                   {getRecoveryCompleteLabel(verdict.level)}
                 </span>
               </div>
-            ))
-            }
-            
+            ))}
+
             {/*}
             {unknownItems.length > 0 ? (
               <div className="recovery-summary-group">
@@ -364,17 +364,23 @@ const unknownItems = recoveryItems.filter(
   return (
     <AppShell>
       <header>
-        <p className="eyebrow">Picotoning · D+{day}</p>
-        <h1 className="headline">{day === 7 ? '한 주의 회복을 잘 기록했어요.' : '오늘의 회복 안내예요.'}</h1>
-        <p className="subcopy">
-          선택한 정보에 따라 오늘의 안내 항목이 달라졌습니다.
-        </p>
+        <p className="eyebrow">Picotoning · D+{currentDay}</p>
+        <h1 className="headline">
+          {currentDay === 7 ? '한 주의 회복을 잘 기록했어요.' : '오늘의 회복 안내예요.'}
+        </h1>
+        <p className="subcopy">선택한 정보에 따라 오늘의 안내 항목이 달라졌습니다.</p>
       </header>
 
       <section className="section hero-card">
-        <span className="badge">D+{day}</span>
+        <span className="badge">D+{currentDay}</span>
         <h2 className="headline" style={{ marginTop: 14 }}>
-          자극을 줄이고, 피부 느낌을 천천히 확인하세요.
+          {currentDay === 0
+            ? '오늘은 이것만 하면 돼요 — 미온수 세안 · 보습 · 외출 자제'
+            : currentDay === 7
+              ? '회복기를 마쳤어요. 이제 한꺼번에 말고 순서대로 다시 시작해요.'
+              : currentDay >= 14
+                ? '재개기를 마쳤어요. 남아 있는 주의 항목을 확인해 주세요.'
+                : '자극을 줄이고, 피부 느낌을 천천히 확인하세요.'}
         </h2>
         <p className="subcopy">
           이 안내는 입력한 속성과 룰팩 {bundledRulePack.meta.version}을 기준으로 표시됩니다.

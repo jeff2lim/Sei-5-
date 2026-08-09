@@ -11,8 +11,7 @@ html {
 body {
   margin: 0;
   color: var(--ink);
-  background:
-    linear-gradient(0deg, rgb(14 124 107 / 1.5%), rgb(14 124 107 / 1.5%)), var(--paper);
+  background: linear-gradient(0deg, rgb(14 124 107 / 1.5%), rgb(14 124 107 / 1.5%)), var(--paper);
   font-family: var(--font-body), 'IBM Plex Sans KR', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -418,6 +417,11 @@ a {
   background: var(--stop-wash);
 }
 
+.badge.consult {
+  color: var(--consult);
+  background: var(--consult-wash);
+}
+
 .badge.unknown {
   color: var(--unknown);
   background: var(--unknown-wash);
@@ -499,6 +503,11 @@ a {
   border-color: #efc5c1;
 }
 
+.verdict-panel.consult {
+  background: var(--consult-wash);
+  border-color: #d8c8ea;
+}
+
 .verdict-panel.unknown {
   background: var(--unknown-wash);
 }
@@ -537,7 +546,7 @@ a {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 7px;
 }
 
@@ -546,6 +555,16 @@ a {
   background: var(--paper);
   border-radius: 11px;
   text-align: center;
+}
+
+.summary-cell.consult {
+  background: var(--consult-wash);
+  border: 1px solid #d8c7ed;
+}
+
+.summary-cell.consult strong,
+.summary-cell.consult span {
+  color: var(--consult);
 }
 
 .summary-cell.stop {
@@ -942,6 +961,10 @@ a {
   background: var(--line);
 }
 
+.product-group-head.consult strong {
+  color: var(--consult);
+}
+
 .product-group-head.stop strong {
   color: var(--stop);
 }
@@ -974,7 +997,6 @@ a {
   color: inherit;
   text-decoration: none;
 }
-
 
 .product-status-main {
   min-width: 0;
