@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useRef, useState } from 'react';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -23,6 +24,9 @@ export default function ProfilePage() {
   const session = useRecoveryStore((state) => state.session);
   const exportData = useRecoveryStore((state) => state.exportData);
   const deleteAllData = useRecoveryStore((state) => state.deleteAllData);
+  const deleteDialogRef = useRef<HTMLDialogElement>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   if (!hydrated) return <LoadingScreen />;
 
   async function downloadData() {
@@ -35,21 +39,47 @@ export default function ProfilePage() {
     URL.revokeObjectURL(url);
   }
 
+  function openDeleteDialog() {
+    setDeleteError(null);
+    deleteDialogRef.current?.showModal();
+  }
+
+  function closeDeleteDialog() {
+    if (deleting) return;
+    deleteDialogRef.current?.close();
+    setDeleteError(null);
+  }
+
   async function clearData() {
-    if (!window.confirm('이 브라우저에 저장된 시술, 제품, 체크 기록을 모두 삭제할까요?')) return;
-    await deleteAllData();
-    router.replace('/');
+    if (deleting) return;
+
+    setDeleting(true);
+    setDeleteError(null);
+
+    try {
+      await deleteAllData();
+      deleteDialogRef.current?.close();
+      router.replace('/');
+    } catch {
+      setDeleting(false);
+      setDeleteError('전체 데이터를 삭제하지 못했어요. 다시 시도해 주세요.');
+    }
   }
 
   const menu = [
-    { href: '/products', label: '등록 제품', value: `${session?.products.length ?? 0}개`, icon: Package },
+    {
+      href: '/products',
+      label: '등록 제품',
+      value: `${session?.products.length ?? 0}개`,
+      icon: Package,
+    },
     {
       href: '/records',
       label: '시술 정보',
       value: session?.procedure?.performedAt ?? '미등록',
       icon: CalendarDays,
     },
-    { href: '/consent', label: '동의 내역', value: '확인·변경', icon: ShieldCheck },
+    { href: '/consent?mode=edit', label: '동의 내역', value: '확인·변경', icon: ShieldCheck },
     { href: '/legal/privacy', label: '개인정보처리방침', value: '', icon: FileText },
     { href: '/legal/terms', label: '서비스 이용약관', value: '', icon: FileText },
   ];
@@ -102,10 +132,49 @@ export default function ProfilePage() {
         <button className="button secondary full" type="button" onClick={downloadData}>
           <Download size={18} aria-hidden="true" /> 내 데이터 내보내기
         </button>
-        <button className="button danger full" type="button" onClick={clearData}>
+        <button className="button danger full" type="button" onClick={openDeleteDialog}>
           <Trash2 size={18} aria-hidden="true" /> 전체 데이터 삭제
         </button>
       </section>
+      <dialog
+        ref={deleteDialogRef}
+        onCancel={(event) => {
+          if (deleting) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <div className="stack">
+          <div>
+            <h2>전체 데이터를 삭제할까요?</h2>
+            <p className="subcopy">이 브라우저에 저장된 시술, 제품, 체크 기록을 모두 삭제합니다.</p>
+          </div>
+
+          {deleteError ? (
+            <div className="notice">
+              <span>{deleteError}</span>
+            </div>
+          ) : null}
+
+          <button
+            className="button danger full"
+            type="button"
+            disabled={deleting}
+            onClick={() => void clearData()}
+          >
+            {deleting ? '삭제 중...' : '전체 삭제'}
+          </button>
+
+          <button
+            className="button secondary full"
+            type="button"
+            disabled={deleting}
+            onClick={closeDeleteDialog}
+          >
+            취소
+          </button>
+        </div>
+      </dialog>
     </AppShell>
   );
 }

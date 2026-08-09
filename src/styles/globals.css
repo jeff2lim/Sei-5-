@@ -234,6 +234,16 @@ a {
   text-align: center;
 }
 
+.button.product-skip {
+  color: var(--ink-soft);
+  background: transparent;
+  border-color: var(--line);
+}
+
+.button.product-skip:hover {
+  background: var(--paper);
+}
+
 .button:hover {
   background: var(--teal-deep);
 }
@@ -538,6 +548,46 @@ a {
   text-align: center;
 }
 
+.summary-cell.stop {
+  background: var(--stop-wash);
+  border: 1px solid #f1c9c4;
+}
+
+.summary-cell.stop strong,
+.summary-cell.stop span {
+  color: var(--stop);
+}
+
+.summary-cell.care {
+  background: var(--care-wash);
+  border: 1px solid #efdbb4;
+}
+
+.summary-cell.care strong,
+.summary-cell.care span {
+  color: var(--care);
+}
+
+.summary-cell.go {
+  background: var(--go-wash);
+  border: 1px solid #bfe4cc;
+}
+
+.summary-cell.go strong,
+.summary-cell.go span {
+  color: var(--go);
+}
+
+.summary-cell.unknown {
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+
+.summary-cell.unknown strong,
+.summary-cell.unknown span {
+  color: var(--ink-soft);
+}
+
 .summary-cell strong {
   display: block;
   font-size: 19px;
@@ -613,7 +663,7 @@ a {
   text-align: center;
 }
 
-.calendar span {
+.calendar > span {
   display: grid;
   min-height: 38px;
   place-items: center;
@@ -621,15 +671,109 @@ a {
   font-size: 12px;
 }
 
-.calendar .checked {
-  color: white;
+.calendar > span {
+  display: flex;
+  min-height: 38px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.calendar-day-number {
+  line-height: 1;
+}
+
+.calendar-month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 8px 0 12px;
+}
+
+.calendar-month-nav strong {
+  min-width: 110px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.calendar-dots {
+  display: flex;
+  min-height: 6px;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  margin-top: 3px;
+}
+
+.calendar-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+}
+
+.calendar-dot.procedure-dot {
   background: var(--teal);
 }
 
-.calendar .procedure {
-  color: var(--stop);
-  background: var(--stop-wash);
+.calendar-dot.check-dot {
+  background: var(--care);
+}
+
+.calendar > span.next-procedure {
+  box-shadow: inset 0 0 0 1px var(--teal);
+  cursor: pointer;
+}
+
+.calendar > span.next-procedure:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
+.calendar > span.today {
+  color: white;
+  background: var(--teal);
   font-weight: 700;
+}
+
+.calendar > span.today .calendar-dot {
+  background: white;
+}
+
+.calendar-today-marker {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  border-radius: 3px;
+  background: var(--teal);
+}
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-top: 14px;
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.calendar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.next-procedure-marker {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--teal);
+  border-radius: 3px;
 }
 
 .legal {
@@ -689,4 +833,192 @@ a {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+.guide-pager {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 6px 8px;
+  background: var(--paper);
+  border-radius: 12px;
+}
+
+.guide-pager-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 13px;
+}
+
+.guide-pager-label span {
+  color: var(--ink-soft);
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+}
+
+.guide-pager-disabled {
+  display: grid;
+  width: var(--tap);
+  height: var(--tap);
+  place-items: center;
+  color: var(--line);
+}
+
+.guide-pager-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 20px;
+}
+
+.guide-pager-dots a {
+  width: 7px;
+  height: 7px;
+  background: var(--line);
+  border-radius: 999px;
+}
+
+.guide-pager-dots a.active {
+  width: 18px;
+  background: var(--teal);
+}
+
+.recovery-summary {
+  display: grid;
+  gap: 14px;
+}
+
+.recovery-summary-title {
+  margin: 14px 0 4px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.recovery-summary-title.go {
+  color: var(--go);
+}
+
+.recovery-summary-title.care {
+  color: var(--care);
+}
+
+.recovery-summary-empty {
+  margin: 10px 0 14px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.product-verdict-group {
+  display: grid;
+  gap: 0;
+}
+
+.product-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-group-head strong {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.product-group-head span {
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.product-group-head i {
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.product-group-head.stop strong {
+  color: var(--stop);
+}
+
+.product-group-head.care strong {
+  color: var(--care);
+}
+
+.product-group-head.unknown strong {
+  color: var(--ink-soft);
+}
+
+.product-group-head.go strong {
+  color: var(--go);
+}
+
+.product-status-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px 24px;
+  align-items: center;
+  gap: 8px;
+
+  padding: 12px 14px;
+  margin-bottom: 8px;
+
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+
+  color: inherit;
+  text-decoration: none;
+}
+
+
+.product-status-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.product-status-main strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.product-attribute-count {
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.product-status-badge {
+  width: 96px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.product-status-open {
+  width: 24px;
+  display: grid;
+  place-items: center;
+  color: var(--ink-soft);
+}
+
+.attribute-group-label {
+  margin: 12px 0 6px;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.attribute-product-list {
+  font-size: 11.5px;
+  color: var(--ink);
+  font-weight: 500;
+  line-height: 1.6;
 }

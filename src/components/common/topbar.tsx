@@ -3,21 +3,43 @@
 import { ChevronLeft, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-export function Topbar({
-  title,
-  closeHref,
-}: {
-  title: string;
-  closeHref?: string;
-}) {
+type TopbarProps =
+  | {
+      title: string;
+      closeHref: string;
+      backHref?: never;
+      onClose?: () => void;
+    }
+  | {
+      title: string;
+      closeHref?: never;
+      backHref?: string;
+      onClose?: () => void;
+    };
+
+export function Topbar({ title, closeHref, backHref, onClose }: TopbarProps) {
   const router = useRouter();
+  function navigateBack() {
+    if (closeHref) {
+      onClose?.();
+      router.push(closeHref);
+      return;
+    }
+
+    if (backHref) {
+      router.push(backHref);
+      return;
+    }
+
+    router.back();
+  }
   return (
     <header className="topbar">
       <button
         className="icon-button"
         type="button"
         aria-label={closeHref ? '닫기' : '뒤로 가기'}
-        onClick={() => (closeHref ? router.push(closeHref) : router.back())}
+        onClick={navigateBack}
       >
         {closeHref ? <X aria-hidden="true" /> : <ChevronLeft aria-hidden="true" />}
       </button>

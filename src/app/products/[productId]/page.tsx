@@ -12,7 +12,7 @@ import { useRecoveryStore } from '@/store/recovery-store';
 import { Info, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function ProductDetailPage() {
   const params = useParams<{ productId: string }>();
@@ -20,6 +20,9 @@ export default function ProductDetailPage() {
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const deleteProduct = useRecoveryStore((state) => state.deleteProduct);
+  const [deleting, setDeleting] = useState(false);
+  const deleteDialogRef = useRef<HTMLDialogElement>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const product = session?.products.find((item) => item.id === params.productId);
   const day = session?.procedure ? getProcedureDay(session.procedure.performedAt, new Date()) : 0;
   const verdict = product ? evaluateProduct(product, day, bundledRulePack) : null;
@@ -28,7 +31,7 @@ export default function ProductDetailPage() {
     if (verdict) analytics.track({ name: 'product_detail_viewed', verdict: verdict.level });
   }, [verdict]);
 
-  if (!hydrated) return <LoadingScreen />;
+  if (!hydrated || deleting) return <LoadingScreen />;
   if (!product || !verdict) {
     return (
       <AppShell>
@@ -45,9 +48,17 @@ export default function ProductDetailPage() {
   const currentProduct = product;
 
   async function remove() {
-    if (!window.confirm(`“${currentProduct.name}” 제품을 삭제할까요?`)) return;
-    await deleteProduct(currentProduct.id);
-    router.replace('/products');
+    setDeleteError(null);
+    deleteDialogRef.current?.close();
+    setDeleting(true);
+
+    try {
+      await deleteProduct(currentProduct.id);
+      router.replace('/products');
+    } catch {
+      setDeleting(false);
+      setDeleteError('제품을 삭제하지 못했어요. 다시 시도해 주세요.');
+    }
   }
 
   return (
@@ -99,10 +110,41 @@ export default function ProductDetailPage() {
           재개일을 사용합니다.
         </span>
       </div>
-
-      <button className="button danger full section" type="button" onClick={remove}>
+      {deleteError ? (
+        <div className="notice section">
+          <span>{deleteError}</span>
+        </div>
+      ) : null}
+      <button
+        className="button danger full section"
+        type="button"
+        onClick={() => {
+          setDeleteError(null);
+          deleteDialogRef.current?.showModal();
+        }}
+      >
         <Trash2 size={18} aria-hidden="true" /> 제품 삭제
       </button>
+      <dialog ref={deleteDialogRef}>
+        <div className="stack">
+          <div>
+            <h2>제품을 삭제할까요?</h2>
+            <p className="subcopy">“{currentProduct.name}” 제품을 삭제합니다.</p>
+          </div>
+
+          <button className="button danger full" type="button" onClick={() => void remove()}>
+            삭제하기
+          </button>
+
+          <button
+            className="button secondary full"
+            type="button"
+            onClick={() => deleteDialogRef.current?.close()}
+          >
+            취소
+          </button>
+        </div>
+      </dialog>
     </AppShell>
   );
 }
