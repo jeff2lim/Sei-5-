@@ -18,7 +18,7 @@ test('new user can finish onboarding with no products and enter home', async ({ 
   ].join('-');
   await page.getByLabel('시술 날짜').fill(today);
   await page.getByRole('button', { name: '다음' }).click();
-  await page.getByRole('link', { name: '제품 없이 다음' }).click();
+  await page.getByRole('link', { name: '제품 없이 넘어가기' }).click();
   await page.getByLabel('잘 모르겠어요').check();
   await page.getByRole('button', { name: '다음' }).click();
   await expect(page.getByRole('heading', { name: '회복 관리 준비가 끝났어요.' })).toBeVisible();
