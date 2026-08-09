@@ -8,8 +8,6 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 
-const SHOW_NEXT_PROCEDURE = true;
-
 function RecordsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -146,7 +144,7 @@ function RecordsPageContent() {
           {Array.from({ length: dayCount }, (_, index) => index + 1).map((day) => {
             const isProcedureDay = day === procedureDay;
             const isCheckedDay = checkedDays.has(day);
-            const isNextProcedureDay = SHOW_NEXT_PROCEDURE && day === nextProcedureDay;
+            const isNextProcedureDay = day === nextProcedureDay;
             const isToday = day === todayDay;
 
             const checkInId = checkInIdByDay.get(day);
@@ -223,12 +221,10 @@ function RecordsPageContent() {
             <i className="calendar-today-marker" aria-hidden="true" />
             오늘
           </span>
-          {SHOW_NEXT_PROCEDURE ? (
-            <span>
-              <i className="next-procedure-marker" aria-hidden="true" />
-              다음 시술 예정
-            </span>
-          ) : null}
+          <span>
+            <i className="next-procedure-marker" aria-hidden="true" />
+            다음 시술 예정
+          </span>
         </div>
       </section>
 

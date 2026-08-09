@@ -6,7 +6,6 @@ import { VerdictBadge } from '@/components/verdict/verdict-badge';
 import type { VerdictLevel } from '@/domain/product';
 import { getProcedureDay } from '@/domain/procedure';
 import { evaluateProduct } from '@/rules/engine/evaluate';
-import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
 import { ingredientGroups } from '@/ruletable/data';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { ChevronRight, PackagePlus, Plus } from 'lucide-react';
@@ -25,7 +24,7 @@ export default function ProductsPage() {
   const rows = (session?.products ?? [])
     .map((product) => ({
       product,
-      verdict: evaluateProduct(product, day, bundledRulePack, sensitivity),
+      verdict: evaluateProduct(product, day, sensitivity),
     }))
     .sort((a, b) => rank[b.verdict.level] - rank[a.verdict.level]);
   const counts = (['consult', 'stop', 'care', 'unknown', 'go'] as const).map(

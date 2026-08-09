@@ -7,7 +7,7 @@ import { analytics } from '@/domain/analytics';
 import type { ProductCategory, VerdictLevel } from '@/domain/product';
 import { getProcedureDay } from '@/domain/procedure';
 import { evaluateCategory } from '@/rules/engine/evaluate';
-import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
+import { rulePackMeta } from '@/rules/loaders/bundled-rule-pack';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { ChevronRight, ClipboardCheck, Droplets, Info, ShieldCheck, Sparkles } from 'lucide-react';
 import Link from 'next/link';
@@ -58,7 +58,6 @@ export default function HomePage() {
               category.id,
               session?.products ?? [],
               day,
-              bundledRulePack,
               session?.profile.sensitivity ?? 'normal',
             ),
           ),
@@ -70,7 +69,7 @@ export default function HomePage() {
       analytics.track({
         name: 'home_viewed',
         procedureDay: day,
-        rulePackVersion: bundledRulePack.meta.version,
+        rulePackVersion: rulePackMeta.version,
       });
     }
   }, [day]);
@@ -110,41 +109,6 @@ export default function HomePage() {
       </Link>
     </section>
   );
-
-  {
-    /*}
-  const allAttributeVerdicts = categoryVerdicts.flatMap((categoryVerdict) =>
-  categoryVerdict.products.flatMap((productVerdict) =>
-    productVerdict.details
-  ),);
-
-  const recoveryAttributes = bundledRulePack.attributes
-    .filter((attribute) =>
-      allAttributeVerdicts.some(
-        (detail) => detail.attributeId === attribute.id,
-      ),
-    )
-    .map((attribute) => ({
-      attribute,
-      verdict: allAttributeVerdicts.find(
-        (detail) => detail.attributeId === attribute.id,
-      )!,
-    }));
-
-  const resumableItems = recoveryAttributes.filter(
-    ({ verdict }) => verdict.level === 'go',
-  );
-
-  const cautionItems = recoveryAttributes.filter(
-    ({ verdict }) =>
-      verdict.level === 'care' || verdict.level === 'stop',
-  );
-
-  const unknownItems = recoveryAttributes.filter(
-    ({ verdict }) => verdict.level === 'unknown',
-  );
-*/
-  }
 
   const recoveryItems = categoryVerdicts.flatMap((categoryVerdict) =>
     categoryVerdict.products.flatMap((verdict) => {
@@ -220,25 +184,6 @@ export default function HomePage() {
               </p>
             )}
 
-            {/*}
-              {resumableItems.length > 0 ? (
-                resumableItems.map(({ attribute, verdict }) => (
-                <div className="list-row" key={attribute.id}>
-                  <div className="list-row-main">
-                    <strong>{attribute.name}</strong>
-                  </div>
-                  <span className={`badge ${verdict.level}`}>
-                    {getRecoveryCompleteLabel(verdict.level)}
-                  </span>
-                </div>
-                ))
-                ) : (
-                <p className="recovery-summary-empty">
-                  현재 재개 가능으로 표시된 성분·속성이 없어요.
-                </p>
-              )}
-              */}
-
             {cautionItems.length > 0 ? (
               cautionItems.map(({ product, verdict }) => (
                 <div className="list-row" key={product.id}>
@@ -262,25 +207,6 @@ export default function HomePage() {
               <p className="recovery-summary-empty">현재 주의가 필요한 등록 제품이 없어요.</p>
             )}
 
-            {/*}
-              {cautionItems.length > 0 ? (
-                cautionItems.map(({ attribute, verdict }) => (
-                  <div className="list-row" key={attribute.id}>
-                    <div className="list-row-main">
-                      <strong>{attribute.name}</strong>
-                    </div>
-                    <span className={`badge ${verdict.level}`}>
-                      {getRecoveryCompleteLabel(verdict.level)}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <p className="recovery-summary-empty">
-                  현재 주의가 필요한 성분·속성이 없어요.
-                </p>
-              )}
-            */}
-
             {unknownItems.map(({ product, verdict }) => (
               <div className="list-row" key={product.id}>
                 <div className="list-row-main">
@@ -293,82 +219,8 @@ export default function HomePage() {
               </div>
             ))}
 
-            {/*}
-            {unknownItems.length > 0 ? (
-              <div className="recovery-summary-group">
-                <h3 className="recovery-summary-title">
-                  확인이 필요한 것
-                </h3>
-                {unknownItems.map(({ attribute, verdict }) => (
-                  <div className="list-row" key={attribute.id}>
-                    <div className="list-row-main">
-                      <strong>{attribute.name}</strong>
-                    </div>
-                    <span className={`badge ${verdict.level}`}>
-                      {getRecoveryCompleteLabel(verdict.level)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-            */}
           </div>
         </section>
-
-        {/*}
-        <section className="section">
-          <h2 className="section-title">이제부터</h2>
-
-          <div className="stack">
-            {categories.map(({ id, label, description, icon: Icon }, index) => {
-              const verdict = categoryVerdicts[index];
-
-              return (
-                <Link className="category-card" href={`/guide/${id}`} key={id}>
-                  <span className="category-icon">
-                    <Icon size={22} aria-hidden="true" />
-                  </span>
-
-                  <span className="list-row-main">
-                    <strong>{label}</strong>
-                    <span>
-                      {verdict.products.length
-                        ? `${verdict.products.length}개 제품 · ${description}`
-                        : `등록 제품 없음 · ${description}`}
-                    </span>
-                  </span>
-
-                  <span
-                    style={{
-                      display: 'grid',
-                      justifyItems: 'end',
-                      gap: 7,
-                    }}
-                  >
-                    <span className={`badge ${verdict.level}`}>
-                      {getRecoveryCompleteLabel(verdict.level)}
-                    </span>
-                    <ChevronRight
-                      size={17}
-                      color="var(--ink-soft)"
-                      aria-hidden="true"
-                    />
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-        */}
-        {/*
-        <div className="notice section">
-          <Info size={18} aria-hidden="true" />
-          <span>
-            회복 기간이 끝난 뒤에도 자외선 차단과 피부 자극 관리는 계속해주세요.
-            제품별 안내는 현재 룰팩 기준으로 확인할 수 있습니다.
-          </span>
-        </div>
-        */}
 
         {checkInCard}
 
@@ -407,7 +259,7 @@ export default function HomePage() {
                 : '자극을 줄이고, 피부 느낌을 천천히 확인하세요.'}
         </h2>
         <p className="subcopy">
-          이 안내는 입력한 속성과 룰팩 {bundledRulePack.meta.version}을 기준으로 표시됩니다.
+          이 안내는 입력한 속성과 룰팩 {rulePackMeta.version}을 기준으로 표시됩니다.
         </p>
       </section>
 

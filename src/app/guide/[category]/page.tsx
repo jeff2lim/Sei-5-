@@ -8,7 +8,6 @@ import { analytics } from '@/domain/analytics';
 import type { ProductCategory } from '@/domain/product';
 import { getProcedureDay } from '@/domain/procedure';
 import { evaluateProduct } from '@/rules/engine/evaluate';
-import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
 import { activeBehaviorWarnings } from '@/ruletable/resolve';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { ChevronLeft, ChevronRight, Info, PackagePlus } from 'lucide-react';
@@ -49,12 +48,7 @@ export default function GuidePage() {
   const products = (session?.products ?? []).filter((product) => product.category === category);
   const details = products.map((product) => ({
     product,
-    verdict: evaluateProduct(
-      product,
-      day,
-      bundledRulePack,
-      session?.profile.sensitivity ?? 'normal',
-    ),
+    verdict: evaluateProduct(product, day, session?.profile.sensitivity ?? 'normal'),
   }));
   const warnings = activeBehaviorWarnings(day, category);
 

@@ -7,7 +7,6 @@ import { VerdictBadge, verdictLabel } from '@/components/verdict/verdict-badge';
 import { analytics } from '@/domain/analytics';
 import { getProcedureDay } from '@/domain/procedure';
 import { evaluateProduct } from '@/rules/engine/evaluate';
-import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { Info, Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -26,7 +25,7 @@ export default function ProductDetailPage() {
   const product = session?.products.find((item) => item.id === params.productId);
   const day = session?.procedure ? getProcedureDay(session.procedure.performedAt, new Date()) : 0;
   const verdict = product
-    ? evaluateProduct(product, day, bundledRulePack, session?.profile.sensitivity ?? 'normal')
+    ? evaluateProduct(product, day, session?.profile.sensitivity ?? 'normal')
     : null;
 
   useEffect(() => {

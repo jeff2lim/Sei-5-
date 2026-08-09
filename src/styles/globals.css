@@ -683,14 +683,6 @@ a {
 }
 
 .calendar > span {
-  display: grid;
-  min-height: 38px;
-  place-items: center;
-  border-radius: 10px;
-  font-size: 12px;
-}
-
-.calendar > span {
   display: flex;
   min-height: 38px;
   flex-direction: column;

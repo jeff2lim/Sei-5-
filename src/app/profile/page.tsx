@@ -3,7 +3,7 @@
 import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
 import { useRecoveryStore } from '@/store/recovery-store';
-import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
+import { rulePackMeta } from '@/rules/loaders/bundled-rule-pack';
 import {
   Bell,
   CalendarDays,
@@ -131,9 +131,9 @@ export default function ProfilePage() {
         <div className="list-row">
           <span className="list-row-main">
             <strong>룰팩</strong>
-            <span>{bundledRulePack.meta.status}</span>
+            <span>{rulePackMeta.status}</span>
           </span>
-          <span className="badge">{bundledRulePack.meta.version}</span>
+          <span className="badge">{rulePackMeta.version}</span>
         </div>
       </section>
 
