@@ -23,6 +23,14 @@ function sessionSummary(session: RecoverySession | null) {
   return `${session.procedure?.performedAt ?? '시술일 미등록'} · 제품 ${session.products.length}개 · 체크 ${session.checkIns.length}개`;
 }
 
+function supportCode(error: unknown) {
+  if (error && typeof error === 'object' && 'code' in error) {
+    const code = error.code;
+    if (typeof code === 'string' && code) return code;
+  }
+  return error instanceof Error ? error.name : 'UNKNOWN';
+}
+
 function ImportContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -59,10 +67,12 @@ function ImportContent() {
 
         await hydrate();
         router.replace(next);
-      } catch {
+      } catch (cause) {
         if (!active) return;
         analytics.track({ name: 'local_data_import_failed' });
-        setError('기록을 계정으로 옮기지 못했어요. 로컬 기록은 삭제되지 않았습니다.');
+        setError(
+          `기록을 계정으로 옮기지 못했어요. 로컬 기록은 삭제되지 않았습니다. 오류 코드: ${supportCode(cause)}`,
+        );
         setWorking(false);
       }
     }

@@ -22,6 +22,7 @@ import { useRef, useState } from 'react';
 export default function ProfilePage() {
   const router = useRouter();
   const hydrated = useRecoveryStore((state) => state.hydrated);
+  const hydrationError = useRecoveryStore((state) => state.hydrationError);
   const session = useRecoveryStore((state) => state.session);
   const exportData = useRecoveryStore((state) => state.exportData);
   const deleteAllData = useRecoveryStore((state) => state.deleteAllData);
@@ -90,6 +91,12 @@ export default function ProfilePage() {
       <p className="eyebrow">Profile & settings</p>
       <h1 className="headline">마이</h1>
       <p className="subcopy">내 정보, 시술 기록과 데이터 설정을 관리해요.</p>
+
+      {hydrationError ? (
+        <div className="notice" role="alert">
+          <span>계정 기록을 불러오지 못했어요. 오류 코드: {hydrationError}</span>
+        </div>
+      ) : null}
 
       <AuthStatusCard />
 

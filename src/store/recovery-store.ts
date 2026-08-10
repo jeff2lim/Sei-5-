@@ -15,6 +15,7 @@ type ProductDraft = {
 
 type RecoveryState = {
   hydrated: boolean;
+  hydrationError: string | null;
   session: RecoverySession | null;
   productDraft: ProductDraft;
   hydrate: () => Promise<void>;
@@ -36,12 +37,24 @@ const blankDraft: ProductDraft = { name: '', category: null };
 
 export const useRecoveryStore = create<RecoveryState>((set, get) => ({
   hydrated: false,
+  hydrationError: null,
   session: null,
   productDraft: blankDraft,
 
   async hydrate() {
-    const session = await recoveryRepository.loadSession();
-    set({ session, hydrated: true });
+    try {
+      const session = await recoveryRepository.loadSession();
+      set({ session, hydrated: true, hydrationError: null });
+    } catch (error) {
+      const code =
+        error && typeof error === 'object' && 'code' in error && typeof error.code === 'string'
+          ? error.code
+          : error instanceof Error
+            ? error.name
+            : 'UNKNOWN';
+      set({ hydrated: true, hydrationError: code });
+      throw error;
+    }
   },
 
   async saveConsent(consent) {
@@ -131,6 +144,11 @@ export const useRecoveryStore = create<RecoveryState>((set, get) => ({
 
   async deleteAllData() {
     await recoveryRepository.deleteAllData();
-    set({ session: null, hydrated: true, productDraft: blankDraft });
+    set({
+      session: null,
+      hydrated: true,
+      hydrationError: null,
+      productDraft: blankDraft,
+    });
   },
 }));
