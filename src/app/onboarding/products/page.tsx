@@ -6,6 +6,7 @@ import { LoadingScreen } from '@/components/common/loading-screen';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { PackagePlus, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 
 const categoryLabels = {
@@ -15,10 +16,12 @@ const categoryLabels = {
 };
 
 export default function OnboardingProductsPage() {
+  const router = useRouter();
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const deleteProduct = useRecoveryStore((state) => state.deleteProduct);
   const setProductDraft = useRecoveryStore((state) => state.setProductDraft);
+  const saveOnboardingStep = useRecoveryStore((state) => state.saveOnboardingStep);
   const products = session?.products ?? [];
 
   const deleteDialogRef = useRef<HTMLDialogElement>(null);
@@ -61,6 +64,11 @@ export default function OnboardingProductsPage() {
     } finally {
       setDeleting(false);
     }
+  }
+
+  async function continueToCleansing() {
+    await saveOnboardingStep('cleansing');
+    router.push('/onboarding/cleansing');
   }
   if (!hydrated) return <LoadingScreen navigation={false} />;
 
@@ -126,12 +134,13 @@ export default function OnboardingProductsPage() {
         >
           <Plus size={18} aria-hidden="true" /> 제품 등록하기
         </Link>
-        <Link
+        <button
+          type="button"
           className={products.length ? 'button full' : 'button product-skip full'}
-          href="/onboarding/cleansing"
+          onClick={() => void continueToCleansing()}
         >
           {products.length ? '다음' : '제품 없이 넘어가기'}
-        </Link>
+        </button>
       </div>
       <dialog
         ref={deleteDialogRef}

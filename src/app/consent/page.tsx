@@ -68,6 +68,7 @@ export default function ConsentPage() {
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const saveConsent = useRecoveryStore((state) => state.saveConsent);
+  const saveOnboardingStep = useRecoveryStore((state) => state.saveOnboardingStep);
 
   const [consentMode, setConsentMode] = useState<'onboarding' | 'edit' | null>(null);
   const isEditing = consentMode === 'edit';
@@ -137,6 +138,7 @@ export default function ConsentPage() {
     if (!requiredComplete) return;
     const consent: ConsentState = { ...values, updatedAt: new Date().toISOString() };
     await saveConsent(consent);
+    if (!isEditing) await saveOnboardingStep('procedure');
     window.sessionStorage.removeItem(CONSENT_DRAFT_KEY);
     router.push(isEditing ? '/profile' : '/onboarding/procedure');
   }

@@ -3,7 +3,7 @@
 import type { CheckIn } from '@/domain/check-in';
 import type { ProcedureRecord, Sensitivity, UserProfile } from '@/domain/procedure';
 import type { Product, ProductCategory } from '@/domain/product';
-import type { ConsentState, RecoverySession } from '@/domain/session';
+import type { ConsentState, OnboardingStep, RecoverySession } from '@/domain/session';
 import type { ProductRuleSelection } from '@/ruletable/types';
 import { recoveryRepository } from '@/repositories';
 import { create } from 'zustand';
@@ -19,6 +19,8 @@ type RecoveryState = {
   productDraft: ProductDraft;
   hydrate: () => Promise<void>;
   saveConsent: (consent: ConsentState) => Promise<void>;
+  saveOnboardingStep: (step: OnboardingStep) => Promise<void>;
+  completeOnboarding: () => Promise<void>;
   saveProcedure: (performedAt: string, sensitivity: Sensitivity) => Promise<void>;
   saveProfile: (profile: UserProfile) => Promise<void>;
   setProductDraft: (draft: ProductDraft) => void;
@@ -44,6 +46,24 @@ export const useRecoveryStore = create<RecoveryState>((set, get) => ({
 
   async saveConsent(consent) {
     await recoveryRepository.saveConsent(consent);
+    await get().hydrate();
+  },
+
+  async saveOnboardingStep(currentStep) {
+    await recoveryRepository.saveOnboarding({
+      status: 'in_progress',
+      currentStep,
+      completedAt: null,
+    });
+    await get().hydrate();
+  },
+
+  async completeOnboarding() {
+    await recoveryRepository.saveOnboarding({
+      status: 'completed',
+      currentStep: 'complete',
+      completedAt: new Date().toISOString(),
+    });
     await get().hydrate();
   },
 

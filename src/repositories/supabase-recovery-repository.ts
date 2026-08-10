@@ -2,7 +2,9 @@ import type { RecoveryRepository } from './recovery-repository';
 
 export class SupabaseRecoveryRepository implements RecoveryRepository {
   private unavailable(): never {
-    throw new Error('Supabase 모드는 아직 연결되지 않았습니다. NEXT_PUBLIC_DATA_MODE=local을 사용하세요.');
+    throw new Error(
+      'Supabase 모드는 아직 연결되지 않았습니다. NEXT_PUBLIC_DATA_MODE=local을 사용하세요.',
+    );
   }
 
   loadSession() {
@@ -15,6 +17,9 @@ export class SupabaseRecoveryRepository implements RecoveryRepository {
     return Promise.reject(this.unavailable());
   }
   saveConsent() {
+    return Promise.reject(this.unavailable());
+  }
+  saveOnboarding() {
     return Promise.reject(this.unavailable());
   }
   listProducts() {

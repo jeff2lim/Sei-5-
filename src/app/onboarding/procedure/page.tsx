@@ -24,6 +24,7 @@ export default function ProcedurePage() {
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const saveProcedure = useRecoveryStore((state) => state.saveProcedure);
+  const saveOnboardingStep = useRecoveryStore((state) => state.saveOnboardingStep);
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { performedAt: today(), sensitivity: 'normal' },
@@ -37,7 +38,7 @@ export default function ProcedurePage() {
       performedAt: session?.procedure?.performedAt ?? today(),
       sensitivity: session?.profile.sensitivity ?? 'normal',
     });
-  }, [form, hydrated, session?.procedure?.performedAt, session?.profile.sensitivity,]);
+  }, [form, hydrated, session?.procedure?.performedAt, session?.profile.sensitivity]);
 
   async function submit(values: FormValues) {
     if (values.performedAt > today()) {
@@ -45,6 +46,7 @@ export default function ProcedurePage() {
       return;
     }
     await saveProcedure(values.performedAt, values.sensitivity as Sensitivity);
+    await saveOnboardingStep('products');
     analytics.track({
       name: 'procedure_saved',
       procedureDay: getProcedureDay(values.performedAt, new Date()),

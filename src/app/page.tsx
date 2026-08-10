@@ -2,6 +2,7 @@
 
 import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
+import { getOnboardingDestination } from '@/domain/session';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
 import Link from 'next/link';
@@ -24,7 +25,7 @@ export default function LandingPage() {
   }, []);
   useEffect(() => {
     if (!hydrated || showLanding === null || showLanding || !session?.consent) return;
-    router.replace(session.procedure ? '/home' : '/onboarding/procedure');
+    router.replace(getOnboardingDestination(session));
   }, [hydrated, router, session, showLanding]);
 
   if (!hydrated || showLanding === null || (!showLanding && session?.consent))

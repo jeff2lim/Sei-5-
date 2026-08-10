@@ -18,13 +18,23 @@ test('new user can finish onboarding with no products and enter home', async ({ 
   ].join('-');
   await page.getByLabel('시술 날짜').fill(today);
   await page.getByRole('button', { name: '다음' }).click();
-  await page.getByRole('link', { name: '제품 없이 넘어가기' }).click();
+  await expect(page).toHaveURL(/\/onboarding\/products$/);
+
+  await page.goto('/');
+  await expect(page).toHaveURL(/\/onboarding\/products$/);
+
+  await page.getByRole('button', { name: '제품 없이 넘어가기' }).click();
   await page.getByLabel('잘 모르겠어요').check();
   await page.getByRole('button', { name: '다음' }).click();
   await expect(page.getByRole('heading', { name: '회복 관리 준비가 끝났어요.' })).toBeVisible();
-  await page.getByRole('link', { name: /회복 관리 시작/ }).click();
+  await page.getByRole('button', { name: /회복 관리 시작/ }).click();
   await expect(page).toHaveURL(/\/home$/);
   await expect(page.getByText('Picotoning · D+0', { exact: true })).toBeVisible();
+
+  await page.reload();
+  await expect(page).toHaveURL(/\/home$/);
+  await page.goto('/');
+  await expect(page).toHaveURL(/\/home$/);
 });
 
 test('draft warning and bottom navigation stay visible on mobile', async ({ page }) => {

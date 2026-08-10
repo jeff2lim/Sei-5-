@@ -1,13 +1,14 @@
 import type { CheckIn } from '@/domain/check-in';
 import type { ProcedureRecord, UserProfile } from '@/domain/procedure';
 import type { Product } from '@/domain/product';
-import type { ConsentState, RecoverySession } from '@/domain/session';
+import type { ConsentState, OnboardingState, RecoverySession } from '@/domain/session';
 
 export interface RecoveryRepository {
   loadSession(): Promise<RecoverySession | null>;
   saveProfile(profile: UserProfile): Promise<void>;
   saveProcedure(procedure: ProcedureRecord): Promise<void>;
   saveConsent(consent: ConsentState): Promise<void>;
+  saveOnboarding(onboarding: OnboardingState): Promise<void>;
   listProducts(): Promise<Product[]>;
   getProduct(id: string): Promise<Product | null>;
   saveProduct(product: Product): Promise<void>;

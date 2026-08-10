@@ -1,12 +1,23 @@
 import type { CheckIn } from '@/domain/check-in';
 import type { ProcedureRecord, UserProfile } from '@/domain/procedure';
 import type { Product } from '@/domain/product';
-import type { ConsentState, RecoverySession } from '@/domain/session';
+import {
+  RECOVERY_SESSION_SCHEMA_VERSION,
+  type ConsentState,
+  type OnboardingState,
+  type RecoverySession,
+} from '@/domain/session';
 import type { RecoveryRepository } from './recovery-repository';
 
 const STORAGE_KEY = 'recovery-note:v1';
 
 const emptySession = (): RecoverySession => ({
+  schemaVersion: RECOVERY_SESSION_SCHEMA_VERSION,
+  onboarding: {
+    status: 'not_started',
+    currentStep: 'consent',
+    completedAt: null,
+  },
   profile: { sensitivity: 'normal' },
   procedure: null,
   products: [],
@@ -14,13 +25,53 @@ const emptySession = (): RecoverySession => ({
   consent: null,
 });
 
+type StoredSession = Partial<Omit<RecoverySession, 'onboarding' | 'schemaVersion'>> & {
+  schemaVersion?: number;
+  onboarding?: Partial<OnboardingState>;
+};
+
+function migrateOnboarding(session: StoredSession): OnboardingState {
+  if (
+    session.onboarding?.status &&
+    session.onboarding.currentStep &&
+    session.onboarding.completedAt !== undefined
+  ) {
+    return session.onboarding as OnboardingState;
+  }
+
+  // v1 had no completion marker. Reaching the cleansing answer was the last persisted
+  // action before the completion screen, so it is the safest legacy completion signal.
+  if (session.profile?.cleansingFeel !== undefined) {
+    return { status: 'completed', currentStep: 'complete', completedAt: null };
+  }
+  if (session.procedure) {
+    return { status: 'in_progress', currentStep: 'products', completedAt: null };
+  }
+  if (session.consent) {
+    return { status: 'in_progress', currentStep: 'procedure', completedAt: null };
+  }
+  return { status: 'not_started', currentStep: 'consent', completedAt: null };
+}
+
 export class LocalRecoveryRepository implements RecoveryRepository {
   private read(): RecoverySession {
     if (typeof window === 'undefined') return emptySession();
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return emptySession();
     try {
-      return { ...emptySession(), ...(JSON.parse(raw) as RecoverySession) };
+      const stored = JSON.parse(raw) as StoredSession;
+      const session: RecoverySession = {
+        ...emptySession(),
+        ...stored,
+        schemaVersion: RECOVERY_SESSION_SCHEMA_VERSION,
+        onboarding: migrateOnboarding(stored),
+        profile: { ...emptySession().profile, ...stored.profile },
+      };
+
+      if (stored.schemaVersion !== RECOVERY_SESSION_SCHEMA_VERSION || !stored.onboarding) {
+        this.write(session);
+      }
+      return session;
     } catch {
       return emptySession();
     }
@@ -45,6 +96,10 @@ export class LocalRecoveryRepository implements RecoveryRepository {
 
   async saveConsent(consent: ConsentState) {
     this.write({ ...this.read(), consent });
+  }
+
+  async saveOnboarding(onboarding: OnboardingState) {
+    this.write({ ...this.read(), onboarding });
   }
 
   async listProducts() {
