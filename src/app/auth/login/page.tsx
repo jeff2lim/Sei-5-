@@ -34,7 +34,10 @@ function LoginContent() {
 
     const { error: signInError } = await createBrowserSupabaseClient().auth.signInWithOAuth({
       provider: 'kakao',
-      options: { redirectTo: callbackUrl.toString() },
+      options: {
+        redirectTo: callbackUrl.toString(),
+        scopes: 'profile_nickname',
+      },
     });
 
     if (signInError) {
