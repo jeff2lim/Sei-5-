@@ -36,7 +36,6 @@ function LoginContent() {
       provider: 'kakao',
       options: {
         redirectTo: callbackUrl.toString(),
-        scopes: 'profile_nickname',
       },
     });
 
