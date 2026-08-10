@@ -4,11 +4,12 @@ import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
 import { analytics } from '@/domain/analytics';
 import { getProcedureDay } from '@/domain/procedure';
+import { isAuthEnabled } from '@/lib/supabase/config';
 import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { Check, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function CompletePage() {
   const router = useRouter();
@@ -16,11 +17,18 @@ export default function CompletePage() {
   const session = useRecoveryStore((state) => state.session);
   const completeOnboarding = useRecoveryStore((state) => state.completeOnboarding);
   const [completing, setCompleting] = useState(false);
+
+  useEffect(() => {
+    if (isAuthEnabled()) {
+      analytics.track({ name: 'auth_prompt_viewed', placement: 'onboarding_complete' });
+    }
+  }, []);
+
   if (!hydrated) return <LoadingScreen navigation={false} />;
 
   const day = session?.procedure ? getProcedureDay(session.procedure.performedAt, new Date()) : 0;
 
-  async function startRecovery() {
+  async function startRecovery(destination: string) {
     if (completing) return;
     setCompleting(true);
     await completeOnboarding();
@@ -28,7 +36,7 @@ export default function CompletePage() {
       name: 'onboarding_completed',
       productCount: session?.products.length ?? 0,
     });
-    router.push('/home');
+    router.push(destination);
   }
 
   return (
@@ -64,14 +72,45 @@ export default function CompletePage() {
         </div>
       </section>
       <div className="sticky-actions">
-        <button
-          type="button"
-          className="button full"
-          disabled={completing}
-          onClick={() => void startRecovery()}
-        >
-          <Sparkles size={18} aria-hidden="true" /> {completing ? '저장 중...' : '회복 관리 시작'}
-        </button>
+        {isAuthEnabled() ? (
+          <>
+            <button
+              type="button"
+              className="button kakao full"
+              disabled={completing}
+              onClick={() =>
+                void startRecovery('/auth/login?next=/home&placement=onboarding_complete')
+              }
+            >
+              <Sparkles size={18} aria-hidden="true" />
+              {completing ? '저장 중...' : '카카오로 기록 저장하기'}
+            </button>
+            <button
+              type="button"
+              className="button secondary full"
+              disabled={completing}
+              onClick={() => {
+                analytics.track({
+                  name: 'auth_prompt_skipped',
+                  placement: 'onboarding_complete',
+                });
+                void startRecovery('/home');
+              }}
+            >
+              이 기기에서만 계속하기
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            className="button full"
+            disabled={completing}
+            onClick={() => void startRecovery('/home')}
+          >
+            <Sparkles size={18} aria-hidden="true" />
+            {completing ? '저장 중...' : '회복 관리 시작'}
+          </button>
+        )}
       </div>
     </AppShell>
   );

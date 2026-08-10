@@ -7,10 +7,23 @@ function validateChoice(name: string, allowed: readonly string[], fallback: stri
   }
 }
 
-validateChoice('NEXT_PUBLIC_DATA_MODE', ['local'], 'local');
+validateChoice('NEXT_PUBLIC_DATA_MODE', ['local', 'hybrid'], 'local');
 validateChoice('NEXT_PUBLIC_RULEPACK_SOURCE', ['bundled'], 'bundled');
 validateChoice('NEXT_PUBLIC_ENABLE_COMMERCE', ['true', 'false'], 'true');
 validateChoice('NEXT_PUBLIC_ENABLE_PHOTO', ['false'], 'false');
+
+const dataMode = process.env.NEXT_PUBLIC_DATA_MODE ?? 'local';
+if (dataMode !== 'local') {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    errors.push('NEXT_PUBLIC_SUPABASE_URL이 필요합니다.');
+  }
+  if (!process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
+    errors.push('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY가 필요합니다.');
+  }
+  if (!process.env.SUPABASE_SECRET_KEY) {
+    errors.push('계정 삭제를 위한 SUPABASE_SECRET_KEY가 필요합니다.');
+  }
+}
 
 if (errors.length > 0) {
   throw new Error(
@@ -19,4 +32,4 @@ if (errors.length > 0) {
   );
 }
 
-console.log('Deployment environment validation passed (local storage, bundled rules).');
+console.log(`Deployment environment validation passed (${dataMode} data, bundled rules).`);

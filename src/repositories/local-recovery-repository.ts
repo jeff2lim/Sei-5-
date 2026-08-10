@@ -3,6 +3,7 @@ import type { ProcedureRecord, UserProfile } from '@/domain/procedure';
 import type { Product } from '@/domain/product';
 import {
   RECOVERY_SESSION_SCHEMA_VERSION,
+  createEmptyRecoverySession,
   type ConsentState,
   type OnboardingState,
   type RecoverySession,
@@ -10,20 +11,6 @@ import {
 import type { RecoveryRepository } from './recovery-repository';
 
 const STORAGE_KEY = 'recovery-note:v1';
-
-const emptySession = (): RecoverySession => ({
-  schemaVersion: RECOVERY_SESSION_SCHEMA_VERSION,
-  onboarding: {
-    status: 'not_started',
-    currentStep: 'consent',
-    completedAt: null,
-  },
-  profile: { sensitivity: 'normal' },
-  procedure: null,
-  products: [],
-  checkIns: [],
-  consent: null,
-});
 
 type StoredSession = Partial<Omit<RecoverySession, 'onboarding' | 'schemaVersion'>> & {
   schemaVersion?: number;
@@ -55,17 +42,17 @@ function migrateOnboarding(session: StoredSession): OnboardingState {
 
 export class LocalRecoveryRepository implements RecoveryRepository {
   private read(): RecoverySession {
-    if (typeof window === 'undefined') return emptySession();
+    if (typeof window === 'undefined') return createEmptyRecoverySession();
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return emptySession();
+    if (!raw) return createEmptyRecoverySession();
     try {
       const stored = JSON.parse(raw) as StoredSession;
       const session: RecoverySession = {
-        ...emptySession(),
+        ...createEmptyRecoverySession(),
         ...stored,
         schemaVersion: RECOVERY_SESSION_SCHEMA_VERSION,
         onboarding: migrateOnboarding(stored),
-        profile: { ...emptySession().profile, ...stored.profile },
+        profile: { ...createEmptyRecoverySession().profile, ...stored.profile },
       };
 
       if (stored.schemaVersion !== RECOVERY_SESSION_SCHEMA_VERSION || !stored.onboarding) {
@@ -73,7 +60,7 @@ export class LocalRecoveryRepository implements RecoveryRepository {
       }
       return session;
     } catch {
-      return emptySession();
+      return createEmptyRecoverySession();
     }
   }
 

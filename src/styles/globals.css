@@ -243,6 +243,16 @@ a {
   background: var(--paper);
 }
 
+.button.kakao {
+  color: #191919;
+  background: #fee500;
+  border-color: #fee500;
+}
+
+.button.kakao:hover {
+  background: #f4dc00;
+}
+
 .button:hover {
   background: var(--teal-deep);
 }
@@ -330,6 +340,38 @@ a {
   margin: 0;
   padding: 0;
   border: 0;
+}
+
+.choice-card-button {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  width: 100%;
+  min-height: 78px;
+  padding: 16px;
+  align-items: center;
+  gap: 12px;
+  color: var(--ink);
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  text-align: left;
+}
+
+.choice-card-button:hover {
+  background: var(--teal-wash);
+  border-color: var(--teal);
+}
+
+.choice-card-button span,
+.choice-card-button strong,
+.choice-card-button small {
+  display: block;
+}
+
+.choice-card-button small {
+  margin-top: 5px;
+  color: var(--ink-soft);
+  font-size: 12px;
 }
 
 .choice {

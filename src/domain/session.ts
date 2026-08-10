@@ -31,6 +31,22 @@ export type RecoverySession = {
   consent: ConsentState | null;
 };
 
+export function createEmptyRecoverySession(): RecoverySession {
+  return {
+    schemaVersion: RECOVERY_SESSION_SCHEMA_VERSION,
+    onboarding: {
+      status: 'not_started',
+      currentStep: 'consent',
+      completedAt: null,
+    },
+    profile: { sensitivity: 'normal' },
+    procedure: null,
+    products: [],
+    checkIns: [],
+    consent: null,
+  };
+}
+
 export function getOnboardingDestination(session: RecoverySession): string {
   if (session.onboarding.status === 'completed') return '/home';
 
