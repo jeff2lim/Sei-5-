@@ -37,8 +37,10 @@ Apply `supabase/migrations/202608100001_recovery_sessions.sql` with the Supabase
 2. Enable Kakao Login and create/activate the client secret.
 3. Add the Supabase Auth callback URL shown in the Supabase Kakao provider settings to Kakao's allowed redirect URIs.
 4. In Supabase Authentication → Providers → Kakao, enter the Kakao REST API key and client secret.
-5. Enable “Allow users without an email” unless email is a reviewed and required Kakao consent item.
-6. Do not request friend, message, or other unrelated Kakao scopes.
+5. Convert the Kakao application to a Biz App. Individual developers without a business registration number can do this with identity verification and the Kakao Business terms.
+6. In Kakao Login → Consent Items, enable nickname, profile image, and email as optional consent items. Supabase's native Kakao provider requests these three scopes by default.
+7. Enable “Allow users without an email” in Supabase so users can skip the optional email consent.
+8. Do not request friend, message, or other unrelated Kakao scopes.
 
 Kakao secrets belong in the Kakao/Supabase dashboards, not in this repository or Vercel public variables.
 
@@ -47,9 +49,10 @@ Kakao secrets belong in the Kakao/Supabase dashboards, not in this repository or
 In Supabase Authentication URL Configuration:
 
 - Set the production Site URL to the stable production domain.
-- Add `https://<production-domain>/auth/callback` to the redirect allow list.
-- Add `http://localhost:3000/auth/callback` for local testing.
-- Add preview URLs only when preview authentication testing is required; keep production rules narrow.
+- Add `https://<production-domain>/auth/callback**` to allow the callback's safe `next` query parameter.
+- Add `http://localhost:3000/**` for local testing.
+- For Vercel previews, add `https://*-<team-or-account-slug>.vercel.app/**` as recommended by Supabase.
+- Keep the production rule scoped to the callback path; do not use a production-wide wildcard.
 
 ## 5. Vercel rollout
 
