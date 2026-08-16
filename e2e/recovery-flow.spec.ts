@@ -89,3 +89,154 @@ test('user can register a skincare product with a v5 ingredient group', async ({
   await expect(page.getByText('비타민C 세럼')).toBeVisible();
   await expect(page.getByText('중단', { exact: true }).first()).toBeVisible();
 });
+
+const isoDaysAgo = (days: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date.toISOString().slice(0, 10);
+};
+
+type SeedOptions = {
+  daysAgo?: number;
+  profile?: Record<string, unknown>;
+  products?: unknown[];
+  checkIns?: unknown[];
+};
+
+const seed = (page: import('@playwright/test').Page, options: SeedOptions = {}) =>
+  page.addInitScript((seedOptions: SeedOptions) => {
+    const performedAt = (() => {
+      const date = new Date();
+      date.setDate(date.getDate() - (seedOptions.daysAgo ?? 0));
+      return date.toISOString().slice(0, 10);
+    })();
+    window.localStorage.setItem(
+      'recovery-note:v1',
+      JSON.stringify({
+        profile: seedOptions.profile ?? { sensitivity: 'normal' },
+        procedure: {
+          id: 'p1',
+          procedureType: 'picotoning',
+          performedAt,
+          createdAt: new Date().toISOString(),
+        },
+        products: seedOptions.products ?? [],
+        checkIns: seedOptions.checkIns ?? [],
+        consent: {
+          terms: true,
+          privacy: true,
+          healthData: true,
+          photo: false,
+          marketing: false,
+          updatedAt: new Date().toISOString(),
+        },
+      }),
+    );
+  }, options);
+
+test('after the D+14 window home shows the completion screen and still reaches check-in', async ({
+  page,
+}) => {
+  await seed(page, { daysAgo: 20 });
+
+  await page.goto('/home');
+  await expect(page.getByRole('heading', { name: '2주 회복 과정을 잘 기록했어요.' })).toBeVisible();
+  await expect(page.getByText('Picotoning · D+20', { exact: true })).toBeVisible();
+
+  // 회복 완료 화면에서도 상태 체크로 갈 수 있어야 합니다.
+  await page.getByRole('link', { name: '상태 체크 시작' }).click();
+  await expect(page).toHaveURL(/\/check-in$/);
+});
+
+test('within the window home keeps the daily guidance screen', async ({ page }) => {
+  await seed(page, { daysAgo: 10 });
+
+  await page.goto('/home');
+  await expect(page.getByText('Picotoning · D+10', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '오늘의 회복 안내예요.' })).toBeVisible();
+});
+
+test('procedure date can be edited without losing the next appointment', async ({ page }) => {
+  await seed(page, {
+    daysAgo: 3,
+    profile: { sensitivity: 'normal', nextProcedureAt: '2026-12-01' },
+  });
+
+  await page.goto('/profile');
+  await page.getByRole('link', { name: /시술 정보/ }).click();
+  await expect(page).toHaveURL(/\/onboarding\/procedure\?mode=edit$/);
+
+  await page.getByLabel('시술 날짜').fill(isoDaysAgo(1));
+  await page.getByRole('button', { name: '시술 정보 저장' }).click();
+  await expect(page).toHaveURL(/\/profile$/);
+
+  const stored = await page.evaluate(() =>
+    JSON.parse(window.localStorage.getItem('recovery-note:v1') ?? '{}'),
+  );
+  expect(stored.procedure.performedAt).toBe(isoDaysAgo(1));
+  expect(stored.procedure.id).toBe('p1');
+  expect(stored.profile.nextProcedureAt).toBe('2026-12-01');
+});
+
+test('product can be edited in place instead of deleted and re-added', async ({ page }) => {
+  await seed(page, {
+    daysAgo: 2,
+    products: [
+      {
+        id: 'prod-1',
+        name: '기존 세럼',
+        category: 'skincare',
+        ruleSelection: {
+          ingredientGroupIds: ['niacinamide'],
+          cleansingMethodIds: [],
+          baseMakeupIds: [],
+        },
+        attributeIds: ['niacinamide'],
+        createdAt: '2026-07-01T00:00:00.000Z',
+        updatedAt: '2026-07-01T00:00:00.000Z',
+      },
+    ],
+  });
+
+  await page.goto('/products/prod-1');
+  await page.getByRole('link', { name: /제품 수정/ }).click();
+  await expect(page).toHaveURL(/\/products\/prod-1\/edit$/);
+
+  // 기존 값이 초기값으로 들어와야 합니다.
+  await expect(page.getByLabel('제품 이름')).toHaveValue('기존 세럼');
+  await page.getByLabel('제품 이름').fill('이름 바꾼 세럼');
+  await page.getByRole('button', { name: '속성 선택하기' }).click();
+  await expect(page.getByRole('checkbox', { name: /나이아신아마이드/ })).toBeChecked();
+  await page.getByRole('button', { name: '변경 저장' }).click();
+
+  await expect(page).toHaveURL(/\/products\/prod-1$/);
+  await expect(page.getByRole('heading', { name: '이름 바꾼 세럼' })).toBeVisible();
+
+  const stored = await page.evaluate(() =>
+    JSON.parse(window.localStorage.getItem('recovery-note:v1') ?? '{}'),
+  );
+  expect(stored.products).toHaveLength(1);
+  expect(stored.products[0].id).toBe('prod-1');
+  expect(stored.products[0].createdAt).toBe('2026-07-01T00:00:00.000Z');
+});
+
+test('calendar opens the check-in record for a checked day', async ({ page }) => {
+  const checkedAt = new Date();
+  checkedAt.setHours(12, 0, 0, 0);
+  await seed(page, {
+    daysAgo: 1,
+    checkIns: [
+      {
+        id: 'check-1',
+        checkedAt: checkedAt.toISOString(),
+        procedureDay: 1,
+        answers: [{ symptomId: 'redness', present: false }],
+        rulePackVersion: '5.0.0-team-provisional',
+      },
+    ],
+  });
+
+  await page.goto('/records');
+  await page.getByRole('button', { name: /피부 체크한 날, 기록 보기/ }).click();
+  await expect(page).toHaveURL(/\/check-in\/result\?id=check-1$/);
+});

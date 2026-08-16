@@ -4,7 +4,7 @@ import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
 import { analytics } from '@/domain/analytics';
 import { getProcedureDay } from '@/domain/procedure';
-import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
+import { rulePackMeta } from '@/rules/loaders/bundled-rule-pack';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { Check, Sparkles } from 'lucide-react';
 import Link from 'next/link';
@@ -41,7 +41,7 @@ export default function CompletePage() {
         </div>
         <div className="list-row">
           <span>룰팩 버전</span>
-          <strong>{bundledRulePack.meta.version}</strong>
+          <strong>{rulePackMeta.version}</strong>
         </div>
         <div className="list-row">
           <span>안내 출처</span>

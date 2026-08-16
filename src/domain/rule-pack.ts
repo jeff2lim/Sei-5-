@@ -1,27 +1,7 @@
-import type { ContactActionType } from './check-in';
-import type { AttributeDefinition, VerdictLevel } from './product';
-
-export type RulePeriod = {
-  fromDay: number;
-  toDay: number | null;
-  level: Exclude<VerdictLevel, 'unknown'>;
-  resumeDay?: number;
-  reason: string;
-};
-
-export type AttributeRule = {
-  attributeId: string;
-  periods: RulePeriod[];
-};
-
-export type ContactRule = {
-  symptomId: string;
-  conditions: { present: true; severity?: 'mild' | 'moderate' | 'severe' };
-  action: ContactActionType;
-  title: string;
-  body: string;
-};
-
+/**
+ * 화면에 노출하는 룰팩 메타입니다.
+ * 규칙 본문의 형태는 src/rules/schema.ts의 zod 스키마가 정의합니다.
+ */
 export type RulePackMeta = {
   id: string;
   version: string;
@@ -32,11 +12,4 @@ export type RulePackMeta = {
   };
   reviewedBy?: string;
   reviewedAt?: string;
-};
-
-export type RulePack = {
-  meta: RulePackMeta;
-  attributes: AttributeDefinition[];
-  verdictRules: AttributeRule[];
-  contactRules: ContactRule[];
 };

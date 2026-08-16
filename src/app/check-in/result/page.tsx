@@ -3,7 +3,6 @@
 import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
 import { evaluateCheckIn } from '@/rules/engine/evaluate';
-import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
 import { consecutiveDowngradeDays, hasDowngradeTrigger } from '@/ruletable/resolve';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { AlertTriangle, CheckCircle2, PhoneCall } from 'lucide-react';
@@ -53,7 +52,7 @@ function CheckInResultPageContent() {
     );
   }
 
-  const action = evaluateCheckIn(checkIn, bundledRulePack);
+  const action = evaluateCheckIn(checkIn);
   const urgent = action.type !== 'CONTINUE_GUIDE';
   const Icon = urgent ? AlertTriangle : CheckCircle2;
   const level = action.type === 'CONTACT_CLINIC_PROMPTLY' ? 'stop' : urgent ? 'care' : 'go';

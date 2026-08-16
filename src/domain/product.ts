@@ -13,10 +13,3 @@ export type Product = {
   createdAt: string;
   updatedAt: string;
 };
-
-export type AttributeDefinition = {
-  id: string;
-  category: ProductCategory;
-  name: string;
-  description: string;
-};
