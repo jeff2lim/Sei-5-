@@ -7,13 +7,12 @@ import { analytics } from '@/domain/analytics';
 import type { ProductCategory, VerdictLevel } from '@/domain/product';
 import { getProcedureDay, getRecoveryMilestone } from '@/domain/procedure';
 import { evaluateCategory } from '@/rules/engine/evaluate';
-import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
+import { rulePackMeta } from '@/rules/loaders/bundled-rule-pack';
 import { getNextProcedureDay } from '@/ruletable/date';
 import { activePrepBehaviorWarnings } from '@/ruletable/resolve';
 import { useRecoveryStore } from '@/store/recovery-store';
 import {
   ChevronRight,
-  CircleCheck,
   ClipboardCheck,
   Droplets,
   Info,
@@ -32,6 +31,9 @@ const categories: Array<{
   { id: 'skincare', label: '스킨케어', icon: Sparkles },
   { id: 'outing', label: '외출준비', icon: ShieldCheck },
 ];
+
+/** 룰테이블 v6가 D−7~D+14를 커버합니다. 이후 날짜는 D+14 판정으로 고정됩니다. */
+const RECOVERY_WINDOW_DAYS = 14;
 
 function getRecoveryCompleteLabel(level: VerdictLevel) {
   switch (level) {
@@ -68,7 +70,6 @@ export default function HomePage() {
               category.id,
               session?.products ?? [],
               day,
-              bundledRulePack,
               session?.profile.sensitivity ?? 'normal',
               nextProcedureDay,
             ),
@@ -81,7 +82,7 @@ export default function HomePage() {
       analytics.track({
         name: 'home_viewed',
         procedureDay: day,
-        rulePackVersion: bundledRulePack.meta.version,
+        rulePackVersion: rulePackMeta.version,
       });
     }
   }, [day]);
@@ -110,40 +111,21 @@ export default function HomePage() {
     (checkIn) => checkIn.checkedAt.slice(0, 10) === new Date().toISOString().slice(0, 10),
   );
 
-  {
-    /*}
-  const allAttributeVerdicts = categoryVerdicts.flatMap((categoryVerdict) =>
-  categoryVerdict.products.flatMap((productVerdict) =>
-    productVerdict.details
-  ),);
-
-  const recoveryAttributes = bundledRulePack.attributes
-    .filter((attribute) =>
-      allAttributeVerdicts.some(
-        (detail) => detail.attributeId === attribute.id,
-      ),
-    )
-    .map((attribute) => ({
-      attribute,
-      verdict: allAttributeVerdicts.find(
-        (detail) => detail.attributeId === attribute.id,
-      )!,
-    }));
-
-  const resumableItems = recoveryAttributes.filter(
-    ({ verdict }) => verdict.level === 'go',
+  // 회복기와 회복 완료 화면 양쪽에서 같은 진입점을 씁니다.
+  const checkInCard = (
+    <section className="section card">
+      <div className="list-row" style={{ paddingTop: 0 }}>
+        <div className="list-row-main">
+          <strong>오늘 피부 상태 체크</strong>
+          <span>{todayCheck ? '오늘 기록을 완료했어요.' : '최대 5개 항목을 직접 확인해요.'}</span>
+        </div>
+        {todayCheck ? <VerdictBadge level="go" /> : <ClipboardCheck color="var(--teal)" />}
+      </div>
+      <Link className="button full" href="/check-in" style={{ marginTop: 12 }}>
+        {todayCheck ? '다시 체크하기' : '상태 체크 시작'}
+      </Link>
+    </section>
   );
-
-  const cautionItems = recoveryAttributes.filter(
-    ({ verdict }) =>
-      verdict.level === 'care' || verdict.level === 'stop',
-  );
-
-  const unknownItems = recoveryAttributes.filter(
-    ({ verdict }) => verdict.level === 'unknown',
-  );
-*/
-  }
 
   const recoveryItems = categoryVerdicts.flatMap((categoryVerdict) =>
     categoryVerdict.products.flatMap((verdict) => {
@@ -163,7 +145,13 @@ export default function HomePage() {
   const unknownItems = recoveryItems.filter(({ verdict }) => verdict.level === 'unknown');
 
   const milestone =
-    day === null ? null : day === 7 ? getRecoveryMilestone(day) : showPrep ? null : getRecoveryMilestone(day);
+    day === null
+      ? null
+      : day === 7
+        ? getRecoveryMilestone(day)
+        : showPrep
+          ? null
+          : getRecoveryMilestone(day);
   const isFirstWeekMilestone = milestone === 'first-week';
   const isRecoveryCompleteMilestone = milestone === 'recovery-complete';
 
@@ -206,7 +194,9 @@ export default function HomePage() {
           </h2>
 
           <p className="subcopy">
-            제품별 안내는 등록한 정보를 기준으로 계속 확인할 수 있어요.
+            {isRecoveryCompleteMilestone
+              ? `아래 안내는 룰테이블의 마지막 날인 D+${RECOVERY_WINDOW_DAYS} 기준으로 계속 표시됩니다.`
+              : '제품별 안내는 등록한 정보를 기준으로 계속 확인할 수 있어요.'}
           </p>
         </section>
 
@@ -241,25 +231,6 @@ export default function HomePage() {
               </p>
             )}
 
-            {/*}
-              {resumableItems.length > 0 ? (
-                resumableItems.map(({ attribute, verdict }) => (
-                <div className="list-row" key={attribute.id}>
-                  <div className="list-row-main">
-                    <strong>{attribute.name}</strong>
-                  </div>
-                  <span className={`badge ${verdict.level}`}>
-                    {getRecoveryCompleteLabel(verdict.level)}
-                  </span>
-                </div>
-                ))
-                ) : (
-                <p className="recovery-summary-empty">
-                  현재 재개 가능으로 표시된 성분·속성이 없어요.
-                </p>
-              )}
-              */}
-
             {cautionItems.length > 0 ? (
               cautionItems.map(({ product, verdict }) => (
                 <div className="list-row" key={product.id}>
@@ -284,25 +255,6 @@ export default function HomePage() {
               <p className="recovery-summary-empty">현재 주의가 필요한 등록 제품이 없어요.</p>
             )}
 
-            {/*}
-              {cautionItems.length > 0 ? (
-                cautionItems.map(({ attribute, verdict }) => (
-                  <div className="list-row" key={attribute.id}>
-                    <div className="list-row-main">
-                      <strong>{attribute.name}</strong>
-                    </div>
-                    <span className={`badge ${verdict.level}`}>
-                      {getRecoveryCompleteLabel(verdict.level)}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <p className="recovery-summary-empty">
-                  현재 주의가 필요한 성분·속성이 없어요.
-                </p>
-              )}
-            */}
-
             {unknownItems.map(({ product, verdict }) => (
               <div className="list-row" key={product.id}>
                 <div className="list-row-main">
@@ -315,82 +267,10 @@ export default function HomePage() {
               </div>
             ))}
 
-            {/*}
-            {unknownItems.length > 0 ? (
-              <div className="recovery-summary-group">
-                <h3 className="recovery-summary-title">
-                  확인이 필요한 것
-                </h3>
-                {unknownItems.map(({ attribute, verdict }) => (
-                  <div className="list-row" key={attribute.id}>
-                    <div className="list-row-main">
-                      <strong>{attribute.name}</strong>
-                    </div>
-                    <span className={`badge ${verdict.level}`}>
-                      {getRecoveryCompleteLabel(verdict.level)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-            */}
           </div>
         </section>
 
-        {/*}
-        <section className="section">
-          <h2 className="section-title">이제부터</h2>
-
-          <div className="stack">
-            {categories.map(({ id, label, description, icon: Icon }, index) => {
-              const verdict = categoryVerdicts[index];
-
-              return (
-                <Link className="category-card" href={`/guide/${id}`} key={id}>
-                  <span className="category-icon">
-                    <Icon size={22} aria-hidden="true" />
-                  </span>
-
-                  <span className="list-row-main">
-                    <strong>{label}</strong>
-                    <span>
-                      {verdict.products.length
-                        ? `${verdict.products.length}개 제품 · ${description}`
-                        : `등록 제품 없음 · ${description}`}
-                    </span>
-                  </span>
-
-                  <span
-                    style={{
-                      display: 'grid',
-                      justifyItems: 'end',
-                      gap: 7,
-                    }}
-                  >
-                    <span className={`badge ${verdict.level}`}>
-                      {getRecoveryCompleteLabel(verdict.level)}
-                    </span>
-                    <ChevronRight
-                      size={17}
-                      color="var(--ink-soft)"
-                      aria-hidden="true"
-                    />
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-        */}
-        {/*
-        <div className="notice section">
-          <Info size={18} aria-hidden="true" />
-          <span>
-            회복 기간이 끝난 뒤에도 자외선 차단과 피부 자극 관리는 계속해주세요.
-            제품별 안내는 현재 안내 기준으로 확인할 수 있습니다.
-          </span>
-        </div>
-        */}
+        {checkInCard}
 
         {isFirstWeekMilestone && nextProcedureDay !== null && nextProcedureDay <= 14 ? (
           <div className="notice section">
@@ -448,7 +328,9 @@ export default function HomePage() {
                 ? '재개기를 마쳤어요. 남아 있는 주의 항목을 확인해 주세요.'
                 : '자극을 줄이고, 피부 느낌을 천천히 확인하세요.'}
         </h2>
-        <p className="subcopy">입력한 제품 정보와 오늘 날짜를 기준으로 표시됩니다.</p>
+        <p className="subcopy">
+          이 안내는 입력한 속성과 룰팩 {rulePackMeta.version}을 기준으로 표시됩니다.
+        </p>
       </section>
 
       {prepWarnings.length ? (
@@ -491,25 +373,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section card">
-        <div className="list-row" style={{ paddingTop: 0 }}>
-          <div className="list-row-main">
-            <strong>오늘 피부 상태 체크</strong>
-            <span>{todayCheck ? '오늘 기록을 완료했어요.' : '최대 5개 항목을 직접 확인해요.'}</span>
-          </div>
-          {todayCheck ? (
-            <span className="badge go">
-              <CircleCheck size={14} aria-hidden="true" />
-              완료
-            </span>
-          ) : (
-            <ClipboardCheck color="var(--teal)" />
-          )}
-        </div>
-        <Link className="button full" href="/check-in" style={{ marginTop: 12 }}>
-          {todayCheck ? '다시 체크하기' : '상태 체크 시작'}
-        </Link>
-      </section>
+      {checkInCard}
 
       <div className="notice section">
         <Info size={18} aria-hidden="true" />

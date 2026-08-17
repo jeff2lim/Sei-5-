@@ -8,7 +8,7 @@ import { analytics } from '@/domain/analytics';
 import { getProcedureDay, toLocalDateInputValue } from '@/domain/procedure';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -25,11 +25,16 @@ export default function ProcedurePage() {
   const session = useRecoveryStore((state) => state.session);
   const saveProcedure = useRecoveryStore((state) => state.saveProcedure);
   const saveOnboardingStep = useRecoveryStore((state) => state.saveOnboardingStep);
+  // 마이에서 들어오면 온보딩이 아니라 시술 정보 수정 화면으로 동작합니다.
+  const [isEditing, setIsEditing] = useState(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { performedAt: today(), sensitivity: 'normal' },
   });
 
+  useEffect(() => {
+    setIsEditing(new URLSearchParams(window.location.search).get('mode') === 'edit');
+  }, []);
   useEffect(() => analytics.track({ name: 'onboarding_started' }), []);
   useEffect(() => {
     if (!hydrated) return;
@@ -46,26 +51,37 @@ export default function ProcedurePage() {
       return;
     }
     await saveProcedure(values.performedAt, values.sensitivity as Sensitivity);
-    await saveOnboardingStep('products');
+    if (!isEditing) await saveOnboardingStep('products');
     analytics.track({
       name: 'procedure_saved',
       procedureDay: getProcedureDay(values.performedAt, new Date()),
     });
-    router.push('/onboarding/products');
+    router.push(isEditing ? '/profile' : '/onboarding/products');
   }
 
   return (
     <AppShell navigation={false}>
-      <Topbar title="시술 기록" closeHref="/consent?from=onboarding" />
-      <div className="progress" aria-label="4단계 중 1단계">
-        <span className="active" />
-        <span />
-        <span />
-        <span />
-      </div>
-      <p className="eyebrow">Step 1 · Procedure</p>
-      <h1 className="headline">피코토닝 시술일을 알려 주세요.</h1>
-      <p className="subcopy">날짜를 기준으로 D+n 안내가 달라져요.</p>
+      <Topbar
+        title={isEditing ? '시술 정보' : '시술 기록'}
+        closeHref={isEditing ? '/profile' : '/consent?from=onboarding'}
+      />
+      {isEditing ? null : (
+        <div className="progress" aria-label="4단계 중 1단계">
+          <span className="active" />
+          <span />
+          <span />
+          <span />
+        </div>
+      )}
+      <p className="eyebrow">{isEditing ? 'Procedure' : 'Step 1 · Procedure'}</p>
+      <h1 className="headline">
+        {isEditing ? '시술 정보를 수정할까요?' : '피코토닝 시술일을 알려 주세요.'}
+      </h1>
+      <p className="subcopy">
+        {isEditing
+          ? '새로 시술을 받았다면 날짜를 바꿔 주세요. D+n 안내가 새 날짜 기준으로 다시 시작돼요.'
+          : '날짜를 기준으로 D+n 안내가 달라져요.'}
+      </p>
 
       <form className="section stack" onSubmit={form.handleSubmit(submit)} noValidate>
         <div className="field">
@@ -102,7 +118,7 @@ export default function ProcedurePage() {
 
         <div className="sticky-actions">
           <button className="button full" type="submit" disabled={form.formState.isSubmitting}>
-            다음
+            {isEditing ? '시술 정보 저장' : '다음'}
           </button>
         </div>
       </form>

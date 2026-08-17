@@ -762,14 +762,6 @@ a {
 }
 
 .calendar > span {
-  display: grid;
-  min-height: 38px;
-  place-items: center;
-  border-radius: 10px;
-  font-size: 12px;
-}
-
-.calendar > span {
   display: flex;
   min-height: 38px;
   flex-direction: column;
@@ -828,6 +820,15 @@ a {
 }
 
 .calendar > span.next-procedure:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
+.calendar > span.calendar-day-interactive {
+  cursor: pointer;
+}
+
+.calendar > span.calendar-day-interactive:focus-visible {
   outline: 2px solid var(--teal);
   outline-offset: 2px;
 }

@@ -9,7 +9,7 @@ import type { ProductRuleSelection } from '@/ruletable/types';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const emptySelection = (): ProductRuleSelection => ({
   ingredientGroupIds: [],
@@ -17,17 +17,56 @@ const emptySelection = (): ProductRuleSelection => ({
   baseMakeupIds: [],
 });
 
-export function ProductAttributesForm({ successHref }: { successHref: string }) {
+type OutingType =
+  | 'serum_lotion'
+  | 'regular_non_waterproof'
+  | 'waterproof_stick'
+  | 'cushion_base';
+
+export function ProductAttributesForm({
+  successHref,
+  restartHref,
+}: {
+  successHref: string;
+  /** draft가 비었을 때(새로고침 등) 돌아갈 1단계 주소입니다. */
+  restartHref?: string;
+}) {
   const router = useRouter();
   const draft = useRecoveryStore((state) => state.productDraft);
   const saveProduct = useRecoveryStore((state) => state.saveProduct);
+  const editingProduct = useRecoveryStore((state) =>
+    state.productDraft.editingProductId
+      ? state.session?.products.find((item) => item.id === state.productDraft.editingProductId)
+      : undefined,
+  );
+  const isEditing = Boolean(draft.editingProductId);
   const [selection, setSelection] = useState<ProductRuleSelection>(emptySelection);
   const [oilOrBalm, setOilOrBalm] = useState(false);
   const [scrubOrPeeling, setScrubOrPeeling] = useState(false);
-  const [outingType, setOutingType] = useState<
-    'serum_lotion' | 'regular_non_waterproof' | 'waterproof_stick' | 'cushion_base' | null
-  >(null);
+  const [outingType, setOutingType] = useState<OutingType | null>(null);
+  const [seeded, setSeeded] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // 수정 모드에서는 기존에 고른 값을 그대로 다시 보여 줍니다.
+  useEffect(() => {
+    if (seeded || !editingProduct) return;
+    const existing = editingProduct.ruleSelection;
+    if (existing) {
+      setSelection({
+        ingredientGroupIds: existing.ingredientGroupIds ?? [],
+        cleansingMethodIds: existing.cleansingMethodIds ?? [],
+        baseMakeupIds: existing.baseMakeupIds ?? [],
+        sunscreenTypeId: existing.sunscreenTypeId,
+      });
+      setOilOrBalm((existing.cleansingMethodIds ?? []).includes('cleansing_oil'));
+      setScrubOrPeeling((existing.cleansingMethodIds ?? []).includes('scrub_deep'));
+      setOutingType(
+        (existing.sunscreenTypeId as OutingType | undefined) ??
+          ((existing.baseMakeupIds ?? []).includes('cushion') ? 'cushion_base' : null),
+      );
+    }
+    setSeeded(true);
+  }, [editingProduct, seeded]);
   const selectedCount = useMemo(
     () =>
       selection.ingredientGroupIds.length +
@@ -44,14 +83,21 @@ export function ProductAttributesForm({ successHref }: { successHref: string }) 
   if (!draft.category) {
     return (
       <AppShell navigation={false}>
-        <Topbar title="제품 등록 · 2/2" />
+        <Topbar title={isEditing ? '제품 수정 · 2/2' : '제품 등록 · 2/2'} />
         <div className="empty-state">
           <h2>제품 정보가 비어 있어요</h2>
           <p>첫 단계에서 제품 이름과 사용 시점을 다시 선택해 주세요.</p>
           <button
             className="button"
             type="button"
-            onClick={() => router.replace(`${successHref}/new/category`)}
+            onClick={() =>
+              router.replace(
+                restartHref ??
+                  (successHref.startsWith('/onboarding')
+                    ? '/onboarding/products/new/category'
+                    : '/products/new/category'),
+              )
+            }
           >
             첫 단계로 이동
           </button>
@@ -99,7 +145,7 @@ export function ProductAttributesForm({ successHref }: { successHref: string }) 
           nextSelection.baseMakeupIds.length +
           (nextSelection.sunscreenTypeId ? 1 : 0),
       });
-      router.push(successHref);
+      router.push(isEditing ? `/products/${product.id}` : successHref);
     } finally {
       setSaving(false);
     }
@@ -109,7 +155,7 @@ export function ProductAttributesForm({ successHref }: { successHref: string }) 
 
   return (
     <AppShell navigation={false}>
-      <Topbar title="제품 등록 · 2/2" />
+      <Topbar title={isEditing ? '제품 수정 · 2/2' : '제품 등록 · 2/2'} />
       <p className="eyebrow">What do you use?</p>
       <h1 className="headline">
         {draft.category === 'cleansing'
@@ -225,7 +271,9 @@ export function ProductAttributesForm({ successHref }: { successHref: string }) 
             ? '저장 중…'
             : draft.category === 'skincare' && selectedCount === 0
               ? '성분 미지정으로 저장'
-              : '제품 저장'}
+              : isEditing
+                ? '변경 저장'
+                : '제품 저장'}
         </button>
       </div>
     </AppShell>

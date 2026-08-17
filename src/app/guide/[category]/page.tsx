@@ -11,7 +11,6 @@ import { analytics } from '@/domain/analytics';
 import type { ProductCategory } from '@/domain/product';
 import { getProcedureDay } from '@/domain/procedure';
 import { evaluateProduct } from '@/rules/engine/evaluate';
-import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
 import {
   combinationsForCategory,
   resolveCombinationState,
@@ -68,7 +67,6 @@ export default function GuidePage() {
     verdict: evaluateProduct(
       product,
       day,
-      bundledRulePack,
       session?.profile.sensitivity ?? 'normal',
       nextProcedureDay,
     ),

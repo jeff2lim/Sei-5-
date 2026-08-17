@@ -8,7 +8,6 @@ import { VerdictBadge } from '@/components/verdict/verdict-badge';
 import type { VerdictLevel } from '@/domain/product';
 import { getProcedureDay } from '@/domain/procedure';
 import { evaluateProduct } from '@/rules/engine/evaluate';
-import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
 import { resolveCombinationState, toCombinationUiProduct } from '@/ruletable/combine';
 import { ingredientGroups } from '@/ruletable/data';
 import { getNextProcedureDay } from '@/ruletable/date';
@@ -34,7 +33,7 @@ export default function ProductsPage() {
   const rows = (session?.products ?? [])
     .map((product) => ({
       product,
-      verdict: evaluateProduct(product, day, bundledRulePack, sensitivity, nextProcedureDay),
+      verdict: evaluateProduct(product, day, sensitivity, nextProcedureDay),
     }))
     .sort((a, b) => rank[b.verdict.level] - rank[a.verdict.level]);
   const latestCheckIn = [...(session?.checkIns ?? [])]

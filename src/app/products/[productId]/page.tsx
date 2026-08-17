@@ -7,10 +7,9 @@ import { VerdictBadge, verdictLabel } from '@/components/verdict/verdict-badge';
 import { analytics } from '@/domain/analytics';
 import { getProcedureDay } from '@/domain/procedure';
 import { evaluateProduct } from '@/rules/engine/evaluate';
-import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
 import { getNextProcedureDay } from '@/ruletable/date';
 import { useRecoveryStore } from '@/store/recovery-store';
-import { Info, Trash2 } from 'lucide-react';
+import { Info, Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -34,7 +33,6 @@ export default function ProductDetailPage() {
     ? evaluateProduct(
         product,
         day,
-        bundledRulePack,
         session?.profile.sensitivity ?? 'normal',
         nextProcedureDay,
       )
@@ -136,6 +134,9 @@ export default function ProductDetailPage() {
           <span>{deleteError}</span>
         </div>
       ) : null}
+      <Link className="button secondary full section" href={`/products/${product.id}/edit`}>
+        <Pencil size={18} aria-hidden="true" /> 제품 수정
+      </Link>
       <button
         className="button danger full section"
         type="button"

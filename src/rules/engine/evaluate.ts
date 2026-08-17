@@ -1,7 +1,6 @@
 import type { CheckIn, ContactAction } from '@/domain/check-in';
 import type { Product, ProductCategory, VerdictLevel } from '@/domain/product';
 import type { Sensitivity } from '@/domain/procedure';
-import type { RulePack } from '@/domain/rule-pack';
 import type { AttributeVerdict, CategoryVerdict, ProductVerdict } from '@/domain/verdict';
 import { baseMakeup, cleansingMethods, ingredientGroups, sunscreenTypes } from '@/ruletable/data';
 import { evaluateSymptoms, resolveProduct, resolveTarget, v6RuleTable } from '@/ruletable/resolve';
@@ -50,7 +49,6 @@ function inferTarget(attributeId: string): { type: TargetType; id: string } {
 export function evaluateAttribute(
   attributeId: string,
   procedureDay: number,
-  _rulePack?: RulePack,
   sensitivity: Sensitivity = 'normal',
   nextProcedureDay: number | null = null,
 ): AttributeVerdict {
@@ -84,7 +82,6 @@ function migrateLegacySelection(product: Product): ProductRuleSelection {
 export function evaluateProduct(
   product: Product,
   procedureDay: number,
-  _rulePack?: RulePack,
   sensitivity: Sensitivity = 'normal',
   nextProcedureDay: number | null = null,
 ): ProductVerdict {
@@ -130,12 +127,11 @@ export function evaluateProduct(
 export function evaluateProducts(
   products: Product[],
   procedureDay: number,
-  rulePack?: RulePack,
   sensitivity: Sensitivity = 'normal',
   nextProcedureDay: number | null = null,
 ): ProductVerdict[] {
   return products.map((product) =>
-    evaluateProduct(product, procedureDay, rulePack, sensitivity, nextProcedureDay),
+    evaluateProduct(product, procedureDay, sensitivity, nextProcedureDay),
   );
 }
 
@@ -143,7 +139,6 @@ export function evaluateCategory(
   category: ProductCategory,
   products: Product[],
   procedureDay: number,
-  rulePack?: RulePack,
   sensitivity: Sensitivity = 'normal',
   nextProcedureDay: number | null = null,
 ): CategoryVerdict {
@@ -151,7 +146,6 @@ export function evaluateCategory(
   const verdicts = evaluateProducts(
     matchingProducts,
     procedureDay,
-    rulePack,
     sensitivity,
     nextProcedureDay,
   );
@@ -162,8 +156,7 @@ export function evaluateCategory(
   return { category, level, products: verdicts };
 }
 
-export function evaluateCheckIn(checkIn: CheckIn, _rulePack?: RulePack): ContactAction {
-  void _rulePack;
+export function evaluateCheckIn(checkIn: CheckIn): ContactAction {
   const result = evaluateSymptoms(
     Math.max(0, Math.min(14, checkIn.procedureDay ?? 0)),
     checkIn.answers.map((answer) => ({

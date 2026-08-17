@@ -25,7 +25,16 @@ const categories: Array<{
   },
 ];
 
-export function ProductCategoryForm({ cancelHref }: { cancelHref: string }) {
+export function ProductCategoryForm({
+  cancelHref,
+  nextHref,
+  editingProductId,
+}: {
+  cancelHref: string;
+  nextHref: string;
+  /** 수정 흐름에서만 전달합니다. 신규 등록에서는 남아 있던 편집 상태를 지웁니다. */
+  editingProductId?: string;
+}) {
   const router = useRouter();
   const draft = useRecoveryStore((state) => state.productDraft);
   const setDraft = useRecoveryStore((state) => state.setProductDraft);
@@ -45,15 +54,17 @@ export function ProductCategoryForm({ cancelHref }: { cancelHref: string }) {
       setError('언제 쓰는 제품인지 선택해 주세요.');
       return;
     }
-    setDraft({ name: name.trim(), category });
-    router.push(
-      `${cancelHref.startsWith('/onboarding') ? '/onboarding' : ''}/products/new/attributes`,
-    );
+    // editingProductId는 라우트가 정합니다. 신규 등록이면 undefined로 덮여 초기화됩니다.
+    setDraft({ name: name.trim(), category, editingProductId });
+    router.push(nextHref);
   }
 
   return (
     <AppShell navigation={false}>
-      <Topbar title="제품 등록 · 1/2" closeHref={cancelHref} />
+      <Topbar
+        title={editingProductId ? '제품 수정 · 1/2' : '제품 등록 · 1/2'}
+        closeHref={cancelHref}
+      />
       <p className="eyebrow">When do you use it?</p>
       <h1 className="headline">언제 쓰는 제품인가요?</h1>
       <p className="subcopy">제품을 사용하는 순간에 맞춰 안내 화면에 배치할게요.</p>

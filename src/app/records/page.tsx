@@ -3,14 +3,13 @@
 import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
 import { useRecoveryStore } from '@/store/recovery-store';
-import { CalendarPlus, ChevronLeft, ChevronRight, Trash2, X } from 'lucide-react';
+import { CalendarPlus, ChevronLeft, ChevronRight, ClipboardCheck, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 
-const SHOW_NEXT_PROCEDURE = true;
-
 function RecordsPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
@@ -40,14 +39,15 @@ function RecordsPageContent() {
   const calendarCellCount = 42;
   const trailingBlankCount = calendarCellCount - firstDayOffset - dayCount;
 
-  const checkedDays = new Set(
-    (session?.checkIns ?? [])
-      .filter((item) => {
-        const date = new Date(item.checkedAt);
-        return date.getFullYear() === year && date.getMonth() === month;
-      })
-      .map((item) => new Date(item.checkedAt).getDate()),
-  );
+  // 같은 날 여러 번 체크했으면 가장 마지막 기록으로 이동합니다.
+  const checkInIdByDay = new Map<number, string>();
+  for (const item of session?.checkIns ?? []) {
+    const date = new Date(item.checkedAt);
+    if (date.getFullYear() === year && date.getMonth() === month) {
+      checkInIdByDay.set(date.getDate(), item.id);
+    }
+  }
+  const checkedDays = new Set(checkInIdByDay.keys());
   const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
 
   const procedureDay =
@@ -144,42 +144,51 @@ function RecordsPageContent() {
           {Array.from({ length: dayCount }, (_, index) => index + 1).map((day) => {
             const isProcedureDay = day === procedureDay;
             const isCheckedDay = checkedDays.has(day);
-            const isNextProcedureDay = SHOW_NEXT_PROCEDURE && day === nextProcedureDay;
+            const isNextProcedureDay = day === nextProcedureDay;
             const isToday = day === todayDay;
+
+            const checkInId = checkInIdByDay.get(day);
 
             const descriptions: string[] = [];
 
             if (isToday) descriptions.push('오늘');
             if (isProcedureDay) descriptions.push('시술일');
-            if (isCheckedDay) descriptions.push('피부 체크한 날');
+            if (isCheckedDay) descriptions.push('피부 체크한 날, 기록 보기');
             if (isNextProcedureDay) descriptions.push('다음 시술 예정');
+
+            // 체크 기록이 있으면 그날 결과로, 없고 다음 시술 예정일이면 일정 상세로 엽니다.
+            const activate = checkInId
+              ? () => router.push(`/check-in/result?id=${checkInId}`)
+              : isNextProcedureDay
+                ? () => scheduleDetailDialogRef.current?.showModal()
+                : undefined;
 
             return (
               <span
                 key={day}
                 className={
-                  [isToday ? 'today' : '', isNextProcedureDay ? 'next-procedure' : '']
+                  [
+                    isToday ? 'today' : '',
+                    isNextProcedureDay ? 'next-procedure' : '',
+                    activate ? 'calendar-day-interactive' : '',
+                  ]
                     .filter(Boolean)
                     .join(' ') || undefined
                 }
 
-                onClick={
-                  isNextProcedureDay
-                    ? () => scheduleDetailDialogRef.current?.showModal()
-                    : undefined
-                }
+                onClick={activate}
                 onKeyDown={
-                  isNextProcedureDay
+                  activate
                     ? (event) => {
                         if (event.key === 'Enter' || event.key === ' ') {
                           event.preventDefault();
-                          scheduleDetailDialogRef.current?.showModal();
+                          activate();
                         }
                       }
                     : undefined
                 }
-                role={isNextProcedureDay ? 'button' : undefined}
-                tabIndex={isNextProcedureDay ? 0 : undefined}
+                role={activate ? 'button' : undefined}
+                tabIndex={activate ? 0 : undefined}
 
                 aria-label={`${month + 1}월 ${day}일${
                   descriptions.length ? `, ${descriptions.join(', ')}` : ''
@@ -212,17 +221,22 @@ function RecordsPageContent() {
             <i className="calendar-today-marker" aria-hidden="true" />
             오늘
           </span>
-          {SHOW_NEXT_PROCEDURE ? (
-            <span>
-              <i className="next-procedure-marker" aria-hidden="true" />
-              다음 시술 예정
-            </span>
-          ) : null}
+          <span>
+            <i className="next-procedure-marker" aria-hidden="true" />
+            다음 시술 예정
+          </span>
         </div>
       </section>
 
       <section className="section">
-        <h2 className="section-title">체크 기록</h2>
+        <div className="list-row" style={{ paddingTop: 0 }}>
+          <h2 className="section-title" style={{ margin: 0 }}>
+            체크 기록
+          </h2>
+          <Link className="button secondary" href="/check-in">
+            <ClipboardCheck size={17} aria-hidden="true" /> 상태 체크
+          </Link>
+        </div>
         {session?.checkIns.length ? (
           <div className="card">
             {[...session.checkIns].reverse().map((checkIn) => (

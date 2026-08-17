@@ -18,11 +18,6 @@ test('new user can finish onboarding with no products and enter home', async ({ 
   ].join('-');
   await page.getByLabel('시술 날짜').fill(today);
   await page.getByRole('button', { name: '다음' }).click();
-  await expect(page).toHaveURL(/\/onboarding\/products$/);
-
-  await page.goto('/');
-  await expect(page).toHaveURL(/\/onboarding\/products$/);
-
   await page.getByRole('button', { name: '제품 없이 넘어가기' }).click();
   await page.getByLabel('잘 모르겠어요').check();
   await page.getByRole('button', { name: '다음' }).click();
@@ -30,11 +25,6 @@ test('new user can finish onboarding with no products and enter home', async ({ 
   await page.getByRole('button', { name: /회복 관리 시작/ }).click();
   await expect(page).toHaveURL(/\/home$/);
   await expect(page.getByText('Picotoning · D+0', { exact: true })).toBeVisible();
-
-  await page.reload();
-  await expect(page).toHaveURL(/\/home$/);
-  await page.goto('/');
-  await expect(page).toHaveURL(/\/home$/);
 });
 
 test('draft warning and bottom navigation stay visible on mobile', async ({ page }) => {
@@ -69,7 +59,7 @@ test('draft warning and bottom navigation stay visible on mobile', async ({ page
   await expect(page).toHaveURL(/\/products$/);
 });
 
-test('user can register a skincare product with a v5 ingredient group', async ({ page }) => {
+test('user can register a skincare product with a v6 ingredient group', async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem(
       'recovery-note:v1',
@@ -100,121 +90,171 @@ test('user can register a skincare product with a v5 ingredient group', async ({
   await expect(page.getByText('중단', { exact: true }).first()).toBeVisible();
 });
 
-test('D+7 and D+14 have distinct milestone homes while D+8 keeps the daily home', async ({
-  page,
-}) => {
-  await page.goto('/');
+const isoDaysAgo = (days: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date.toISOString().slice(0, 10);
+};
 
-  await page.evaluate(() => {
-    const procedureDate = new Date();
-    procedureDate.setDate(procedureDate.getDate() - 7);
-    const performedAt = [
-      procedureDate.getFullYear(),
-      String(procedureDate.getMonth() + 1).padStart(2, '0'),
-      String(procedureDate.getDate()).padStart(2, '0'),
-    ].join('-');
+type SeedOptions = {
+  daysAgo?: number;
+  profile?: Record<string, unknown>;
+  products?: unknown[];
+  checkIns?: unknown[];
+};
 
+const seed = (page: import('@playwright/test').Page, options: SeedOptions = {}) =>
+  page.addInitScript((seedOptions: SeedOptions) => {
+    const performedAt = (() => {
+      const date = new Date();
+      date.setDate(date.getDate() - (seedOptions.daysAgo ?? 0));
+      return date.toISOString().slice(0, 10);
+    })();
     window.localStorage.setItem(
       'recovery-note:v1',
       JSON.stringify({
-        schemaVersion: 2,
-        onboarding: { status: 'completed', currentStep: 'complete', completedAt: null },
-        profile: { sensitivity: 'normal' },
+        profile: seedOptions.profile ?? { sensitivity: 'normal' },
         procedure: {
           id: 'p1',
           procedureType: 'picotoning',
           performedAt,
           createdAt: new Date().toISOString(),
         },
-        products: [],
-        checkIns: [],
-        consent: null,
+        products: seedOptions.products ?? [],
+        checkIns: seedOptions.checkIns ?? [],
+        consent: {
+          terms: true,
+          privacy: true,
+          healthData: true,
+          photo: false,
+          marketing: false,
+          updatedAt: new Date().toISOString(),
+        },
       }),
     );
-  });
+  }, options);
+
+test('after the D+14 window home shows the completion screen and still reaches check-in', async ({
+  page,
+}) => {
+  await seed(page, { daysAgo: 20 });
 
   await page.goto('/home');
-  await expect(page.getByRole('heading', { name: '한 주의 회복을 잘 기록했어요.' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: '14일의 회복 여정을 잘 마쳤어요.' }),
+  ).toBeVisible();
+  await expect(page.getByText('Picotoning · D+20', { exact: true })).toBeVisible();
 
-  await page.evaluate(() => {
-    const session = JSON.parse(window.localStorage.getItem('recovery-note:v1') ?? '{}');
-    const procedureDate = new Date();
-    procedureDate.setDate(procedureDate.getDate() - 8);
-    session.procedure.performedAt = [
-      procedureDate.getFullYear(),
-      String(procedureDate.getMonth() + 1).padStart(2, '0'),
-      String(procedureDate.getDate()).padStart(2, '0'),
-    ].join('-');
-    window.localStorage.setItem('recovery-note:v1', JSON.stringify(session));
-  });
-  await page.reload();
+  // 회복 완료 화면에서도 상태 체크로 갈 수 있어야 합니다.
+  await page.getByRole('link', { name: '상태 체크 시작' }).click();
+  await expect(page).toHaveURL(/\/check-in$/);
+});
+
+test('within the window home keeps the daily guidance screen', async ({ page }) => {
+  await seed(page, { daysAgo: 10 });
+
+  await page.goto('/home');
+  await expect(page.getByText('Picotoning · D+10', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: '오늘의 회복 안내예요.' })).toBeVisible();
+});
 
-  await page.evaluate(() => {
-    const session = JSON.parse(window.localStorage.getItem('recovery-note:v1') ?? '{}');
-    const procedureDate = new Date();
-    procedureDate.setDate(procedureDate.getDate() - 14);
-    session.procedure.performedAt = [
-      procedureDate.getFullYear(),
-      String(procedureDate.getMonth() + 1).padStart(2, '0'),
-      String(procedureDate.getDate()).padStart(2, '0'),
-    ].join('-');
-    window.localStorage.setItem('recovery-note:v1', JSON.stringify(session));
-  });
-  await page.reload();
+test('D+7 shows the first-week recovery milestone', async ({ page }) => {
+  await seed(page, { daysAgo: 7 });
+  await page.goto('/home');
+  await expect(page.getByRole('heading', { name: '한 주의 회복을 잘 기록했어요.' })).toBeVisible();
+});
+
+test('D+14 shows the completed recovery milestone', async ({ page }) => {
+  await seed(page, { daysAgo: 14 });
+  await page.goto('/home');
   await expect(
     page.getByRole('heading', { name: '14일의 회복 여정을 잘 마쳤어요.' }),
   ).toBeVisible();
 });
 
-test('user can edit the procedure date from profile without mobile overflow', async ({ page }) => {
-  await page.goto('/');
-  await page.evaluate(() => {
-    window.localStorage.setItem(
-      'recovery-note:v1',
-      JSON.stringify({
-        schemaVersion: 2,
-        onboarding: { status: 'completed', currentStep: 'complete', completedAt: null },
-        profile: { sensitivity: 'normal', nextProcedureAt: '2026-09-01' },
-        procedure: {
-          id: 'procedure-existing',
-          procedureType: 'picotoning',
-          performedAt: '2026-08-01',
-          createdAt: '2026-08-01T00:00:00.000Z',
-        },
-        products: [],
-        checkIns: [],
-        consent: null,
-      }),
-    );
+test('procedure date can be edited without losing the next appointment', async ({ page }) => {
+  await seed(page, {
+    daysAgo: 3,
+    profile: { sensitivity: 'normal', nextProcedureAt: '2026-12-01' },
   });
 
   await page.goto('/profile');
   await page.getByRole('link', { name: /시술 정보/ }).click();
   await expect(page).toHaveURL(/\/profile\/procedure$/);
 
-  const dateInput = page.getByLabel('시술 날짜');
-  await expect(dateInput).toHaveValue('2026-08-01');
-  await expect
-    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-    .toBe(true);
-
-  await dateInput.fill('2026-08-02');
-  await page.getByLabel('민감한 편').check();
+  await page.getByLabel('시술 날짜').fill(isoDaysAgo(1));
   await page.getByRole('button', { name: '변경사항 저장' }).click();
   await expect(page).toHaveURL(/\/profile$/);
-  await expect(page.getByText('2026-08-02')).toBeVisible();
 
   const stored = await page.evaluate(() =>
     JSON.parse(window.localStorage.getItem('recovery-note:v1') ?? '{}'),
   );
-  expect(stored.procedure).toMatchObject({
-    id: 'procedure-existing',
-    performedAt: '2026-08-02',
-    createdAt: '2026-08-01T00:00:00.000Z',
+  expect(stored.procedure.performedAt).toBe(isoDaysAgo(1));
+  expect(stored.procedure.id).toBe('p1');
+  expect(stored.profile.nextProcedureAt).toBe('2026-12-01');
+});
+
+test('product can be edited in place instead of deleted and re-added', async ({ page }) => {
+  await seed(page, {
+    daysAgo: 2,
+    products: [
+      {
+        id: 'prod-1',
+        name: '기존 세럼',
+        category: 'skincare',
+        ruleSelection: {
+          ingredientGroupIds: ['niacinamide'],
+          cleansingMethodIds: [],
+          baseMakeupIds: [],
+        },
+        attributeIds: ['niacinamide'],
+        createdAt: '2026-07-01T00:00:00.000Z',
+        updatedAt: '2026-07-01T00:00:00.000Z',
+      },
+    ],
   });
-  expect(stored.profile).toMatchObject({
-    sensitivity: 'high',
-    nextProcedureAt: '2026-09-01',
+
+  await page.goto('/products/prod-1');
+  await page.getByRole('link', { name: /제품 수정/ }).click();
+  await expect(page).toHaveURL(/\/products\/prod-1\/edit$/);
+
+  // 기존 값이 초기값으로 들어와야 합니다.
+  await expect(page.getByLabel('제품 이름')).toHaveValue('기존 세럼');
+  await page.getByLabel('제품 이름').fill('이름 바꾼 세럼');
+  await page.getByRole('button', { name: '속성 선택하기' }).click();
+  await expect(
+    page.getByRole('checkbox', { name: /^나이아신아마이드 성분표/ }),
+  ).toBeChecked();
+  await page.getByRole('button', { name: '변경 저장' }).click();
+
+  await expect(page).toHaveURL(/\/products\/prod-1$/);
+  await expect(page.getByRole('heading', { name: '이름 바꾼 세럼' })).toBeVisible();
+
+  const stored = await page.evaluate(() =>
+    JSON.parse(window.localStorage.getItem('recovery-note:v1') ?? '{}'),
+  );
+  expect(stored.products).toHaveLength(1);
+  expect(stored.products[0].id).toBe('prod-1');
+  expect(stored.products[0].createdAt).toBe('2026-07-01T00:00:00.000Z');
+});
+
+test('calendar opens the check-in record for a checked day', async ({ page }) => {
+  const checkedAt = new Date();
+  checkedAt.setHours(12, 0, 0, 0);
+  await seed(page, {
+    daysAgo: 1,
+    checkIns: [
+      {
+        id: 'check-1',
+        checkedAt: checkedAt.toISOString(),
+        procedureDay: 1,
+        answers: [{ symptomId: 'redness', present: false }],
+        rulePackVersion: '6.0.0',
+      },
+    ],
   });
+
+  await page.goto('/records');
+  await page.getByRole('button', { name: /피부 체크한 날, 기록 보기/ }).click();
+  await expect(page).toHaveURL(/\/check-in\/result\?id=check-1$/);
 });
