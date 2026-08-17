@@ -1,4 +1,5 @@
 import attributes from '../../rules/attributes.json';
+import generatedRules from '../../build/rules.generated.json';
 import contactRules from '../../rules/contact-rules.json';
 import meta from '../../rules/meta.json';
 import verdictRules from '../../rules/verdict-rules.json';
@@ -10,6 +11,10 @@ const valid = { meta, attributes, verdictRules, contactRules };
 describe('rule pack validation', () => {
   it('accepts the bundled fixture', () => {
     expect(validateRuleFiles(valid).meta.version).toBe(meta.version);
+  });
+
+  it('keeps the visible rule pack version aligned with the generated v6 pack', () => {
+    expect(meta.version).toBe(generatedRules.version);
   });
 
   it('rejects an unknown attribute reference', () => {
