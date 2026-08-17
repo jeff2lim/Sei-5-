@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getProcedureDay, toLocalDateInputValue } from './procedure';
+import { getProcedureDay, getRecoveryMilestone, toLocalDateInputValue } from './procedure';
 
 describe('getProcedureDay', () => {
   it('returns D+0 on the procedure date', () => {
@@ -16,5 +16,16 @@ describe('getProcedureDay', () => {
 
   it('formats the local calendar date for date inputs', () => {
     expect(toLocalDateInputValue(new Date(2026, 6, 29, 23, 30))).toBe('2026-07-29');
+  });
+});
+
+describe('getRecoveryMilestone', () => {
+  it('shows milestones on D+7 and from D+14', () => {
+    expect(getRecoveryMilestone(6)).toBeNull();
+    expect(getRecoveryMilestone(7)).toBe('first-week');
+    expect(getRecoveryMilestone(8)).toBeNull();
+    expect(getRecoveryMilestone(13)).toBeNull();
+    expect(getRecoveryMilestone(14)).toBe('recovery-complete');
+    expect(getRecoveryMilestone(20)).toBe('recovery-complete');
   });
 });

@@ -1,5 +1,6 @@
 {
   "restorative": { "low": 0, "normal": 0, "high": 0 },
   "pigment_rail": { "low": 0, "normal": 0, "high": 2 },
-  "irritant": { "low": -1, "normal": 0, "high": 2 }
+  "irritant": { "low": -1, "normal": 0, "high": 2 },
+  "prep_gate": { "low": 0, "normal": 0, "high": -2 }
 }

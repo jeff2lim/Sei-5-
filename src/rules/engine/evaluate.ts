@@ -4,12 +4,12 @@ import type { Sensitivity } from '@/domain/procedure';
 import type { RulePack } from '@/domain/rule-pack';
 import type { AttributeVerdict, CategoryVerdict, ProductVerdict } from '@/domain/verdict';
 import { baseMakeup, cleansingMethods, ingredientGroups, sunscreenTypes } from '@/ruletable/data';
-import { evaluateSymptoms, resolveProduct, resolveTarget, v5RuleTable } from '@/ruletable/resolve';
+import { evaluateSymptoms, resolveProduct, resolveTarget, v6RuleTable } from '@/ruletable/resolve';
 import type { ProductRuleSelection, TargetType } from '@/ruletable/types';
 
 const rank: Record<VerdictLevel, number> = {
-  unknown: 0,
-  go: 1,
+  go: 0,
+  unknown: 1,
   care: 2,
   stop: 3,
   consult: 4,
@@ -52,9 +52,10 @@ export function evaluateAttribute(
   procedureDay: number,
   _rulePack?: RulePack,
   sensitivity: Sensitivity = 'normal',
+  nextProcedureDay: number | null = null,
 ): AttributeVerdict {
   const target = inferTarget(attributeId);
-  const detail = resolveTarget(target.type, target.id, procedureDay, sensitivity);
+  const detail = resolveTarget(target.type, target.id, procedureDay, sensitivity, nextProcedureDay);
   return {
     attributeId: detail.targetId,
     targetType: detail.targetType,
@@ -85,6 +86,7 @@ export function evaluateProduct(
   procedureDay: number,
   _rulePack?: RulePack,
   sensitivity: Sensitivity = 'normal',
+  nextProcedureDay: number | null = null,
 ): ProductVerdict {
   const selection = product.ruleSelection ?? migrateLegacySelection(product);
   const resolved = resolveProduct(
@@ -95,8 +97,9 @@ export function evaluateProduct(
     },
     procedureDay,
     sensitivity,
+    nextProcedureDay,
   );
-  const decisiveTimeline = v5RuleTable.timelines.find(
+  const decisiveTimeline = v6RuleTable.timelines.find(
     (timeline) =>
       timeline.target_id === resolved.decidingTarget && timeline.sensitivity === sensitivity,
   );
@@ -106,6 +109,7 @@ export function evaluateProduct(
     resumeDay: decisiveTimeline?.reopen_d_day ?? undefined,
     decisiveAttributeId: resolved.decidingTarget ?? undefined,
     decidingAxis: resolved.decidingAxis,
+    prepText: resolved.prepText ?? undefined,
     notes: resolved.notes,
     details: resolved.details.map((detail) => ({
       attributeId: detail.targetId,
@@ -113,13 +117,13 @@ export function evaluateProduct(
       label: detail.label,
       level: detail.verdict,
       resumeDay:
-        v5RuleTable.timelines.find(
+        v6RuleTable.timelines.find(
           (timeline) =>
             timeline.target_id === detail.targetId && timeline.sensitivity === sensitivity,
         )?.reopen_d_day ?? undefined,
-      reason: detail.conditionText ?? resolved.primaryText,
+      reason: detail.prepText ?? detail.conditionText ?? resolved.primaryText,
     })),
-    rulePackVersion: v5RuleTable.version,
+    rulePackVersion: v6RuleTable.version,
   };
 }
 
@@ -128,8 +132,11 @@ export function evaluateProducts(
   procedureDay: number,
   rulePack?: RulePack,
   sensitivity: Sensitivity = 'normal',
+  nextProcedureDay: number | null = null,
 ): ProductVerdict[] {
-  return products.map((product) => evaluateProduct(product, procedureDay, rulePack, sensitivity));
+  return products.map((product) =>
+    evaluateProduct(product, procedureDay, rulePack, sensitivity, nextProcedureDay),
+  );
 }
 
 export function evaluateCategory(
@@ -138,9 +145,16 @@ export function evaluateCategory(
   procedureDay: number,
   rulePack?: RulePack,
   sensitivity: Sensitivity = 'normal',
+  nextProcedureDay: number | null = null,
 ): CategoryVerdict {
   const matchingProducts = products.filter((product) => product.category === category);
-  const verdicts = evaluateProducts(matchingProducts, procedureDay, rulePack, sensitivity);
+  const verdicts = evaluateProducts(
+    matchingProducts,
+    procedureDay,
+    rulePack,
+    sensitivity,
+    nextProcedureDay,
+  );
   const level = verdicts.reduce<VerdictLevel>(
     (current, verdict) => (rank[verdict.level] > rank[current] ? verdict.level : current),
     'unknown',

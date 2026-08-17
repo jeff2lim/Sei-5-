@@ -5,7 +5,6 @@ import { LoadingScreen } from '@/components/common/loading-screen';
 import { analytics } from '@/domain/analytics';
 import { getProcedureDay } from '@/domain/procedure';
 import { isAuthEnabled } from '@/lib/supabase/config';
-import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { Check, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -61,14 +60,6 @@ export default function CompletePage() {
         <div className="list-row">
           <span>시술</span>
           <strong>피코토닝</strong>
-        </div>
-        <div className="list-row">
-          <span>룰팩 버전</span>
-          <strong>{bundledRulePack.meta.version}</strong>
-        </div>
-        <div className="list-row">
-          <span>안내 출처</span>
-          <strong>샘플 fixture</strong>
         </div>
       </section>
       <div className="sticky-actions">

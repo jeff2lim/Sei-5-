@@ -76,7 +76,7 @@ export default function ProfilePage() {
       icon: Package,
     },
     {
-      href: '/records',
+      href: '/profile/procedure',
       label: '시술 정보',
       value: session?.procedure?.performedAt ?? '미등록',
       icon: CalendarDays,

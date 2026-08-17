@@ -8,6 +8,7 @@ import { analytics } from '@/domain/analytics';
 import { getProcedureDay } from '@/domain/procedure';
 import { evaluateProduct } from '@/rules/engine/evaluate';
 import { bundledRulePack } from '@/rules/loaders/bundled-rule-pack';
+import { getNextProcedureDay } from '@/ruletable/date';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { Info, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -25,8 +26,18 @@ export default function ProductDetailPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const product = session?.products.find((item) => item.id === params.productId);
   const day = session?.procedure ? getProcedureDay(session.procedure.performedAt, new Date()) : 0;
+  const nextProcedureDay = getNextProcedureDay(
+    session?.procedure?.performedAt,
+    session?.profile.nextProcedureAt,
+  );
   const verdict = product
-    ? evaluateProduct(product, day, bundledRulePack, session?.profile.sensitivity ?? 'normal')
+    ? evaluateProduct(
+        product,
+        day,
+        bundledRulePack,
+        session?.profile.sensitivity ?? 'normal',
+        nextProcedureDay,
+      )
     : null;
 
   useEffect(() => {
@@ -74,6 +85,8 @@ export default function ProductDetailPage() {
           {verdict.resumeDay !== undefined ? ` · D+${verdict.resumeDay} 재개 안내` : ''}
         </p>
       </div>
+
+      {verdict.prepText ? <div className="notice section">{verdict.prepText}</div> : null}
 
       <section className="section">
         <h2 className="section-title">결정 근거</h2>

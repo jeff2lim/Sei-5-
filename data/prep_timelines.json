@@ -1,0 +1,488 @@
+[
+  {
+    "prep_timeline_id": "prep.ceramide.normal",
+    "target_type": "ingredient_group",
+    "target_id": "ceramide",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.hyaluronic_acid.normal",
+    "target_type": "ingredient_group",
+    "target_id": "hyaluronic_acid",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.panthenol.normal",
+    "target_type": "ingredient_group",
+    "target_id": "panthenol",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.cica.normal",
+    "target_type": "ingredient_group",
+    "target_id": "cica",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.egf.normal",
+    "target_type": "ingredient_group",
+    "target_id": "egf",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.pdrn.normal",
+    "target_type": "ingredient_group",
+    "target_id": "pdrn",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.exosome.normal",
+    "target_type": "ingredient_group",
+    "target_id": "exosome",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.zinc.normal",
+    "target_type": "ingredient_group",
+    "target_id": "zinc",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [
+      { "from_dtn": 7, "to_dtn": 2, "verdict": "go", "condition_text": null },
+      {
+        "from_dtn": 1,
+        "to_dtn": 1,
+        "verdict": "care",
+        "condition_text": "내일부터는 보습과 자외선 차단만"
+      }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.niacinamide.normal",
+    "target_type": "ingredient_group",
+    "target_id": "niacinamide",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [
+      { "from_dtn": 7, "to_dtn": 2, "verdict": "go", "condition_text": null },
+      {
+        "from_dtn": 1,
+        "to_dtn": 1,
+        "verdict": "care",
+        "condition_text": "내일부터는 보습과 자외선 차단만"
+      }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.brightening_functional.normal",
+    "target_type": "ingredient_group",
+    "target_id": "brightening_functional",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [
+      {
+        "from_dtn": 7,
+        "to_dtn": 4,
+        "verdict": "care",
+        "condition_text": "dtn 4까지만 쓰고, 3일 전부터는 쉬어주세요"
+      },
+      { "from_dtn": 3, "to_dtn": 1, "verdict": "stop", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.vitamin_c.normal",
+    "target_type": "ingredient_group",
+    "target_id": "vitamin_c",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [
+      {
+        "from_dtn": 7,
+        "to_dtn": 4,
+        "verdict": "care",
+        "condition_text": "dtn 4까지만 쓰고, 3일 전부터는 쉬어주세요"
+      },
+      { "from_dtn": 3, "to_dtn": 1, "verdict": "stop", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.acne_active.normal",
+    "target_type": "ingredient_group",
+    "target_id": "acne_active",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [
+      {
+        "from_dtn": 7,
+        "to_dtn": 4,
+        "verdict": "care",
+        "condition_text": "dtn 4까지만 쓰고, 3일 전부터는 쉬어주세요"
+      },
+      { "from_dtn": 3, "to_dtn": 1, "verdict": "stop", "condition_text": null }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.retinoid.normal",
+    "target_type": "ingredient_group",
+    "target_id": "retinoid",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "stop", "condition_text": null }],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.exfoliating_acid.normal",
+    "target_type": "ingredient_group",
+    "target_id": "exfoliating_acid",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "stop", "condition_text": null }],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.clinic_provided.normal",
+    "target_type": "ingredient_group",
+    "target_id": "clinic_provided",
+    "sensitivity": "normal",
+    "sensitivity_policy": null,
+    "phases": [
+      {
+        "from_dtn": 7,
+        "to_dtn": 1,
+        "verdict": "consult",
+        "condition_text": "병원에서 받은 안내를 우선해 주세요"
+      }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+
+  {
+    "prep_timeline_id": "prep.lukewarm_water.normal",
+    "target_type": "cleansing_method",
+    "target_id": "lukewarm_water",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.mild_acidic_foam.normal",
+    "target_type": "cleansing_method",
+    "target_id": "mild_acidic_foam",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.gel_cleanser.normal",
+    "target_type": "cleansing_method",
+    "target_id": "gel_cleanser",
+    "sensitivity": "normal",
+    "sensitivity_policy": "restorative",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.cleansing_water.normal",
+    "target_type": "cleansing_method",
+    "target_id": "cleansing_water",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.point_remover.normal",
+    "target_type": "cleansing_method",
+    "target_id": "point_remover",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.cleansing_oil.normal",
+    "target_type": "cleansing_method",
+    "target_id": "cleansing_oil",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [
+      { "from_dtn": 7, "to_dtn": 2, "verdict": "go", "condition_text": null },
+      { "from_dtn": 1, "to_dtn": 1, "verdict": "care", "condition_text": "짧게 1회, 문지르지 말고" }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.cleansing_balm.normal",
+    "target_type": "cleansing_method",
+    "target_id": "cleansing_balm",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [
+      { "from_dtn": 7, "to_dtn": 2, "verdict": "go", "condition_text": null },
+      { "from_dtn": 1, "to_dtn": 1, "verdict": "care", "condition_text": "짧게 1회, 문지르지 말고" }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.double_cleanse.normal",
+    "target_type": "cleansing_method",
+    "target_id": "double_cleanse",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [
+      { "from_dtn": 7, "to_dtn": 2, "verdict": "go", "condition_text": null },
+      { "from_dtn": 1, "to_dtn": 1, "verdict": "care", "condition_text": "짧게 1회, 문지르지 말고" }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.alkaline_foam.normal",
+    "target_type": "cleansing_method",
+    "target_id": "alkaline_foam",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [
+      { "from_dtn": 7, "to_dtn": 3, "verdict": "go", "condition_text": null },
+      { "from_dtn": 2, "to_dtn": 1, "verdict": "care", "condition_text": "거품만 얹고 빠르게" }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.scrub_deep.normal",
+    "target_type": "cleansing_method",
+    "target_id": "scrub_deep",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "stop", "condition_text": null }],
+    "status": "needs_review",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+
+  {
+    "prep_timeline_id": "prep.physical_cover.normal",
+    "target_type": "sunscreen_type",
+    "target_id": "physical_cover",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.serum_lotion.normal",
+    "target_type": "sunscreen_type",
+    "target_id": "serum_lotion",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.regular_non_waterproof.normal",
+    "target_type": "sunscreen_type",
+    "target_id": "regular_non_waterproof",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [{ "from_dtn": 7, "to_dtn": 1, "verdict": "go", "condition_text": null }],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.waterproof_stick.normal",
+    "target_type": "sunscreen_type",
+    "target_id": "waterproof_stick",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [
+      { "from_dtn": 7, "to_dtn": 2, "verdict": "go", "condition_text": null },
+      {
+        "from_dtn": 1,
+        "to_dtn": 1,
+        "verdict": "care",
+        "condition_text": "지우기 쉬운 선크림으로 바꿔두면 편해요"
+      }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+
+  {
+    "prep_timeline_id": "prep.tone_up.normal",
+    "target_type": "base_makeup",
+    "target_id": "tone_up",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [
+      { "from_dtn": 7, "to_dtn": 2, "verdict": "go", "condition_text": null },
+      {
+        "from_dtn": 1,
+        "to_dtn": 1,
+        "verdict": "care",
+        "condition_text": "가볍게, 시술 당일은 안 하는 게 좋아요"
+      }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.powder.normal",
+    "target_type": "base_makeup",
+    "target_id": "powder",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [
+      { "from_dtn": 7, "to_dtn": 2, "verdict": "go", "condition_text": null },
+      {
+        "from_dtn": 1,
+        "to_dtn": 1,
+        "verdict": "care",
+        "condition_text": "가볍게, 시술 당일은 안 하는 게 좋아요"
+      }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.bb_cc.normal",
+    "target_type": "base_makeup",
+    "target_id": "bb_cc",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [
+      { "from_dtn": 7, "to_dtn": 2, "verdict": "go", "condition_text": null },
+      {
+        "from_dtn": 1,
+        "to_dtn": 1,
+        "verdict": "care",
+        "condition_text": "가볍게, 시술 당일은 안 하는 게 좋아요"
+      }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.primer.normal",
+    "target_type": "base_makeup",
+    "target_id": "primer",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [
+      { "from_dtn": 7, "to_dtn": 3, "verdict": "go", "condition_text": null },
+      {
+        "from_dtn": 2,
+        "to_dtn": 1,
+        "verdict": "care",
+        "condition_text": "가볍게, 시술 당일은 안 하는 게 좋아요"
+      }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.cushion.normal",
+    "target_type": "base_makeup",
+    "target_id": "cushion",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [
+      { "from_dtn": 7, "to_dtn": 3, "verdict": "go", "condition_text": null },
+      {
+        "from_dtn": 2,
+        "to_dtn": 1,
+        "verdict": "care",
+        "condition_text": "가볍게, 시술 당일은 안 하는 게 좋아요"
+      }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.foundation.normal",
+    "target_type": "base_makeup",
+    "target_id": "foundation",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [
+      { "from_dtn": 7, "to_dtn": 3, "verdict": "go", "condition_text": null },
+      {
+        "from_dtn": 2,
+        "to_dtn": 1,
+        "verdict": "care",
+        "condition_text": "가볍게, 시술 당일은 안 하는 게 좋아요"
+      }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  },
+  {
+    "prep_timeline_id": "prep.concealer.normal",
+    "target_type": "base_makeup",
+    "target_id": "concealer",
+    "sensitivity": "normal",
+    "sensitivity_policy": "prep_gate",
+    "phases": [
+      { "from_dtn": 7, "to_dtn": 3, "verdict": "go", "condition_text": null },
+      {
+        "from_dtn": 2,
+        "to_dtn": 1,
+        "verdict": "care",
+        "condition_text": "가볍게, 시술 당일은 안 하는 게 좋아요"
+      }
+    ],
+    "status": "extrapolated",
+    "evidence": { "grade": "general", "citations": [] }
+  }
+]

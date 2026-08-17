@@ -82,14 +82,19 @@ export const useRecoveryStore = create<RecoveryState>((set, get) => ({
 
   async saveProcedure(performedAt, sensitivity) {
     const now = new Date().toISOString();
+    const currentSession = get().session;
+    const currentProcedure = currentSession?.procedure;
     const procedure: ProcedureRecord = {
-      id: crypto.randomUUID(),
+      id: currentProcedure?.id ?? crypto.randomUUID(),
       procedureType: 'picotoning',
       performedAt,
-      createdAt: now,
+      createdAt: currentProcedure?.createdAt ?? now,
     };
     await recoveryRepository.saveProcedure(procedure);
-    await recoveryRepository.saveProfile({ sensitivity });
+    await recoveryRepository.saveProfile({
+      ...(currentSession?.profile ?? { sensitivity: 'normal' }),
+      sensitivity,
+    });
     await get().hydrate();
   },
 

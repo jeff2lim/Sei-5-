@@ -1,0 +1,37 @@
+[
+  {
+    "id": "tanning",
+    "screen": "prep",
+    "text": "야외활동·태닝은 피해주세요. 탄 피부는 시술 강도를 낮춰야 해요",
+    "from_dtn": 14,
+    "judgment_mode": "warning_text_only"
+  },
+  {
+    "id": "other_procedure",
+    "screen": "prep",
+    "text": "다른 피부 시술이나 필링은 시술 전까지 잡지 마세요",
+    "from_dtn": 14,
+    "judgment_mode": "warning_text_only"
+  },
+  {
+    "id": "waxing",
+    "screen": "prep",
+    "text": "얼굴 왁싱·제모는 시술 전까지 쉬어주세요",
+    "from_dtn": 7,
+    "judgment_mode": "warning_text_only"
+  },
+  {
+    "id": "sauna_heat",
+    "screen": "prep",
+    "text": "사우나·찜질방은 시술 전날까지 피해주세요",
+    "from_dtn": 3,
+    "judgment_mode": "warning_text_only"
+  },
+  {
+    "id": "bare_face_visit",
+    "screen": "prep",
+    "text": "시술 당일엔 선크림만 바르고 가시면 돼요",
+    "from_dtn": 1,
+    "judgment_mode": "warning_text_only"
+  }
+]

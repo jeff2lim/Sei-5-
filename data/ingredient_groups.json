@@ -4,98 +4,113 @@
     "label": "세라마이드",
     "screen": "skincare",
     "judgment_mode": "judged",
-    "sensitivity_policy": "restorative"
+    "sensitivity_policy": "restorative",
+    "prep_sensitivity_policy": "restorative"
   },
   {
     "id": "hyaluronic_acid",
     "label": "히알루론산",
     "screen": "skincare",
     "judgment_mode": "judged",
-    "sensitivity_policy": "restorative"
+    "sensitivity_policy": "restorative",
+    "prep_sensitivity_policy": "restorative"
   },
   {
     "id": "panthenol",
     "label": "판테놀",
     "screen": "skincare",
     "judgment_mode": "judged",
-    "sensitivity_policy": "restorative"
+    "sensitivity_policy": "restorative",
+    "prep_sensitivity_policy": "restorative"
   },
   {
     "id": "cica",
     "label": "시카 · 센텔라",
     "screen": "skincare",
     "judgment_mode": "judged",
-    "sensitivity_policy": "restorative"
+    "sensitivity_policy": "restorative",
+    "prep_sensitivity_policy": "restorative"
   },
   {
     "id": "egf",
     "label": "EGF (성장인자)",
     "screen": "skincare",
     "judgment_mode": "judged",
-    "sensitivity_policy": "restorative"
+    "sensitivity_policy": "restorative",
+    "prep_sensitivity_policy": "restorative"
   },
   {
     "id": "pdrn",
     "label": "PDRN",
     "screen": "skincare",
     "judgment_mode": "judged",
-    "sensitivity_policy": "restorative"
+    "sensitivity_policy": "restorative",
+    "prep_sensitivity_policy": "restorative"
   },
   {
     "id": "exosome",
     "label": "엑소좀",
     "screen": "skincare",
     "judgment_mode": "judged",
-    "sensitivity_policy": "restorative"
+    "sensitivity_policy": "restorative",
+    "prep_sensitivity_policy": "restorative"
   },
   {
     "id": "zinc",
     "label": "징크",
     "screen": "skincare",
     "judgment_mode": "judged",
-    "sensitivity_policy": "pigment_rail"
+    "sensitivity_policy": "pigment_rail",
+    "prep_sensitivity_policy": "prep_gate"
   },
   {
     "id": "niacinamide",
     "label": "나이아신아마이드",
     "screen": "skincare",
     "judgment_mode": "judged",
-    "sensitivity_policy": "pigment_rail"
+    "sensitivity_policy": "pigment_rail",
+    "prep_sensitivity_policy": "prep_gate"
   },
   {
     "id": "brightening_functional",
     "label": "미백 기능성",
     "screen": "skincare",
     "judgment_mode": "judged",
-    "sensitivity_policy": "pigment_rail"
+    "sensitivity_policy": "pigment_rail",
+    "prep_sensitivity_policy": "prep_gate"
   },
   {
     "id": "vitamin_c",
     "label": "비타민C",
     "screen": "skincare",
     "judgment_mode": "judged",
-    "sensitivity_policy": "pigment_rail"
+    "sensitivity_policy": "pigment_rail",
+    "prep_sensitivity_policy": "prep_gate"
   },
   {
     "id": "acne_active",
     "label": "여드름 활성",
     "screen": "skincare",
     "judgment_mode": "judged",
-    "sensitivity_policy": "irritant"
+    "sensitivity_policy": "irritant",
+    "prep_sensitivity_policy": "prep_gate",
+    "status": "pending_removal"
   },
   {
     "id": "retinoid",
     "label": "레티놀",
     "screen": "skincare",
     "judgment_mode": "judged",
-    "sensitivity_policy": "irritant"
+    "sensitivity_policy": "irritant",
+    "prep_sensitivity_policy": "prep_gate"
   },
   {
     "id": "exfoliating_acid",
     "label": "AHA · BHA · PHA",
     "screen": "skincare",
     "judgment_mode": "judged",
-    "sensitivity_policy": "irritant"
+    "sensitivity_policy": "irritant",
+    "prep_sensitivity_policy": "prep_gate"
   },
   {
     "id": "clinic_provided",

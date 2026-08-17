@@ -13,6 +13,14 @@ export type UserProfile = {
   nextProcedureAt?: string;
 };
 
+export type RecoveryMilestone = 'first-week' | 'recovery-complete';
+
+export function getRecoveryMilestone(procedureDay: number): RecoveryMilestone | null {
+  if (procedureDay >= 14) return 'recovery-complete';
+  if (procedureDay === 7) return 'first-week';
+  return null;
+}
+
 export function getProcedureDay(performedAt: string, now: Date): number {
   const performed = new Date(`${performedAt.slice(0, 10)}T00:00:00`);
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());

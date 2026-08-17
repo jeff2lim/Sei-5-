@@ -237,10 +237,7 @@ function RecordsPageContent() {
                       new Date(checkIn.checkedAt),
                     )}
                   </strong>
-                  <span>
-                    선택 항목 {checkIn.answers.filter((answer) => answer.present).length}개 · 룰팩{' '}
-                    {checkIn.rulePackVersion}
-                  </span>
+                  <span>선택 항목 {checkIn.answers.filter((answer) => answer.present).length}개</span>
                 </span>
                 <ChevronRight size={18} aria-hidden="true" />
               </Link>

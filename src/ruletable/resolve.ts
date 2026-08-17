@@ -2,8 +2,10 @@ import {
   baseMakeup,
   behaviorWarnings,
   cleansingMethods,
+  combinationPairs,
   ingredientGroups,
   ingredientSynonyms,
+  prepBehaviorWarnings,
   productCategories,
   sunscreenTypes,
   symptomDefinitions,
@@ -23,7 +25,7 @@ import type {
   Verdict,
 } from './types';
 
-export const v5RuleTable = expandRuleTable();
+export const v6RuleTable = expandRuleTable();
 
 const severity: Record<Verdict, number> = { go: 0, care: 1, stop: 2, consult: 3 };
 const urgencyRank: Record<Urgency, number> = { monitor: 0, contact_soon: 1, contact_now: 2 };
@@ -87,6 +89,7 @@ export function resolveTarget(
   rawTargetId: string,
   day: number,
   sensitivity: Sensitivity,
+  nextProcedureDay: number | null = null,
 ): ResolvedTarget {
   const targetId = legacyTargetAliases[rawTargetId] ?? rawTargetId;
   const definition = targetDefinition(targetType, targetId);
@@ -100,6 +103,10 @@ export function resolveTarget(
       policy: null,
       judgmentMode: 'judged',
       deferred: false,
+      phaseName: day <= 7 ? 'recovery' : 'ramp_up',
+      daysToNext: null,
+      prepGated: false,
+      prepText: null,
     };
   }
   if (definition.mode === 'advisory') {
@@ -112,26 +119,67 @@ export function resolveTarget(
       policy: definition.policy,
       judgmentMode: definition.mode,
       deferred: false,
+      phaseName: day <= 7 ? 'recovery' : 'ramp_up',
+      daysToNext: null,
+      prepGated: false,
+      prepText: null,
     };
   }
   const safeDay = Math.max(0, Math.min(14, day));
-  const cell = v5RuleTable.cells.find(
+  const cell = v6RuleTable.cells.find(
     (candidate) =>
       candidate.target_type === targetType &&
       candidate.target_id === targetId &&
       candidate.sensitivity === sensitivity &&
       candidate.d_day === safeDay,
   );
+  const daysToNext = nextProcedureDay === null ? null : nextProcedureDay - day;
+  const prepCell =
+    daysToNext !== null && daysToNext >= 1 && daysToNext <= 7
+      ? v6RuleTable.prep_cells.find(
+          (candidate) =>
+            candidate.target_type === targetType &&
+            candidate.target_id === targetId &&
+            candidate.sensitivity === sensitivity &&
+            candidate.days_to_next === daysToNext,
+        )
+      : undefined;
+  const mainVerdict = cell?.verdict ?? 'unknown';
+  const prepWins =
+    prepCell !== undefined &&
+    mainVerdict !== 'unknown' &&
+    isMoreConservative(prepCell.verdict, mainVerdict);
+  const verdict =
+    prepCell && mainVerdict !== 'unknown'
+      ? moreConservative(mainVerdict, prepCell.verdict)
+      : mainVerdict;
   return {
     targetType,
     targetId,
     label: definition.label,
-    verdict: cell?.verdict ?? 'unknown',
-    conditionText: cell?.condition_text ?? null,
+    verdict,
+    conditionText: prepWins ? prepCell.condition_text : (cell?.condition_text ?? null),
     policy: definition.policy,
     judgmentMode: definition.mode,
     deferred: cell?.deferred ?? false,
+    phaseName: prepCell ? 'prep' : safeDay <= 7 ? 'recovery' : 'ramp_up',
+    daysToNext: prepCell ? daysToNext : null,
+    prepGated: prepWins,
+    prepText: prepWins
+      ? `다음 시술이 ${daysToNext}일 남아서, 오늘은 그대로 쉬어가는 게 좋아요`
+      : null,
   };
+}
+
+export function moreConservative(a: Verdict, b: Verdict): Verdict {
+  if (a === 'consult' || b === 'consult') return 'consult';
+  return severity[a] >= severity[b] ? a : b;
+}
+
+export function isMoreConservative(candidate: Verdict, baseline: Verdict) {
+  if (candidate === 'consult') return baseline !== 'consult';
+  if (baseline === 'consult') return false;
+  return severity[candidate] > severity[baseline];
 }
 
 function maxVerdict(details: ResolvedTarget[]): DisplayVerdict {
@@ -151,28 +199,47 @@ function verdictText(verdict: DisplayVerdict, label: string) {
   if (verdict === 'stop') return `${label} 때문에 아직 쉬어야 해요`;
   if (verdict === 'care') return `${label}은 평소보다 조심해서 사용해 주세요`;
   if (verdict === 'go') return `${label}은 오늘 사용할 수 있어요`;
-  return '연결된 판정 정보가 없습니다';
+  return '판정 정보가 없는 제품은 안전하다는 뜻이 아니라, 현재 룰이 연결되지 않은 상태입니다.';
 }
 
 export function resolveProduct(
   product: ProductRuleInput,
   day: number,
   sensitivity: Sensitivity,
+  nextProcedureDay: number | null = null,
 ): ProductRuleResult {
   const ingredientDetails = product.ingredientGroupIds.map((id) =>
-    resolveTarget('ingredient_group', id, day, sensitivity),
+    resolveTarget('ingredient_group', id, day, sensitivity, nextProcedureDay),
   );
   const formatDetails = [
     ...product.cleansingMethodIds.map((id) =>
-      resolveTarget('cleansing_method', id, day, sensitivity),
+      resolveTarget('cleansing_method', id, day, sensitivity, nextProcedureDay),
     ),
     ...(product.sunscreenTypeId
-      ? [resolveTarget('sunscreen_type', product.sunscreenTypeId, day, sensitivity)]
+      ? [
+          resolveTarget(
+            'sunscreen_type',
+            product.sunscreenTypeId,
+            day,
+            sensitivity,
+            nextProcedureDay,
+          ),
+        ]
       : []),
-    ...product.baseMakeupIds.map((id) => resolveTarget('base_makeup', id, day, sensitivity)),
+    ...product.baseMakeupIds.map((id) =>
+      resolveTarget('base_makeup', id, day, sensitivity, nextProcedureDay),
+    ),
     ...(product.productCategoryId &&
     productCategories.find((category) => category.id === product.productCategoryId)?.timeline_id
-      ? [resolveTarget('product_category', product.productCategoryId, day, sensitivity)]
+      ? [
+          resolveTarget(
+            'product_category',
+            product.productCategoryId,
+            day,
+            sensitivity,
+            nextProcedureDay,
+          ),
+        ]
       : []),
   ];
   const details = [...ingredientDetails, ...formatDetails];
@@ -180,6 +247,17 @@ export function resolveProduct(
   const notes = advisory.map(
     (detail) => `${detail.label}가 있다면 따가움이나 붉은기를 확인하세요.`,
   );
+  const selected = (target: { type: 'ingredient_group' | 'cleansing_method'; id: string }) =>
+    target.type === 'ingredient_group'
+      ? product.ingredientGroupIds.includes(target.id)
+      : product.cleansingMethodIds.includes(target.id);
+  if (
+    combinationPairs.some(
+      (pair) => pair.relation !== 'no_restriction' && selected(pair.a) && selected(pair.b),
+    )
+  ) {
+    notes.push('이 제품 하나만 쓰고 다른 기능성 제품은 오늘 쉬어주세요.');
+  }
   if (product.ingredientGroupIds.length === 0 && formatDetails.length > 0) {
     notes.push('성분을 모르시면 회복기엔 쉬어가는 걸 권해요. 제형 판정만 적용했습니다.');
   }
@@ -192,6 +270,7 @@ export function resolveProduct(
       decidingTarget: consult.targetId,
       primaryText: verdictText('consult', consult.label),
       secondaryText: consult.conditionText,
+      prepText: consult.prepText,
       notes,
       details,
     };
@@ -210,8 +289,10 @@ export function resolveProduct(
     : 'unknown';
   const decidingIngredient = ingredientVerdict === verdict;
   const decidingFormat = formatVerdict === verdict;
-  const decidingAxis =
-    verdict === 'unknown'
+  const prepDecisive = details.some((detail) => detail.prepGated && detail.verdict === verdict);
+  const decidingAxis = prepDecisive
+    ? 'prep_gate'
+    : verdict === 'unknown'
       ? 'none'
       : decidingIngredient && decidingFormat
         ? 'both'
@@ -222,7 +303,7 @@ export function resolveProduct(
     .filter((detail) => detail.verdict === verdict && detail.judgmentMode === 'judged')
     .sort((a, b) => {
       const reopen = (targetId: string) => {
-        const timeline = v5RuleTable.timelines.find(
+        const timeline = v6RuleTable.timelines.find(
           (candidate) => candidate.target_id === targetId && candidate.sensitivity === sensitivity,
         );
         return timeline?.true_reopen_d ?? timeline?.reopen_d_day ?? -1;
@@ -236,6 +317,7 @@ export function resolveProduct(
     decidingTarget: decisive?.targetId ?? null,
     primaryText: verdictText(verdict, decisive?.label ?? product.productName),
     secondaryText: decisive?.conditionText ?? null,
+    prepText: decisive?.prepText ?? null,
     notes,
     details,
   };
@@ -252,20 +334,44 @@ export function matchIngredientGroup(rawIngredient: string): string | null {
   return null;
 }
 
+const excludedIngredientText =
+  "연고·의약품은 등록 대상이 아니에요. 병원에서 받은 제품이라면 '병원 제공'으로 등록해 주세요.";
+
+export function matchIngredientInput(rawIngredient: string): {
+  groupId: string | null;
+  excluded: boolean;
+  message: string | null;
+} {
+  const normalized = rawIngredient.trim().toLocaleLowerCase();
+  for (const [id, dictionary] of Object.entries(ingredientSynonyms)) {
+    if ((dictionary.excluded ?? []).some((value) => value.toLocaleLowerCase() === normalized)) {
+      return { groupId: null, excluded: true, message: excludedIngredientText };
+    }
+    if (dictionary.all.some((value) => value.toLocaleLowerCase() === normalized)) {
+      return { groupId: id, excluded: false, message: null };
+    }
+  }
+  return { groupId: null, excluded: false, message: null };
+}
+
 export function effectiveRemovalPower(removalPower: number, verdict: DisplayVerdict) {
   if (verdict === 'go') return removalPower;
   if (verdict === 'care') return Math.max(1, removalPower - 1);
   return 0;
 }
 
-export function maxPermittedRemovalPower(day: number, sensitivity: Sensitivity) {
+export function maxPermittedRemovalPower(
+  day: number,
+  sensitivity: Sensitivity,
+  nextProcedureDay: number | null = null,
+) {
   return cleansingMethods.reduce(
     (maximum, method) =>
       Math.max(
         maximum,
         effectiveRemovalPower(
           method.removal_power,
-          resolveTarget('cleansing_method', method.id, day, sensitivity).verdict,
+          resolveTarget('cleansing_method', method.id, day, sensitivity, nextProcedureDay).verdict,
         ),
       ),
     0,
@@ -294,6 +400,7 @@ export function resolveSunscreenCleansing(
   makeupItemIds: string[],
   day: number,
   sensitivity: Sensitivity,
+  nextProcedureDay: number | null = null,
 ) {
   const required = computeLayeredBurden(sunscreenTypeId, makeupItemIds);
   const candidates = cleansingMethods
@@ -301,7 +408,7 @@ export function resolveSunscreenCleansing(
       method,
       permitted: effectiveRemovalPower(
         method.removal_power,
-        resolveTarget('cleansing_method', method.id, day, sensitivity).verdict,
+        resolveTarget('cleansing_method', method.id, day, sensitivity, nextProcedureDay).verdict,
       ),
     }))
     .filter((candidate) => candidate.permitted >= required)
@@ -321,7 +428,7 @@ export function resolveSunscreenCleansing(
   return {
     ok: false as const,
     required,
-    permitted: maxPermittedRemovalPower(day, sensitivity),
+    permitted: maxPermittedRemovalPower(day, sensitivity, nextProcedureDay),
     reason: 'removal_burden_exceeds_permitted_cleansing' as const,
     suggestions: ['switch_to_lower_burden_sunscreen', 'reduce_makeup_layers'],
   };
@@ -334,6 +441,11 @@ export function activeBehaviorWarnings(day: number, screen: 'cleansing' | 'skinc
       day <= warning.to_d &&
       (warning.screen === screen || warning.screen === 'common'),
   );
+}
+
+export function activePrepBehaviorWarnings(daysToNext: number | null) {
+  if (daysToNext === null || daysToNext < 1) return [];
+  return prepBehaviorWarnings.filter((warning) => daysToNext <= warning.from_dtn);
 }
 
 export function evaluateSymptoms(day: number, answers: SymptomAnswerV5[]): SymptomEvaluation {
@@ -392,8 +504,13 @@ export function adjustVerdictBySymptoms(
   target: { type: TargetType; id: string; policy: SensitivityPolicy | null },
   day: number,
   answers: SymptomAnswerV5[],
+  nextProcedureDay: number | null = null,
 ) {
   const evaluation = evaluateSymptoms(day, answers);
+  const daysToNext = nextProcedureDay === null ? null : nextProcedureDay - day;
+  if (daysToNext !== null && daysToNext >= 1 && daysToNext <= 7) {
+    return { verdict, evaluation };
+  }
   const hasWarning = evaluation.overallUrgency !== null;
   if (hasWarning) {
     const warningLocked =

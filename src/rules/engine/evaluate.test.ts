@@ -50,7 +50,14 @@ describe('deterministic rule engine', () => {
 
   it('preserves the rule pack version on every product verdict', () => {
     expect(evaluateProduct(product(['hydrating']), 0, bundledRulePack).rulePackVersion).toBe(
-      '5.0.0',
+      '6.0.0',
     );
+  });
+
+  it('exposes the prep gate through the app-facing evaluator', () => {
+    const verdict = evaluateProduct(product(['retinoid']), 11, bundledRulePack, 'normal', 14);
+    expect(verdict.level).toBe('stop');
+    expect(verdict.decidingAxis).toBe('prep_gate');
+    expect(verdict.prepText).toContain('다음 시술이 3일 남아서');
   });
 });
