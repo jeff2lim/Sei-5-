@@ -13,7 +13,13 @@ export type AnalyticsEvent =
   | { name: 'product_detail_viewed'; verdict: VerdictLevel }
   | { name: 'commerce_item_viewed'; itemId: string; placement: string }
   | { name: 'commerce_item_clicked'; itemId: string; placement: string }
-  | { name: 'data_deleted' };
+  | { name: 'data_deleted' }
+  | { name: 'auth_prompt_viewed'; placement: string }
+  | { name: 'kakao_login_started'; placement: string }
+  | { name: 'kakao_login_completed' }
+  | { name: 'auth_prompt_skipped'; placement: string }
+  | { name: 'local_data_imported' }
+  | { name: 'local_data_import_failed' };
 
 export interface AnalyticsAdapter {
   track(event: AnalyticsEvent): void;

@@ -24,6 +24,7 @@ export default function ProcedurePage() {
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const saveProcedure = useRecoveryStore((state) => state.saveProcedure);
+  const saveOnboardingStep = useRecoveryStore((state) => state.saveOnboardingStep);
   // 마이에서 들어오면 온보딩이 아니라 시술 정보 수정 화면으로 동작합니다.
   const [isEditing, setIsEditing] = useState(false);
   const form = useForm<FormValues>({
@@ -42,7 +43,7 @@ export default function ProcedurePage() {
       performedAt: session?.procedure?.performedAt ?? today(),
       sensitivity: session?.profile.sensitivity ?? 'normal',
     });
-  }, [form, hydrated, session?.procedure?.performedAt, session?.profile.sensitivity,]);
+  }, [form, hydrated, session?.procedure?.performedAt, session?.profile.sensitivity]);
 
   async function submit(values: FormValues) {
     if (values.performedAt > today()) {
@@ -50,6 +51,7 @@ export default function ProcedurePage() {
       return;
     }
     await saveProcedure(values.performedAt, values.sensitivity as Sensitivity);
+    if (!isEditing) await saveOnboardingStep('products');
     analytics.track({
       name: 'procedure_saved',
       procedureDay: getProcedureDay(values.performedAt, new Date()),

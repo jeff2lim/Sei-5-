@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recovery-note.local/schema/combination.schema.json",
+  "title": "Recovery Note v6 authored combination pair",
+  "type": "object",
+  "required": [
+    "pair_id",
+    "a",
+    "b",
+    "relation",
+    "verdict_effect",
+    "active_from_d",
+    "slot_a",
+    "slot_b",
+    "user_text",
+    "reason_text",
+    "evidence",
+    "status"
+  ],
+  "properties": {
+    "pair_id": { "type": "string", "minLength": 1 },
+    "a": { "$ref": "#/$defs/target" },
+    "b": { "$ref": "#/$defs/target" },
+    "relation": { "enum": ["separate_days", "separate_time", "no_restriction"] },
+    "verdict_effect": { "const": "none" },
+    "active_from_d": { "type": "null" },
+    "slot_a": { "type": ["string", "null"], "enum": ["morning", "evening", null] },
+    "slot_b": { "type": ["string", "null"], "enum": ["morning", "evening", null] },
+    "user_text": { "type": "string", "minLength": 1 },
+    "reason_text": { "type": "string", "minLength": 1 },
+    "evidence": {
+      "type": "object",
+      "required": ["grade", "source_procedure", "citations"],
+      "properties": {
+        "grade": { "enum": ["direct", "indirect", "general", "weak"] },
+        "source_procedure": { "type": "null" },
+        "citations": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "status": {
+      "enum": ["team_provisional", "extrapolated", "needs_review", "confirmed", "pending_removal"]
+    }
+  },
+  "$defs": {
+    "target": {
+      "type": "object",
+      "required": ["type", "id"],
+      "properties": {
+        "type": { "enum": ["ingredient_group", "cleansing_method"] },
+        "id": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,14 +1,26 @@
 import baseMakeupJson from '../../data/base_makeup.json';
 import behaviorWarningsJson from '../../data/behavior_warnings.json';
 import cleansingMethodsJson from '../../data/cleansing_methods.json';
+import combinationsJson from '../../data/combinations.json';
 import ingredientGroupsJson from '../../data/ingredient_groups.json';
 import ingredientSynonymsJson from '../../data/ingredient_synonyms.json';
 import productCategoriesJson from '../../data/product_categories.json';
+import prepBehaviorWarningsJson from '../../data/prep_behavior_warnings.json';
+import prepTimelinesJson from '../../data/prep_timelines.json';
 import sensitivityPolicyJson from '../../data/sensitivity_policy.json';
 import sunscreenTypesJson from '../../data/sunscreen_types.json';
 import symptomsJson from '../../data/symptoms.json';
 import timelinesJson from '../../data/timelines.json';
-import type { JudgmentMode, Sensitivity, SensitivityPolicy, Timeline, Urgency } from './types';
+import type {
+  CombinationPair,
+  JudgmentMode,
+  PrepBehaviorWarning,
+  PrepTimeline,
+  Sensitivity,
+  SensitivityPolicy,
+  Timeline,
+  Urgency,
+} from './types';
 
 export const ingredientGroups = ingredientGroupsJson as Array<{
   id: string;
@@ -16,11 +28,19 @@ export const ingredientGroups = ingredientGroupsJson as Array<{
   screen: 'skincare';
   judgment_mode: JudgmentMode;
   sensitivity_policy: SensitivityPolicy | null;
+  prep_sensitivity_policy?: 'restorative' | 'prep_gate' | null;
+  status?: 'pending_removal';
 }>;
 
 export const ingredientSynonyms = ingredientSynonymsJson as Record<
   string,
-  { label: string; display_3: string[]; all: string[]; excluded?: string[] }
+  {
+    label: string;
+    display_3: string[];
+    all: string[];
+    excluded?: string[];
+    status?: 'pending_removal';
+  }
 >;
 
 export const cleansingMethods = cleansingMethodsJson as Array<{
@@ -86,5 +106,8 @@ export const sensitivityPolicies = sensitivityPolicyJson as Record<
 >;
 
 export const timelines = timelinesJson as Timeline[];
+export const prepTimelines = prepTimelinesJson as PrepTimeline[];
+export const prepBehaviorWarnings = prepBehaviorWarningsJson as PrepBehaviorWarning[];
+export const combinationPairs = combinationsJson.pairs as CombinationPair[];
 
 export { baseMakeupJson, cleansingMethodsJson, sunscreenTypesJson };

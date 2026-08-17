@@ -1,16 +1,20 @@
 'use client';
 
 import { AppShell } from '@/components/app-shell/app-shell';
+import { CombinationGroup } from '@/components/combinations/combination-group';
+import { useCombinationPick } from '@/components/combinations/use-combination-pick';
 import { LoadingScreen } from '@/components/common/loading-screen';
 import { VerdictBadge } from '@/components/verdict/verdict-badge';
 import type { VerdictLevel } from '@/domain/product';
 import { getProcedureDay } from '@/domain/procedure';
 import { evaluateProduct } from '@/rules/engine/evaluate';
+import { resolveCombinationState, toCombinationUiProduct } from '@/ruletable/combine';
 import { ingredientGroups } from '@/ruletable/data';
+import { getNextProcedureDay } from '@/ruletable/date';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { ChevronRight, PackagePlus, Plus } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const rank: Record<VerdictLevel, number> = { consult: 4, stop: 3, care: 2, unknown: 1, go: 0 };
 
@@ -18,15 +22,61 @@ export default function ProductsPage() {
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const [view, setView] = useState<'products' | 'attributes'>('products');
-  if (!hydrated) return <LoadingScreen />;
+  const [showPickToast, setShowPickToast] = useState(false);
   const day = session?.procedure ? getProcedureDay(session.procedure.performedAt, new Date()) : 0;
   const sensitivity = session?.profile.sensitivity ?? 'normal';
+  const nextProcedureDay = getNextProcedureDay(
+    session?.procedure?.performedAt,
+    session?.profile.nextProcedureAt,
+  );
+  const { selectedProductId, selectProduct } = useCombinationPick(session?.procedure?.id, day);
   const rows = (session?.products ?? [])
     .map((product) => ({
       product,
-      verdict: evaluateProduct(product, day, sensitivity),
+      verdict: evaluateProduct(product, day, sensitivity, nextProcedureDay),
     }))
     .sort((a, b) => rank[b.verdict.level] - rank[a.verdict.level]);
+  const latestCheckIn = [...(session?.checkIns ?? [])]
+    .filter((checkIn) => checkIn.procedureDay === day)
+    .sort((a, b) => b.checkedAt.localeCompare(a.checkedAt))[0];
+  const combinationState = resolveCombinationState({
+    day,
+    sensitivity,
+    userProducts: rows.map(({ product, verdict }) =>
+      toCombinationUiProduct(product, verdict.level),
+    ),
+    symptoms: latestCheckIn?.answers.map((answer) => ({
+      id: answer.symptomId,
+      present: answer.present,
+      severity: answer.severity,
+    })),
+    nextProcedureDay,
+    selectedProductId,
+  });
+  const pickProduct = useCallback(
+    (productId: string) => {
+      const isFirstPick = selectedProductId === null;
+      selectProduct(productId);
+      if (isFirstPick) {
+        setShowPickToast(true);
+        window.setTimeout(() => setShowPickToast(false), 2600);
+      }
+    },
+    [selectProduct, selectedProductId],
+  );
+
+  useEffect(() => {
+    const search = new URLSearchParams(window.location.search);
+    if (search.get('tab') !== 'ingredient') return;
+    setView('attributes');
+    window.setTimeout(() => {
+      document
+        .getElementById('combination')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 0);
+  }, []);
+
+  if (!hydrated) return <LoadingScreen />;
   const counts = (['consult', 'stop', 'care', 'unknown', 'go'] as const).map(
     (level) => rows.filter((row) => row.verdict.level === level).length,
   );
@@ -192,6 +242,12 @@ export default function ProductsPage() {
                   ))}
                 </>
               ) : null}
+              <CombinationGroup
+                variant="group"
+                state={combinationState}
+                day={day}
+                onPick={pickProduct}
+              />
               {safeAttributes.length > 0 ? (
                 <>
                   <div className="attribute-group-label">문제 없는 성분</div>
@@ -220,6 +276,11 @@ export default function ProductsPage() {
           <Plus size={18} aria-hidden="true" /> 제품 등록하기
         </Link>
       </div>
+      {showPickToast ? (
+        <div className="combination-toast" role="status">
+          판정이 바뀐 건 아니에요. 오늘 순서만 정한 거예요.
+        </div>
+      ) : null}
     </AppShell>
   );
 }

@@ -97,7 +97,7 @@ function CheckInResultPageContent() {
       {urgent ? (
         <div className="notice section">
           <PhoneCall size={18} aria-hidden="true" />
-          <span>이 결과는 위험도 점수나 진단이 아닙니다. 룰팩에 연결된 행동 안내입니다.</span>
+          <span>이 결과는 위험도 점수나 진단이 아닙니다. 입력한 상태에 따른 행동 안내입니다.</span>
         </div>
       ) : null}
       {consecutiveDays >= 3 && session?.profile.sensitivity !== 'high' ? (

@@ -99,24 +99,26 @@
   },
   "brightening_functional": {
     "label": "미백 기능성",
-    "display_3": ["알부틴", "트라넥사믹애씨드", "하이드로퀴논"],
+    "display_3": ["알부틴", "트라넥사믹애씨드", "나이아신아마이드 복합"],
     "all": [
       "알부틴",
       "알파-알부틴",
       "베타-알부틴",
       "트라넥사믹애씨드",
       "트라넥삼산",
-      "하이드로퀴논",
       "유용성감초추출물",
       "글라브리딘",
       "Arbutin",
       "Tranexamic Acid"
-    ]
+    ],
+    "excluded": ["하이드로퀴논", "Hydroquinone"]
   },
   "acne_active": {
     "label": "여드름 활성",
-    "display_3": ["벤조일퍼옥사이드", "과산화벤조일", "설퍼"],
-    "all": ["벤조일퍼옥사이드", "과산화벤조일", "Benzoyl Peroxide", "설퍼", "황", "Sulfur"]
+    "display_3": ["설퍼", "황", "Sulfur"],
+    "all": ["설퍼", "황", "Sulfur"],
+    "excluded": ["벤조일퍼옥사이드", "과산화벤조일", "Benzoyl Peroxide"],
+    "status": "pending_removal"
   },
   "retinoid": {
     "label": "레티놀",
@@ -130,11 +132,10 @@
       "하이드록시피나콜론레티노에이트",
       "HPR",
       "레티닐레티노에이트",
-      "트레티노인",
-      "아다팔렌",
       "Retinol",
       "Retinal"
-    ]
+    ],
+    "excluded": ["트레티노인", "아다팔렌", "Tretinoin", "Adapalene"]
   },
   "exfoliating_acid": {
     "label": "AHA · BHA",

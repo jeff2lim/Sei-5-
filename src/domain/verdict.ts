@@ -14,7 +14,8 @@ export type ProductVerdict = {
   level: VerdictLevel;
   resumeDay?: number;
   decisiveAttributeId?: string;
-  decidingAxis?: 'ingredient' | 'format' | 'both' | 'consult' | 'none';
+  decidingAxis?: 'ingredient' | 'format' | 'both' | 'prep_gate' | 'consult' | 'none';
+  prepText?: string;
   notes?: string[];
   details: AttributeVerdict[];
   rulePackVersion: string;

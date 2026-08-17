@@ -2,6 +2,7 @@
 
 import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
+import { AuthStatusCard } from '@/components/auth/auth-status-card';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { rulePackMeta } from '@/rules/loaders/bundled-rule-pack';
 import {
@@ -22,6 +23,7 @@ import { useRef, useState } from 'react';
 export default function ProfilePage() {
   const router = useRouter();
   const hydrated = useRecoveryStore((state) => state.hydrated);
+  const hydrationError = useRecoveryStore((state) => state.hydrationError);
   const session = useRecoveryStore((state) => state.session);
   const exportData = useRecoveryStore((state) => state.exportData);
   const deleteAllData = useRecoveryStore((state) => state.deleteAllData);
@@ -75,7 +77,7 @@ export default function ProfilePage() {
       icon: Package,
     },
     {
-      href: '/onboarding/procedure?mode=edit',
+      href: '/profile/procedure',
       label: '시술 정보',
       value: session?.procedure
         ? `${session.procedure.performedAt} · 수정`
@@ -99,6 +101,14 @@ export default function ProfilePage() {
       <h1 className="headline">마이</h1>
       <p className="subcopy">내 정보, 시술 기록과 데이터 설정을 관리해요.</p>
 
+      {hydrationError ? (
+        <div className="notice" role="alert">
+          <span>계정 기록을 불러오지 못했어요. 오류 코드: {hydrationError}</span>
+        </div>
+      ) : null}
+
+      <AuthStatusCard />
+
       <section className="section card">
         {menu.map(({ href, label, value, icon: Icon }) => (
           <Link className="list-row" href={href} key={label}>
@@ -120,13 +130,6 @@ export default function ProfilePage() {
             <span>MVP에서는 아직 제공하지 않아요.</span>
           </span>
           <span className="badge">준비 중</span>
-        </div>
-        <div className="list-row">
-          <span className="list-row-main">
-            <strong>데이터 저장 방식</strong>
-            <span>이 브라우저의 localStorage에만 저장</span>
-          </span>
-          <span className="badge">local</span>
         </div>
         <div className="list-row">
           <span className="list-row-main">

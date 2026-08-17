@@ -19,4 +19,6 @@ UI는 `localStorage` 또는 Supabase를 직접 호출하지 않습니다. `Recov
 
 ## Supabase 전환
 
-`SupabaseRecoveryRepository`는 의도적으로 실패하는 스켈레톤입니다. 사용자별 RLS 정책, 인증, 삭제 정책, 백업과 보존 기간을 검토하기 전에는 실제 데이터를 저장하지 않습니다.
+`hybrid` 모드는 비로그인 사용자에게 `LocalRecoveryRepository`, Supabase Auth 사용자에게 `SupabaseRecoveryRepository`를 선택합니다. 로그인 직후 이전 화면이 로컬 세션과 클라우드 세션을 비교하며, 클라우드가 비어 있을 때만 자동으로 이전합니다. 양쪽에 데이터가 있으면 사용자가 선택하기 전까지 덮어쓰지 않습니다.
+
+클라우드 저장은 `recovery_sessions`의 사용자별 JSONB 한 행을 사용합니다. 현재 도메인 세션을 손실 없이 옮기는 MVP 경계이며, 제품 카탈로그 검색이나 다중 시술 지원이 필요해질 때 별도 테이블로 정규화합니다. 모든 접근은 RLS의 `auth.uid() = user_id` 정책을 통과해야 합니다.

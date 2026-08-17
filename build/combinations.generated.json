@@ -1,0 +1,680 @@
+{
+  "version": "6.0.0",
+  "combinations": [
+    {
+      "pair_id": "retinoid__exfoliating_acid",
+      "a": {
+        "type": "ingredient_group",
+        "id": "retinoid"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "exfoliating_acid"
+      },
+      "relation": "separate_days",
+      "verdict_effect": "none",
+      "active_from_d": 11,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "오늘은 둘 중 하나만 쓰고, 내일 나머지를 써보세요",
+      "reason_text": "둘 다 각질을 정리하는 성분이라 같은 날 겹치면 자극이 커져요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "low"
+    },
+    {
+      "pair_id": "vitamin_c__retinoid",
+      "a": {
+        "type": "ingredient_group",
+        "id": "vitamin_c"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "retinoid"
+      },
+      "relation": "separate_days",
+      "verdict_effect": "none",
+      "active_from_d": 10,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "오늘은 둘 중 하나만 쓰고, 내일 나머지를 써보세요",
+      "reason_text": "둘 다 회복 직후 피부엔 센 성분이라, 하루에 하나씩 나눠 쓰는 게 안전해요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "low"
+    },
+    {
+      "pair_id": "vitamin_c__exfoliating_acid",
+      "a": {
+        "type": "ingredient_group",
+        "id": "vitamin_c"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "exfoliating_acid"
+      },
+      "relation": "separate_time",
+      "verdict_effect": "none",
+      "active_from_d": 11,
+      "slot_a": "morning",
+      "slot_b": "evening",
+      "user_text": "비타민C는 아침, 각질 제품은 저녁에 나눠서",
+      "reason_text": "둘 다 산성이라 같은 시간에 겹치면 따가울 수 있어요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "low"
+    },
+    {
+      "pair_id": "niacinamide__vitamin_c",
+      "a": {
+        "type": "ingredient_group",
+        "id": "niacinamide"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "vitamin_c"
+      },
+      "relation": "no_restriction",
+      "verdict_effect": "none",
+      "active_from_d": 7,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "같이 써도 괜찮아요",
+      "reason_text": "같이 쓰면 안 된다는 얘기를 보셨을 수 있어요. 아주 높은 온도에서 실험한 옛날 결과가 잘못 퍼진 거라 평소 쓰는 화장품에서는 서로 방해하지 않아요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "low"
+    },
+    {
+      "pair_id": "niacinamide__exfoliating_acid",
+      "a": {
+        "type": "ingredient_group",
+        "id": "niacinamide"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "exfoliating_acid"
+      },
+      "relation": "no_restriction",
+      "verdict_effect": "none",
+      "active_from_d": 11,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "같이 써도 괜찮아요",
+      "reason_text": "나이아신아마이드가 오히려 자극을 덜어주는 쪽이에요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "low"
+    },
+    {
+      "pair_id": "vitamin_c__brightening_functional",
+      "a": {
+        "type": "ingredient_group",
+        "id": "vitamin_c"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "brightening_functional"
+      },
+      "relation": "no_restriction",
+      "verdict_effect": "none",
+      "active_from_d": 7,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "같이 써도 괜찮아요",
+      "reason_text": "색소 관리에는 오히려 함께 쓰는 편이 일반적이에요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "low"
+    },
+    {
+      "pair_id": "retinoid__ceramide",
+      "a": {
+        "type": "ingredient_group",
+        "id": "retinoid"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "ceramide"
+      },
+      "relation": "no_restriction",
+      "verdict_effect": "none",
+      "active_from_d": 10,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "같이 쓰면 오히려 좋아요",
+      "reason_text": "레티놀은 건조해질 수 있어서 보습 성분을 함께 쓰면 도움이 돼요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "low"
+    },
+    {
+      "pair_id": "vitamin_c__egf",
+      "a": {
+        "type": "ingredient_group",
+        "id": "vitamin_c"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "egf"
+      },
+      "relation": "no_restriction",
+      "verdict_effect": "none",
+      "active_from_d": 7,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "같이 써도 괜찮아요",
+      "reason_text": "서로 효과를 없앤다는 얘기는 근거가 없어요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "low"
+    },
+    {
+      "pair_id": "exfoliating_acid__scrub_deep",
+      "a": {
+        "type": "ingredient_group",
+        "id": "exfoliating_acid"
+      },
+      "b": {
+        "type": "cleansing_method",
+        "id": "scrub_deep"
+      },
+      "relation": "separate_days",
+      "verdict_effect": "none",
+      "active_from_d": 11,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "오늘은 둘 중 하나만 쓰고, 내일 나머지를 써보세요",
+      "reason_text": "각질 제품과 스크럽을 같은 날 쓰면 피부가 많이 벗겨져요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "low"
+    },
+    {
+      "pair_id": "retinoid__exfoliating_acid",
+      "a": {
+        "type": "ingredient_group",
+        "id": "retinoid"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "exfoliating_acid"
+      },
+      "relation": "separate_days",
+      "verdict_effect": "none",
+      "active_from_d": 12,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "오늘은 둘 중 하나만 쓰고, 내일 나머지를 써보세요",
+      "reason_text": "둘 다 각질을 정리하는 성분이라 같은 날 겹치면 자극이 커져요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "normal"
+    },
+    {
+      "pair_id": "vitamin_c__retinoid",
+      "a": {
+        "type": "ingredient_group",
+        "id": "vitamin_c"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "retinoid"
+      },
+      "relation": "separate_days",
+      "verdict_effect": "none",
+      "active_from_d": 11,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "오늘은 둘 중 하나만 쓰고, 내일 나머지를 써보세요",
+      "reason_text": "둘 다 회복 직후 피부엔 센 성분이라, 하루에 하나씩 나눠 쓰는 게 안전해요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "normal"
+    },
+    {
+      "pair_id": "vitamin_c__exfoliating_acid",
+      "a": {
+        "type": "ingredient_group",
+        "id": "vitamin_c"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "exfoliating_acid"
+      },
+      "relation": "separate_time",
+      "verdict_effect": "none",
+      "active_from_d": 12,
+      "slot_a": "morning",
+      "slot_b": "evening",
+      "user_text": "비타민C는 아침, 각질 제품은 저녁에 나눠서",
+      "reason_text": "둘 다 산성이라 같은 시간에 겹치면 따가울 수 있어요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "normal"
+    },
+    {
+      "pair_id": "niacinamide__vitamin_c",
+      "a": {
+        "type": "ingredient_group",
+        "id": "niacinamide"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "vitamin_c"
+      },
+      "relation": "no_restriction",
+      "verdict_effect": "none",
+      "active_from_d": 7,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "같이 써도 괜찮아요",
+      "reason_text": "같이 쓰면 안 된다는 얘기를 보셨을 수 있어요. 아주 높은 온도에서 실험한 옛날 결과가 잘못 퍼진 거라 평소 쓰는 화장품에서는 서로 방해하지 않아요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "normal"
+    },
+    {
+      "pair_id": "niacinamide__exfoliating_acid",
+      "a": {
+        "type": "ingredient_group",
+        "id": "niacinamide"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "exfoliating_acid"
+      },
+      "relation": "no_restriction",
+      "verdict_effect": "none",
+      "active_from_d": 12,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "같이 써도 괜찮아요",
+      "reason_text": "나이아신아마이드가 오히려 자극을 덜어주는 쪽이에요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "normal"
+    },
+    {
+      "pair_id": "vitamin_c__brightening_functional",
+      "a": {
+        "type": "ingredient_group",
+        "id": "vitamin_c"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "brightening_functional"
+      },
+      "relation": "no_restriction",
+      "verdict_effect": "none",
+      "active_from_d": 7,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "같이 써도 괜찮아요",
+      "reason_text": "색소 관리에는 오히려 함께 쓰는 편이 일반적이에요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "normal"
+    },
+    {
+      "pair_id": "retinoid__ceramide",
+      "a": {
+        "type": "ingredient_group",
+        "id": "retinoid"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "ceramide"
+      },
+      "relation": "no_restriction",
+      "verdict_effect": "none",
+      "active_from_d": 11,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "같이 쓰면 오히려 좋아요",
+      "reason_text": "레티놀은 건조해질 수 있어서 보습 성분을 함께 쓰면 도움이 돼요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "normal"
+    },
+    {
+      "pair_id": "vitamin_c__egf",
+      "a": {
+        "type": "ingredient_group",
+        "id": "vitamin_c"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "egf"
+      },
+      "relation": "no_restriction",
+      "verdict_effect": "none",
+      "active_from_d": 7,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "같이 써도 괜찮아요",
+      "reason_text": "서로 효과를 없앤다는 얘기는 근거가 없어요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "normal"
+    },
+    {
+      "pair_id": "exfoliating_acid__scrub_deep",
+      "a": {
+        "type": "ingredient_group",
+        "id": "exfoliating_acid"
+      },
+      "b": {
+        "type": "cleansing_method",
+        "id": "scrub_deep"
+      },
+      "relation": "separate_days",
+      "verdict_effect": "none",
+      "active_from_d": 12,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "오늘은 둘 중 하나만 쓰고, 내일 나머지를 써보세요",
+      "reason_text": "각질 제품과 스크럽을 같은 날 쓰면 피부가 많이 벗겨져요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "normal"
+    },
+    {
+      "pair_id": "retinoid__exfoliating_acid",
+      "a": {
+        "type": "ingredient_group",
+        "id": "retinoid"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "exfoliating_acid"
+      },
+      "relation": "separate_days",
+      "verdict_effect": "none",
+      "active_from_d": 14,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "오늘은 둘 중 하나만 쓰고, 내일 나머지를 써보세요",
+      "reason_text": "둘 다 각질을 정리하는 성분이라 같은 날 겹치면 자극이 커져요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "high"
+    },
+    {
+      "pair_id": "vitamin_c__retinoid",
+      "a": {
+        "type": "ingredient_group",
+        "id": "vitamin_c"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "retinoid"
+      },
+      "relation": "separate_days",
+      "verdict_effect": "none",
+      "active_from_d": 14,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "오늘은 둘 중 하나만 쓰고, 내일 나머지를 써보세요",
+      "reason_text": "둘 다 회복 직후 피부엔 센 성분이라, 하루에 하나씩 나눠 쓰는 게 안전해요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "high"
+    },
+    {
+      "pair_id": "vitamin_c__exfoliating_acid",
+      "a": {
+        "type": "ingredient_group",
+        "id": "vitamin_c"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "exfoliating_acid"
+      },
+      "relation": "separate_time",
+      "verdict_effect": "none",
+      "active_from_d": 14,
+      "slot_a": "morning",
+      "slot_b": "evening",
+      "user_text": "비타민C는 아침, 각질 제품은 저녁에 나눠서",
+      "reason_text": "둘 다 산성이라 같은 시간에 겹치면 따가울 수 있어요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "high"
+    },
+    {
+      "pair_id": "niacinamide__vitamin_c",
+      "a": {
+        "type": "ingredient_group",
+        "id": "niacinamide"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "vitamin_c"
+      },
+      "relation": "no_restriction",
+      "verdict_effect": "none",
+      "active_from_d": 9,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "같이 써도 괜찮아요",
+      "reason_text": "같이 쓰면 안 된다는 얘기를 보셨을 수 있어요. 아주 높은 온도에서 실험한 옛날 결과가 잘못 퍼진 거라 평소 쓰는 화장품에서는 서로 방해하지 않아요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "high"
+    },
+    {
+      "pair_id": "niacinamide__exfoliating_acid",
+      "a": {
+        "type": "ingredient_group",
+        "id": "niacinamide"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "exfoliating_acid"
+      },
+      "relation": "no_restriction",
+      "verdict_effect": "none",
+      "active_from_d": 14,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "같이 써도 괜찮아요",
+      "reason_text": "나이아신아마이드가 오히려 자극을 덜어주는 쪽이에요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "high"
+    },
+    {
+      "pair_id": "vitamin_c__brightening_functional",
+      "a": {
+        "type": "ingredient_group",
+        "id": "vitamin_c"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "brightening_functional"
+      },
+      "relation": "no_restriction",
+      "verdict_effect": "none",
+      "active_from_d": 9,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "같이 써도 괜찮아요",
+      "reason_text": "색소 관리에는 오히려 함께 쓰는 편이 일반적이에요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "high"
+    },
+    {
+      "pair_id": "retinoid__ceramide",
+      "a": {
+        "type": "ingredient_group",
+        "id": "retinoid"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "ceramide"
+      },
+      "relation": "no_restriction",
+      "verdict_effect": "none",
+      "active_from_d": 14,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "같이 쓰면 오히려 좋아요",
+      "reason_text": "레티놀은 건조해질 수 있어서 보습 성분을 함께 쓰면 도움이 돼요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "high"
+    },
+    {
+      "pair_id": "vitamin_c__egf",
+      "a": {
+        "type": "ingredient_group",
+        "id": "vitamin_c"
+      },
+      "b": {
+        "type": "ingredient_group",
+        "id": "egf"
+      },
+      "relation": "no_restriction",
+      "verdict_effect": "none",
+      "active_from_d": 9,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "같이 써도 괜찮아요",
+      "reason_text": "서로 효과를 없앤다는 얘기는 근거가 없어요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "high"
+    },
+    {
+      "pair_id": "exfoliating_acid__scrub_deep",
+      "a": {
+        "type": "ingredient_group",
+        "id": "exfoliating_acid"
+      },
+      "b": {
+        "type": "cleansing_method",
+        "id": "scrub_deep"
+      },
+      "relation": "separate_days",
+      "verdict_effect": "none",
+      "active_from_d": 14,
+      "slot_a": null,
+      "slot_b": null,
+      "user_text": "오늘은 둘 중 하나만 쓰고, 내일 나머지를 써보세요",
+      "reason_text": "각질 제품과 스크럽을 같은 날 쓰면 피부가 많이 벗겨져요",
+      "evidence": {
+        "grade": "general",
+        "source_procedure": null,
+        "citations": []
+      },
+      "status": "extrapolated",
+      "sensitivity": "high"
+    }
+  ]
+}

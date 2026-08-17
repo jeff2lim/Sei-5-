@@ -18,11 +18,11 @@ test('new user can finish onboarding with no products and enter home', async ({ 
   ].join('-');
   await page.getByLabel('시술 날짜').fill(today);
   await page.getByRole('button', { name: '다음' }).click();
-  await page.getByRole('link', { name: '제품 없이 넘어가기' }).click();
+  await page.getByRole('button', { name: '제품 없이 넘어가기' }).click();
   await page.getByLabel('잘 모르겠어요').check();
   await page.getByRole('button', { name: '다음' }).click();
   await expect(page.getByRole('heading', { name: '회복 관리 준비가 끝났어요.' })).toBeVisible();
-  await page.getByRole('link', { name: /회복 관리 시작/ }).click();
+  await page.getByRole('button', { name: /회복 관리 시작/ }).click();
   await expect(page).toHaveURL(/\/home$/);
   await expect(page.getByText('Picotoning · D+0', { exact: true })).toBeVisible();
 });
@@ -53,13 +53,13 @@ test('draft warning and bottom navigation stay visible on mobile', async ({ page
     );
   });
   await page.goto('/home');
-  await expect(page.locator('.draft-banner')).toContainText('내부 검증용 룰팩');
+  await expect(page.locator('.draft-banner')).toContainText('내부 검증 중인 안내');
   await expect(page.getByRole('navigation', { name: '하단 탐색' })).toBeVisible();
   await page.getByRole('link', { name: '내 제품' }).click();
   await expect(page).toHaveURL(/\/products$/);
 });
 
-test('user can register a skincare product with a v5 ingredient group', async ({ page }) => {
+test('user can register a skincare product with a v6 ingredient group', async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem(
       'recovery-note:v1',
@@ -140,7 +140,9 @@ test('after the D+14 window home shows the completion screen and still reaches c
   await seed(page, { daysAgo: 20 });
 
   await page.goto('/home');
-  await expect(page.getByRole('heading', { name: '2주 회복 과정을 잘 기록했어요.' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: '14일의 회복 여정을 잘 마쳤어요.' }),
+  ).toBeVisible();
   await expect(page.getByText('Picotoning · D+20', { exact: true })).toBeVisible();
 
   // 회복 완료 화면에서도 상태 체크로 갈 수 있어야 합니다.
@@ -156,6 +158,20 @@ test('within the window home keeps the daily guidance screen', async ({ page }) 
   await expect(page.getByRole('heading', { name: '오늘의 회복 안내예요.' })).toBeVisible();
 });
 
+test('D+7 shows the first-week recovery milestone', async ({ page }) => {
+  await seed(page, { daysAgo: 7 });
+  await page.goto('/home');
+  await expect(page.getByRole('heading', { name: '한 주의 회복을 잘 기록했어요.' })).toBeVisible();
+});
+
+test('D+14 shows the completed recovery milestone', async ({ page }) => {
+  await seed(page, { daysAgo: 14 });
+  await page.goto('/home');
+  await expect(
+    page.getByRole('heading', { name: '14일의 회복 여정을 잘 마쳤어요.' }),
+  ).toBeVisible();
+});
+
 test('procedure date can be edited without losing the next appointment', async ({ page }) => {
   await seed(page, {
     daysAgo: 3,
@@ -164,10 +180,10 @@ test('procedure date can be edited without losing the next appointment', async (
 
   await page.goto('/profile');
   await page.getByRole('link', { name: /시술 정보/ }).click();
-  await expect(page).toHaveURL(/\/onboarding\/procedure\?mode=edit$/);
+  await expect(page).toHaveURL(/\/profile\/procedure$/);
 
   await page.getByLabel('시술 날짜').fill(isoDaysAgo(1));
-  await page.getByRole('button', { name: '시술 정보 저장' }).click();
+  await page.getByRole('button', { name: '변경사항 저장' }).click();
   await expect(page).toHaveURL(/\/profile$/);
 
   const stored = await page.evaluate(() =>
@@ -206,7 +222,9 @@ test('product can be edited in place instead of deleted and re-added', async ({ 
   await expect(page.getByLabel('제품 이름')).toHaveValue('기존 세럼');
   await page.getByLabel('제품 이름').fill('이름 바꾼 세럼');
   await page.getByRole('button', { name: '속성 선택하기' }).click();
-  await expect(page.getByRole('checkbox', { name: /나이아신아마이드/ })).toBeChecked();
+  await expect(
+    page.getByRole('checkbox', { name: /^나이아신아마이드 성분표/ }),
+  ).toBeChecked();
   await page.getByRole('button', { name: '변경 저장' }).click();
 
   await expect(page).toHaveURL(/\/products\/prod-1$/);
@@ -231,7 +249,7 @@ test('calendar opens the check-in record for a checked day', async ({ page }) =>
         checkedAt: checkedAt.toISOString(),
         procedureDay: 1,
         answers: [{ symptomId: 'redness', present: false }],
-        rulePackVersion: '5.0.0-team-provisional',
+        rulePackVersion: '6.0.0',
       },
     ],
   });

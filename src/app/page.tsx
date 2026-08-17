@@ -2,6 +2,7 @@
 
 import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
+import { getOnboardingDestination } from '@/domain/session';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
 import Link from 'next/link';
@@ -24,7 +25,7 @@ export default function LandingPage() {
   }, []);
   useEffect(() => {
     if (!hydrated || showLanding === null || showLanding || !session?.consent) return;
-    router.replace(session.procedure ? '/home' : '/onboarding/procedure');
+    router.replace(getOnboardingDestination(session));
   }, [hydrated, router, session, showLanding]);
 
   if (!hydrated || showLanding === null || (!showLanding && session?.consent))
@@ -51,8 +52,8 @@ export default function LandingPage() {
         <div className="notice">
           <ShieldCheck aria-hidden="true" size={20} />
           <span>
-            이 앱은 진단이나 치료를 제공하지 않으며 의료진의 판단을 대신하지 않습니다. 현재 룰팩은
-            내부 검증용입니다.
+            이 앱은 진단이나 치료를 제공하지 않으며 의료진의 판단을 대신하지 않습니다. 현재 안내는
+            내부 검증 중입니다.
           </span>
         </div>
         <Link className="button full" href="/consent" onClick={handleStart}>

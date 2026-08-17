@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 export function StoreHydrator() {
   const hydrate = useRecoveryStore((state) => state.hydrate);
   useEffect(() => {
-    void hydrate();
+    void hydrate().catch(() => undefined);
   }, [hydrate]);
   return null;
 }

@@ -5,26 +5,34 @@ import { LoadingScreen } from '@/components/common/loading-screen';
 import { VerdictBadge } from '@/components/verdict/verdict-badge';
 import { analytics } from '@/domain/analytics';
 import type { ProductCategory, VerdictLevel } from '@/domain/product';
-import { getProcedureDay } from '@/domain/procedure';
+import { getProcedureDay, getRecoveryMilestone } from '@/domain/procedure';
 import { evaluateCategory } from '@/rules/engine/evaluate';
 import { rulePackMeta } from '@/rules/loaders/bundled-rule-pack';
+import { getNextProcedureDay } from '@/ruletable/date';
+import { activePrepBehaviorWarnings } from '@/ruletable/resolve';
 import { useRecoveryStore } from '@/store/recovery-store';
-import { ChevronRight, ClipboardCheck, Droplets, Info, ShieldCheck, Sparkles } from 'lucide-react';
+import {
+  ChevronRight,
+  ClipboardCheck,
+  Droplets,
+  Info,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo } from 'react';
 
 const categories: Array<{
   id: ProductCategory;
   label: string;
-  description: string;
   icon: typeof Droplets;
 }> = [
-  { id: 'cleansing', label: '세안', description: '마찰을 줄이는 세안 안내', icon: Droplets },
-  { id: 'skincare', label: '스킨케어', description: '등록 성분별 사용 안내', icon: Sparkles },
-  { id: 'outing', label: '외출준비', description: '제형과 자외선 차단 안내', icon: ShieldCheck },
+  { id: 'cleansing', label: '세안', icon: Droplets },
+  { id: 'skincare', label: '스킨케어', icon: Sparkles },
+  { id: 'outing', label: '외출준비', icon: ShieldCheck },
 ];
 
-/** 룰테이블 v5가 D+0~14를 커버합니다. 이후 날짜는 D+14 판정으로 고정됩니다. */
+/** 룰테이블 v6가 D−7~D+14를 커버합니다. 이후 날짜는 D+14 판정으로 고정됩니다. */
 const RECOVERY_WINDOW_DAYS = 14;
 
 function getRecoveryCompleteLabel(level: VerdictLevel) {
@@ -49,6 +57,10 @@ export default function HomePage() {
   const day = session?.procedure
     ? getProcedureDay(session.procedure.performedAt, new Date())
     : null;
+  const nextProcedureDay = getNextProcedureDay(
+    session?.procedure?.performedAt,
+    session?.profile.nextProcedureAt,
+  );
   const categoryVerdicts = useMemo(
     () =>
       day === null
@@ -59,9 +71,10 @@ export default function HomePage() {
               session?.products ?? [],
               day,
               session?.profile.sensitivity ?? 'normal',
+              nextProcedureDay,
             ),
           ),
-    [day, session?.products, session?.profile.sensitivity],
+    [day, nextProcedureDay, session?.products, session?.profile.sensitivity],
   );
 
   useEffect(() => {
@@ -89,6 +102,10 @@ export default function HomePage() {
     );
   }
   const currentDay = day ?? 0;
+  const daysToNext = nextProcedureDay === null ? null : nextProcedureDay - currentDay;
+  const inPrep = daysToNext !== null && daysToNext >= 1 && daysToNext <= 7;
+  const showPrep = nextProcedureDay !== null && (currentDay >= 14 || inPrep);
+  const prepWarnings = activePrepBehaviorWarnings(daysToNext);
 
   const todayCheck = session.checkIns.some(
     (checkIn) => checkIn.checkedAt.slice(0, 10) === new Date().toISOString().slice(0, 10),
@@ -127,29 +144,59 @@ export default function HomePage() {
 
   const unknownItems = recoveryItems.filter(({ verdict }) => verdict.level === 'unknown');
 
-  if (day !== null && day > RECOVERY_WINDOW_DAYS) {
+  const milestone =
+    day === null
+      ? null
+      : day === 7
+        ? getRecoveryMilestone(day)
+        : showPrep
+          ? null
+          : getRecoveryMilestone(day);
+  const isFirstWeekMilestone = milestone === 'first-week';
+  const isRecoveryCompleteMilestone = milestone === 'recovery-complete';
+
+  if (isFirstWeekMilestone || isRecoveryCompleteMilestone) {
     return (
       <AppShell>
         <header>
           <p className="eyebrow">Picotoning · D+{day}</p>
-          <h1 className="headline">2주 회복 과정을 잘 기록했어요.</h1>
+          <h1 className="headline">
+            {isRecoveryCompleteMilestone
+              ? '14일의 회복 여정을 잘 마쳤어요.'
+              : '한 주의 회복을 잘 기록했어요.'}
+          </h1>
           <p className="subcopy">
-            피코토닝 후 D+{RECOVERY_WINDOW_DAYS}까지의 회복·재개 기간을 마쳤어요.
+            {isRecoveryCompleteMilestone
+              ? '피코토닝 후 2주 회복·재개 기간을 마쳤어요.'
+              : '피코토닝 후 첫 주 회복 기간을 마쳤어요.'}
           </p>
         </header>
 
         <section className="section hero-card">
-          <span className="badge go">회복 완료</span>
+          <span className="badge go">
+            {isRecoveryCompleteMilestone ? '회복 여정 완료' : '첫 주 완료'}
+          </span>
 
           <h2 className="headline" style={{ marginTop: 14 }}>
-            이제 대부분의 일상 관리를
-            <br />
-            서서히 재개할 수 있어요.
+            {isRecoveryCompleteMilestone ? (
+              <>
+                이제 일상 관리로 돌아가되
+                <br />
+                피부 상태는 계속 살펴주세요.
+              </>
+            ) : (
+              <>
+                이제 대부분의 일상 관리를
+                <br />
+                서서히 재개할 수 있어요.
+              </>
+            )}
           </h2>
 
           <p className="subcopy">
-            아래 안내는 룰테이블의 마지막 날인 D+{RECOVERY_WINDOW_DAYS} 기준으로 계속
-            표시됩니다.
+            {isRecoveryCompleteMilestone
+              ? `아래 안내는 룰테이블의 마지막 날인 D+${RECOVERY_WINDOW_DAYS} 기준으로 계속 표시됩니다.`
+              : '제품별 안내는 등록한 정보를 기준으로 계속 확인할 수 있어요.'}
           </p>
         </section>
 
@@ -171,7 +218,7 @@ export default function HomePage() {
                 <div className="list-row" key={product.id}>
                   <div className="list-row-main">
                     <strong>{product.name}</strong>
-                    <span>현재 룰 기준으로 재개할 수 있어요.</span>
+                    <span>현재 안내 기준으로 재개할 수 있어요.</span>
                   </div>
                   <span className={`badge ${verdict.level}`}>
                     {getRecoveryCompleteLabel(verdict.level)}
@@ -190,11 +237,12 @@ export default function HomePage() {
                   <div className="list-row-main">
                     <strong>{product.name}</strong>
                     <span>
-                      {verdict.level === 'consult'
+                      {verdict.prepText ??
+                      (verdict.level === 'consult'
                         ? '사용 전에 병원 확인이 필요한 항목이에요.'
                         : verdict.level === 'stop'
                           ? '아직은 사용을 쉬어가는 항목이에요.'
-                          : '무리하지 말고 천천히 재개하세요.'}
+                          : '무리하지 말고 천천히 재개하세요.')}
                     </span>
                   </div>
 
@@ -224,6 +272,16 @@ export default function HomePage() {
 
         {checkInCard}
 
+        {isFirstWeekMilestone && nextProcedureDay !== null && nextProcedureDay <= 14 ? (
+          <div className="notice section">
+            <Info size={18} aria-hidden="true" />
+            <span>
+              2주 간격으로 시술받으시면 레티놀·필링 제품은 시술 기간 내내 쉬는 게 맞아요.
+              시술을 다 마친 뒤에 다시 시작하세요.
+            </span>
+          </div>
+        ) : null}
+
         <section className="section stack">
           <Link className="button full" href="/records?addSchedule=1">
             다음 시술 일정 잡기
@@ -240,17 +298,29 @@ export default function HomePage() {
   return (
     <AppShell>
       <header>
-        <p className="eyebrow">Picotoning · D+{currentDay}</p>
+        <p className="eyebrow">
+          {showPrep && daysToNext !== null
+            ? `Picotoning prep · D−${daysToNext}`
+            : `Picotoning · D+${currentDay}`}
+        </p>
         <h1 className="headline">
-          {currentDay === 7 ? '한 주의 회복을 잘 기록했어요.' : '오늘의 회복 안내예요.'}
+          {showPrep
+            ? '다음 시술 준비 안내예요.'
+            : currentDay === 7
+              ? '한 주의 회복을 잘 기록했어요.'
+              : '오늘의 회복 안내예요.'}
         </h1>
         <p className="subcopy">선택한 정보에 따라 오늘의 안내 항목이 달라졌습니다.</p>
       </header>
 
       <section className="section hero-card">
-        <span className="badge">D+{currentDay}</span>
+        <span className="badge">
+          {showPrep && daysToNext !== null ? `D−${daysToNext}` : `D+${currentDay}`}
+        </span>
         <h2 className="headline" style={{ marginTop: 14 }}>
-          {currentDay === 0
+          {showPrep
+            ? '시술 전까지 자외선 차단이 가장 중요해요. 지우기 쉬운 걸 바르고 순하게 지우세요.'
+            : currentDay === 0
             ? '오늘은 이것만 하면 돼요 — 미온수 세안 · 보습 · 외출 자제'
             : currentDay === 7
               ? '회복기를 마쳤어요. 이제 한꺼번에 말고 순서대로 다시 시작해요.'
@@ -263,10 +333,22 @@ export default function HomePage() {
         </p>
       </section>
 
+      {prepWarnings.length ? (
+        <section className="section stack" aria-label="시술 준비">
+          <h2 className="section-title">시술 준비</h2>
+          {prepWarnings.map((warning) => (
+            <div className="notice" key={warning.id}>
+              <Info size={18} aria-hidden="true" />
+              <span>{warning.text}</span>
+            </div>
+          ))}
+        </section>
+      ) : null}
+
       <section className="section">
         <h2 className="section-title">내 제품으로 보는 오늘</h2>
         <div className="stack">
-          {categories.map(({ id, label, description, icon: Icon }, index) => {
+          {categories.map(({ id, label, icon: Icon }, index) => {
             const verdict = categoryVerdicts[index];
             return (
               <Link className="category-card" href={`/guide/${id}`} key={id}>
@@ -277,8 +359,8 @@ export default function HomePage() {
                   <strong>{label}</strong>
                   <span>
                     {verdict.products.length
-                      ? `${verdict.products.length}개 제품 · ${description}`
-                      : `등록 제품 없음 · ${description}`}
+                      ? `${verdict.products.length}개 제품`
+                      : '등록 제품 없음'}
                   </span>
                 </span>
                 <span style={{ display: 'grid', justifyItems: 'end', gap: 7 }}>

@@ -207,13 +207,21 @@ export function ProductAttributesForm({
             return (
               <label className="choice" key={group.id}>
                 <strong>{group.label}</strong>
-                <span>
-                  {synonyms?.length
-                    ? `전성분표 예: ${synonyms.join(' · ')}`
-                    : group.judgment_mode === 'consult_only'
+                {synonyms?.length ? (
+                  <span className="ingredient-aliases" aria-label={`성분표 표기: ${synonyms.join(', ')}`}>
+                    {synonyms.map((synonym) => (
+                      <span className="ingredient-alias" key={synonym}>
+                        {synonym}
+                      </span>
+                    ))}
+                  </span>
+                ) : (
+                  <span>
+                    {group.judgment_mode === 'consult_only'
                       ? '병원에서 직접 받은 제품이면 선택하세요.'
                       : '향료 표기가 있으면 선택하세요. 판정이 아닌 주의 문구만 표시됩니다.'}
-                </span>
+                  </span>
+                )}
                 <input
                   type="checkbox"
                   checked={selection.ingredientGroupIds.includes(group.id)}

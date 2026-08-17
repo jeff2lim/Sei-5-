@@ -1,19 +1,28 @@
 'use client';
 
 import { AppShell } from '@/components/app-shell/app-shell';
+import { CombinationSheet } from '@/components/combinations/combination-sheet';
+import { CombinationStrip } from '@/components/combinations/combination-strip';
+import { useCombinationPick } from '@/components/combinations/use-combination-pick';
 import { LoadingScreen } from '@/components/common/loading-screen';
 import { Topbar } from '@/components/common/topbar';
-import { VerdictBadge } from '@/components/verdict/verdict-badge';
+import { ProductRow } from '@/components/products/product-row';
 import { analytics } from '@/domain/analytics';
 import type { ProductCategory } from '@/domain/product';
 import { getProcedureDay } from '@/domain/procedure';
 import { evaluateProduct } from '@/rules/engine/evaluate';
+import {
+  combinationsForCategory,
+  resolveCombinationState,
+  toCombinationUiProduct,
+} from '@/ruletable/combine';
+import { getNextProcedureDay } from '@/ruletable/date';
 import { activeBehaviorWarnings } from '@/ruletable/resolve';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { ChevronLeft, ChevronRight, Info, PackagePlus } from 'lucide-react';
 import Link from 'next/link';
 import { notFound, useParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const content = {
   cleansing: {
@@ -44,13 +53,57 @@ export default function GuidePage() {
   const nextCategory = currentIndex < guideOrder.length - 1 ? guideOrder[currentIndex + 1] : null;
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [showPickToast, setShowPickToast] = useState(false);
+  const stripRef = useRef<HTMLButtonElement>(null);
   const day = session?.procedure ? getProcedureDay(session.procedure.performedAt, new Date()) : 0;
-  const products = (session?.products ?? []).filter((product) => product.category === category);
-  const details = products.map((product) => ({
+  const nextProcedureDay = getNextProcedureDay(
+    session?.procedure?.performedAt,
+    session?.profile.nextProcedureAt,
+  );
+  const { selectedProductId, selectProduct } = useCombinationPick(session?.procedure?.id, day);
+  const allDetails = (session?.products ?? []).map((product) => ({
     product,
-    verdict: evaluateProduct(product, day, session?.profile.sensitivity ?? 'normal'),
+    verdict: evaluateProduct(
+      product,
+      day,
+      session?.profile.sensitivity ?? 'normal',
+      nextProcedureDay,
+    ),
   }));
+  const details = allDetails.filter(({ product }) => product.category === category);
+  const latestCheckIn = [...(session?.checkIns ?? [])]
+    .filter((checkIn) => checkIn.procedureDay === day)
+    .sort((a, b) => b.checkedAt.localeCompare(a.checkedAt))[0];
+  const combinationState = resolveCombinationState({
+    day,
+    sensitivity: session?.profile.sensitivity ?? 'normal',
+    userProducts: allDetails.map(({ product, verdict }) =>
+      toCombinationUiProduct(product, verdict.level),
+    ),
+    symptoms: latestCheckIn?.answers.map((answer) => ({
+      id: answer.symptomId,
+      present: answer.present,
+      severity: answer.severity,
+    })),
+    nextProcedureDay,
+    selectedProductId,
+  });
+  const categoryCombinationState = combinationsForCategory(combinationState, category);
   const warnings = activeBehaviorWarnings(day, category);
+
+  const pickProduct = useCallback(
+    (productId: string) => {
+      const isFirstPick = selectedProductId === null;
+      selectProduct(productId);
+      if (isFirstPick) {
+        setShowPickToast(true);
+        window.setTimeout(() => setShowPickToast(false), 2600);
+      }
+    },
+    [selectProduct, selectedProductId],
+  );
+  const closeSheet = useCallback(() => setSheetOpen(false), []);
 
   useEffect(() => {
     analytics.track({ name: 'category_guide_viewed', category });
@@ -109,18 +162,26 @@ export default function GuidePage() {
         <h2 className="section-title">내 {content[category].title} 제품</h2>
         {details.length ? (
           <div className="card">
-            {details.map(({ product, verdict }) => (
-              <Link className="list-row" href={`/products/${product.id}`} key={product.id}>
-                <span className="list-row-main">
-                  <strong>{product.name}</strong>
-                  <span>
-                    {verdict.resumeDay !== undefined ? `D+${verdict.resumeDay} 재개 안내 · ` : ''}
-                    {verdict.details[0]?.reason ?? '선택한 속성이 없어 판정 정보가 없습니다.'}
-                  </span>
-                </span>
-                <VerdictBadge level={verdict.level} />
-              </Link>
-            ))}
+            {details.map(({ product, verdict }) => {
+              const affected = categoryCombinationState.affectedProducts.some(
+                (candidate) => candidate.productId === product.id,
+              );
+              const combinationLabel = selectedProductId
+                ? product.id === selectedProductId
+                  ? 'today'
+                  : affected
+                    ? 'tomorrow'
+                    : null
+                : null;
+              return (
+                <ProductRow
+                  product={product}
+                  verdict={verdict}
+                  combinationLabel={combinationLabel}
+                  key={product.id}
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="empty-state">
@@ -151,6 +212,12 @@ export default function GuidePage() {
         </section>
       ) : null}
 
+      <CombinationStrip
+        state={categoryCombinationState}
+        onOpen={() => setSheetOpen(true)}
+        ref={stripRef}
+      />
+
       <div
         className="guide-pager-dots"
         aria-label={`${currentIndex + 1} / ${guideOrder.length} 단계`}
@@ -165,6 +232,20 @@ export default function GuidePage() {
           />
         ))}
       </div>
+
+      <CombinationSheet
+        open={sheetOpen}
+        state={categoryCombinationState}
+        day={day}
+        onClose={closeSheet}
+        onPick={pickProduct}
+        returnFocusRef={stripRef}
+      />
+      {showPickToast ? (
+        <div className="combination-toast" role="status">
+          판정이 바뀐 건 아니에요. 오늘 순서만 정한 거예요.
+        </div>
+      ) : null}
     </AppShell>
   );
 }

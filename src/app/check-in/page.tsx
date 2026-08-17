@@ -7,7 +7,7 @@ import type { CheckIn, CheckInAnswer } from '@/domain/check-in';
 import { getProcedureDay } from '@/domain/procedure';
 import { evaluateCheckIn } from '@/rules/engine/evaluate';
 import { symptomDefinitions } from '@/ruletable/data';
-import { v5RuleTable } from '@/ruletable/resolve';
+import { v6RuleTable } from '@/ruletable/resolve';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { AlertTriangle, CameraOff, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -51,7 +51,7 @@ export default function CheckInPage() {
         checkedAt: new Date().toISOString(),
         procedureDay,
         answers: Object.values(answers),
-        rulePackVersion: v5RuleTable.version,
+        rulePackVersion: v6RuleTable.version,
       };
       const action = evaluateCheckIn(checkIn);
       await saveCheckIn(checkIn);
