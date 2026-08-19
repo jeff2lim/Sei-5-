@@ -1,7 +1,12 @@
 import type { CheckIn, ContactAction } from '@/domain/check-in';
 import type { Product, ProductCategory, VerdictLevel } from '@/domain/product';
 import type { Sensitivity } from '@/domain/procedure';
-import type { AttributeVerdict, CategoryVerdict, ProductVerdict } from '@/domain/verdict';
+import type {
+  AttributeVerdict,
+  CategoryEvaluationState,
+  ProductEvaluationState,
+  ProductVerdict,
+} from '@/domain/verdict';
 import { baseMakeup, cleansingMethods, ingredientGroups, sunscreenTypes } from '@/ruletable/data';
 import { evaluateSymptoms, resolveProduct, resolveTarget, v6RuleTable } from '@/ruletable/resolve';
 import type { ProductRuleSelection, TargetType } from '@/ruletable/types';
@@ -135,14 +140,31 @@ export function evaluateProducts(
   );
 }
 
+export function evaluateProductCollection(
+  products: Product[],
+  procedureDay: number,
+  sensitivity: Sensitivity = 'normal',
+  nextProcedureDay: number | null = null,
+): ProductEvaluationState {
+  if (products.length === 0) return { status: 'empty' };
+  return {
+    status: 'evaluated',
+    items: products.map((product) => ({
+      product,
+      verdict: evaluateProduct(product, procedureDay, sensitivity, nextProcedureDay),
+    })),
+  };
+}
+
 export function evaluateCategory(
   category: ProductCategory,
   products: Product[],
   procedureDay: number,
   sensitivity: Sensitivity = 'normal',
   nextProcedureDay: number | null = null,
-): CategoryVerdict {
+): CategoryEvaluationState {
   const matchingProducts = products.filter((product) => product.category === category);
+  if (matchingProducts.length === 0) return { status: 'empty', category };
   const verdicts = evaluateProducts(
     matchingProducts,
     procedureDay,
@@ -153,7 +175,7 @@ export function evaluateCategory(
     (current, verdict) => (rank[verdict.level] > rank[current] ? verdict.level : current),
     'unknown',
   );
-  return { category, level, products: verdicts };
+  return { status: 'evaluated', category, level, products: verdicts };
 }
 
 export function evaluateCheckIn(checkIn: CheckIn): ContactAction {

@@ -2,6 +2,7 @@
 
 import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
+import { useSubmitState } from '@/hooks/use-submit-state';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { CalendarPlus, ChevronLeft, ChevronRight, ClipboardCheck, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
@@ -22,6 +23,9 @@ function RecordsPageContent() {
   const scheduleDetailDialogRef = useRef<HTMLDialogElement>(null);
   const procedureTypeLabel = session?.procedure?.procedureType === 'picotoning' ? '피코토닝' : '-';
   const [nextDate, setNextDate] = useState(session?.profile.nextProcedureAt ?? '');
+  const { submitting, errorMessage, run, clearError } = useSubmitState({
+    context: 'procedure_schedule',
+  });
   useEffect(() => {
     if (!hydrated) return;
     if (searchParams.get('addSchedule') === '1') {
@@ -62,22 +66,26 @@ function RecordsPageContent() {
   async function deleteNextProcedure() {
     if (!session?.profile.nextProcedureAt) return;
 
-    await saveProfile({
-      ...session.profile,
-      nextProcedureAt: undefined,
-    });
+    await run(async () => {
+      await saveProfile({
+        ...session.profile,
+        nextProcedureAt: undefined,
+      });
 
-    setNextDate('');
-    scheduleDetailDialogRef.current?.close();
+      setNextDate('');
+      scheduleDetailDialogRef.current?.close();
+    });
   }
 
   async function saveNextDate(event: React.FormEvent) {
     event.preventDefault();
-    await saveProfile({
-      ...(session?.profile ?? { sensitivity: 'normal' }),
-      nextProcedureAt: nextDate || undefined,
+    await run(async () => {
+      await saveProfile({
+        ...(session?.profile ?? { sensitivity: 'normal' }),
+        nextProcedureAt: nextDate || undefined,
+      });
+      dialogRef.current?.close();
     });
-    dialogRef.current?.close();
   }
 
   function goToPreviousMonth() {
@@ -102,7 +110,10 @@ function RecordsPageContent() {
           <button
             className="button secondary"
             type="button"
-            onClick={() => dialogRef.current?.showModal()}
+            onClick={() => {
+              clearError();
+              dialogRef.current?.showModal();
+            }}
           >
             <CalendarPlus size={17} aria-hidden="true" /> 일정 추가
           </button>
@@ -302,8 +313,13 @@ function RecordsPageContent() {
               onChange={(event) => setNextDate(event.target.value)}
             />
           </div>
-          <button className="button full" type="submit">
-            저장
+          {errorMessage ? (
+            <p className="error" role="alert">
+              {errorMessage}
+            </p>
+          ) : null}
+          <button className="button full" type="submit" aria-busy={submitting} disabled={submitting}>
+            {submitting ? '저장 중…' : '저장'}
           </button>
         </form>
       </dialog>
@@ -347,11 +363,18 @@ function RecordsPageContent() {
           <button
             className="button danger full"
             type="button"
+            aria-busy={submitting}
+            disabled={submitting}
             onClick={() => void deleteNextProcedure()}
           >
             <Trash2 size={18} aria-hidden="true" />
-            삭제하기
+            {submitting ? '삭제 중…' : '삭제하기'}
           </button>
+          {errorMessage ? (
+            <p className="error" role="alert">
+              {errorMessage}
+            </p>
+          ) : null}
         </div>
       </dialog>
     </AppShell>

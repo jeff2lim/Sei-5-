@@ -4,19 +4,21 @@ import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
 import { analytics } from '@/domain/analytics';
 import { getProcedureDay } from '@/domain/procedure';
+import { useSubmitState } from '@/hooks/use-submit-state';
 import { isAuthEnabled } from '@/lib/supabase/config';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { Check, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 export default function CompletePage() {
   const router = useRouter();
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const completeOnboarding = useRecoveryStore((state) => state.completeOnboarding);
-  const [completing, setCompleting] = useState(false);
-  const [completeError, setCompleteError] = useState<string | null>(null);
+  const { submitting: completing, errorMessage: completeError, run } = useSubmitState({
+    context: 'onboarding_complete',
+  });
 
   useEffect(() => {
     if (isAuthEnabled()) {
@@ -29,22 +31,14 @@ export default function CompletePage() {
   const day = session?.procedure ? getProcedureDay(session.procedure.performedAt, new Date()) : 0;
 
   async function startRecovery(destination: string) {
-    if (completing) return;
-    setCompleting(true);
-    setCompleteError(null);
-    try {
+    await run(async () => {
       await completeOnboarding();
       analytics.track({
         name: 'onboarding_completed',
         productCount: session?.products.length ?? 0,
       });
       router.push(destination);
-    } catch (error) {
-      console.error(error);
-      setCompleteError('저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
-    } finally {
-      setCompleting(false);
-    }
+    });
   }
 
   return (
@@ -82,6 +76,7 @@ export default function CompletePage() {
             <button
               type="button"
               className="button kakao full"
+              aria-busy={completing}
               disabled={completing}
               onClick={() =>
                 void startRecovery('/auth/login?next=/home&placement=onboarding_complete')
@@ -93,6 +88,7 @@ export default function CompletePage() {
             <button
               type="button"
               className="button secondary full"
+              aria-busy={completing}
               disabled={completing}
               onClick={() => {
                 analytics.track({
@@ -109,6 +105,7 @@ export default function CompletePage() {
           <button
             type="button"
             className="button full"
+            aria-busy={completing}
             disabled={completing}
             onClick={() => void startRecovery('/home')}
           >

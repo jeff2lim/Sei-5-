@@ -4,6 +4,7 @@ import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
 import { Topbar } from '@/components/common/topbar';
 import type { ConsentState } from '@/domain/session';
+import { useSubmitState } from '@/hooks/use-submit-state';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { ChevronRight, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
@@ -68,14 +69,14 @@ export default function ConsentPage() {
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const saveConsent = useRecoveryStore((state) => state.saveConsent);
-  const saveOnboardingStep = useRecoveryStore((state) => state.saveOnboardingStep);
 
   const [consentMode, setConsentMode] = useState<'onboarding' | 'edit' | null>(null);
   const isEditing = consentMode === 'edit';
   const [values, setValues] = useState<Record<ConsentKey, boolean>>(emptyConsentValues);
   const [draftLoaded, setDraftLoaded] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const { submitting, errorMessage: submitError, run } = useSubmitState({
+    context: 'consent',
+  });
   useEffect(() => {
     if (!hydrated || draftLoaded) return;
 
@@ -137,21 +138,13 @@ export default function ConsentPage() {
   }
 
   async function submit() {
-    if (!requiredComplete || submitting) return;
-    setSubmitting(true);
-    setSubmitError(null);
-    try {
+    if (!requiredComplete) return;
+    await run(async () => {
       const consent: ConsentState = { ...values, updatedAt: new Date().toISOString() };
-      await saveConsent(consent);
-      if (!isEditing) await saveOnboardingStep('procedure');
+      await saveConsent(consent, isEditing ? undefined : 'procedure');
       window.sessionStorage.removeItem(CONSENT_DRAFT_KEY);
       router.push(isEditing ? '/profile' : '/onboarding/procedure');
-    } catch (error) {
-      console.error(error);
-      setSubmitError('저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
-    } finally {
-      setSubmitting(false);
-    }
+    });
   }
 
   if (!hydrated || !draftLoaded || consentMode === null) {
@@ -226,6 +219,7 @@ export default function ConsentPage() {
         <button
           className="button full"
           type="button"
+          aria-busy={submitting}
           disabled={!requiredComplete || submitting}
           onClick={() => void submit()}
         >

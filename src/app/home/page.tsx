@@ -130,7 +130,7 @@ export default function HomePage() {
   );
 
   const recoveryItems = categoryVerdicts.flatMap((categoryVerdict) =>
-    categoryVerdict.products.flatMap((verdict) => {
+    categoryVerdict.status === 'empty' ? [] : categoryVerdict.products.flatMap((verdict) => {
       const product = session.products.find((item) => item.id === verdict.productId);
 
       return product ? [{ product, verdict }] : [];
@@ -354,7 +354,7 @@ export default function HomePage() {
         <div className="stack">
           {categories.map(({ id, label, icon: Icon }, index) => {
             const verdict = categoryVerdicts[index];
-            const hasProducts = verdict.products.length > 0;
+            const hasProducts = verdict.status === 'evaluated';
             return (
               <Link className="category-card" href={`/guide/${id}`} key={id}>
                 <span className="category-icon">
@@ -362,7 +362,9 @@ export default function HomePage() {
                 </span>
                 <span className="list-row-main">
                   <strong>{label}</strong>
-                  <span>{hasProducts ? `${verdict.products.length}개 제품` : '제품을 등록해 주세요'}</span>
+                  <span>
+                    {hasProducts ? `${verdict.products.length}개 제품` : '제품을 등록해 주세요'}
+                  </span>
                 </span>
                 <span style={{ display: 'grid', justifyItems: 'end', gap: 7 }}>
                   {hasProducts ? (

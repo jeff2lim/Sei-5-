@@ -6,6 +6,7 @@ import { Topbar } from '@/components/common/topbar';
 import type { Sensitivity } from '@/domain/procedure';
 import { analytics } from '@/domain/analytics';
 import { getProcedureDay, toLocalDateInputValue } from '@/domain/procedure';
+import { useSubmitState } from '@/hooks/use-submit-state';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -24,11 +25,11 @@ export default function ProcedurePage() {
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const saveProcedure = useRecoveryStore((state) => state.saveProcedure);
-  const saveOnboardingStep = useRecoveryStore((state) => state.saveOnboardingStep);
   // 마이에서 들어오면 온보딩이 아니라 시술 정보 수정 화면으로 동작합니다.
   const [isEditing, setIsEditing] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const { submitting, errorMessage: submitError, run } = useSubmitState({
+    context: 'procedure',
+  });
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { performedAt: today(), sensitivity: 'normal' },
@@ -48,27 +49,22 @@ export default function ProcedurePage() {
   }, [form, hydrated, session?.procedure?.performedAt, session?.profile.sensitivity]);
 
   async function submit(values: FormValues) {
-    if (submitting) return;
     if (values.performedAt > today()) {
       form.setError('performedAt', { message: '시술 날짜는 미래일 수 없어요.' });
       return;
     }
-    setSubmitting(true);
-    setSubmitError(null);
-    try {
-      await saveProcedure(values.performedAt, values.sensitivity as Sensitivity);
-      if (!isEditing) await saveOnboardingStep('products');
+    await run(async () => {
+      await saveProcedure(
+        values.performedAt,
+        values.sensitivity as Sensitivity,
+        isEditing ? undefined : 'products',
+      );
       analytics.track({
         name: 'procedure_saved',
         procedureDay: getProcedureDay(values.performedAt, new Date()),
       });
       router.push(isEditing ? '/profile' : '/onboarding/products');
-    } catch (error) {
-      console.error(error);
-      setSubmitError('저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
-    } finally {
-      setSubmitting(false);
-    }
+    });
   }
 
   return (
@@ -134,7 +130,7 @@ export default function ProcedurePage() {
               {submitError}
             </p>
           ) : null}
-          <button className="button full" type="submit" disabled={submitting}>
+          <button className="button full" type="submit" aria-busy={submitting} disabled={submitting}>
             {submitting ? '저장 중…' : isEditing ? '시술 정보 저장' : '다음'}
           </button>
         </div>

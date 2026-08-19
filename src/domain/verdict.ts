@@ -1,4 +1,4 @@
-import type { ProductCategory, VerdictLevel } from './product';
+import type { Product, ProductCategory, VerdictLevel } from './product';
 
 export type AttributeVerdict = {
   attributeId: string;
@@ -21,8 +21,17 @@ export type ProductVerdict = {
   rulePackVersion: string;
 };
 
-export type CategoryVerdict = {
-  category: ProductCategory;
-  level: VerdictLevel;
-  products: ProductVerdict[];
-};
+export type EvaluatedProduct = { product: Product; verdict: ProductVerdict };
+
+export type ProductEvaluationState =
+  | { status: 'empty' }
+  | { status: 'evaluated'; items: EvaluatedProduct[] };
+
+export type CategoryEvaluationState =
+  | { status: 'empty'; category: ProductCategory }
+  | {
+      status: 'evaluated';
+      category: ProductCategory;
+      level: VerdictLevel;
+      products: ProductVerdict[];
+    };

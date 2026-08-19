@@ -3,6 +3,7 @@
 import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
 import { toLocalDateKey } from '@/domain/date';
+import { useSubmitState } from '@/hooks/use-submit-state';
 import { evaluateCheckIn } from '@/rules/engine/evaluate';
 import { consecutiveDowngradeDays, hasDowngradeTrigger } from '@/ruletable/resolve';
 import { useRecoveryStore } from '@/store/recovery-store';
@@ -34,6 +35,11 @@ function CheckInResultPageContent() {
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const saveProfile = useRecoveryStore((state) => state.saveProfile);
+  const {
+    submitting: profileUpdating,
+    errorMessage: profileError,
+    run: runProfileUpdate,
+  } = useSubmitState({ context: 'check_in_result_profile' });
   const checkIns = session?.checkIns ?? [];
   if (!hydrated) return <LoadingScreen navigation={false} />;
   const checkInId = searchParams.get('id');
@@ -111,14 +117,23 @@ function CheckInResultPageContent() {
           <div className="segmented" style={{ marginTop: 12 }}>
             <button
               type="button"
+              aria-busy={profileUpdating}
+              disabled={profileUpdating}
               onClick={() =>
-                session ? saveProfile({ ...session.profile, sensitivity: 'high' }) : undefined
+                void runProfileUpdate(async () => {
+                  if (session) await saveProfile({ ...session.profile, sensitivity: 'high' });
+                })
               }
             >
-              바꾸기
+              {profileUpdating ? '저장 중…' : '바꾸기'}
             </button>
             <Link href="/home">그대로 둘게요</Link>
           </div>
+          {profileError ? (
+            <p className="error" role="alert">
+              {profileError}
+            </p>
+          ) : null}
         </section>
       ) : null}
       <div className="sticky-actions">

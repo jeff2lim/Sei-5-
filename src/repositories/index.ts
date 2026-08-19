@@ -32,6 +32,9 @@ class ConfiguredRecoveryRepository implements RecoveryRepository {
   async loadSession() {
     return (await this.activeRepository()).loadSession();
   }
+  async mutateSession(update: Parameters<RecoveryRepository['mutateSession']>[0]) {
+    return (await this.activeRepository()).mutateSession(update);
+  }
   async saveProfile(profile: UserProfile) {
     return (await this.activeRepository()).saveProfile(profile);
   }

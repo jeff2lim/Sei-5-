@@ -3,6 +3,7 @@
 import { AppShell } from '@/components/app-shell/app-shell';
 import { Topbar } from '@/components/common/topbar';
 import { LoadingScreen } from '@/components/common/loading-screen';
+import { useSubmitState } from '@/hooks/use-submit-state';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { PackagePlus, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -29,17 +30,25 @@ export default function OnboardingProductsPage() {
     id: string;
     name: string;
   } | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const {
+    submitting: deleting,
+    errorMessage: deleteError,
+    run: runDelete,
+    clearError: clearDeleteError,
+  } = useSubmitState({
+    context: 'onboarding_product_delete',
+    fallbackMessage: '제품을 삭제하지 못했어요. 다시 시도해 주세요.',
+  });
+  const { submitting, errorMessage: submitError, run } = useSubmitState({
+    context: 'onboarding_products',
+  });
 
   function openDeleteDialog(productId: string, productName: string) {
     setPendingDelete({
       id: productId,
       name: productName,
     });
-    setDeleteError(null);
+    clearDeleteError();
     deleteDialogRef.current?.showModal();
   }
 
@@ -48,39 +57,23 @@ export default function OnboardingProductsPage() {
 
     deleteDialogRef.current?.close();
     setPendingDelete(null);
-    setDeleteError(null);
+    clearDeleteError();
   }
 
   async function confirmDeleteProduct() {
-    if (!pendingDelete || deleting) return;
-
-    setDeleting(true);
-    setDeleteError(null);
-
-    try {
+    if (!pendingDelete) return;
+    await runDelete(async () => {
       await deleteProduct(pendingDelete.id);
       deleteDialogRef.current?.close();
       setPendingDelete(null);
-    } catch {
-      setDeleteError('제품을 삭제하지 못했어요. 다시 시도해 주세요.');
-    } finally {
-      setDeleting(false);
-    }
+    });
   }
 
   async function continueToCleansing() {
-    if (submitting) return;
-    setSubmitting(true);
-    setSubmitError(null);
-    try {
+    await run(async () => {
       await saveOnboardingStep('cleansing');
       router.push('/onboarding/cleansing');
-    } catch (error) {
-      console.error(error);
-      setSubmitError('저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
-    } finally {
-      setSubmitting(false);
-    }
+    });
   }
   if (!hydrated) return <LoadingScreen navigation={false} />;
 
@@ -154,6 +147,7 @@ export default function OnboardingProductsPage() {
         <button
           type="button"
           className={products.length ? 'button full' : 'button product-skip full'}
+          aria-busy={submitting}
           disabled={submitting}
           onClick={() => void continueToCleansing()}
         >
@@ -164,7 +158,7 @@ export default function OnboardingProductsPage() {
         ref={deleteDialogRef}
         onClose={() => {
           setPendingDelete(null);
-          setDeleteError(null);
+          clearDeleteError();
         }}
         onCancel={(event) => {
           if (deleting) {
@@ -189,6 +183,7 @@ export default function OnboardingProductsPage() {
           <button
             className="button full"
             type="button"
+            aria-busy={deleting}
             disabled={deleting}
             onClick={() => void confirmDeleteProduct()}
           >

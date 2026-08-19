@@ -5,6 +5,7 @@ import { Topbar } from '@/components/common/topbar';
 import { analytics } from '@/domain/analytics';
 import type { CheckIn, CheckInAnswer } from '@/domain/check-in';
 import { getProcedureDay } from '@/domain/procedure';
+import { useSubmitState } from '@/hooks/use-submit-state';
 import { isAuthEnabled } from '@/lib/supabase/config';
 import { evaluateCheckIn } from '@/rules/engine/evaluate';
 import { symptomDefinitions } from '@/ruletable/data';
@@ -13,7 +14,7 @@ import { useRecoveryStore } from '@/store/recovery-store';
 import { AlertTriangle, CameraOff, Info } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 const severityOptions = [
   { value: 1 as const, label: '약간' },
@@ -26,10 +27,19 @@ export default function CheckInPage() {
   const session = useRecoveryStore((state) => state.session);
   const saveCheckIn = useRecoveryStore((state) => state.saveCheckIn);
   const [answers, setAnswers] = useState<Record<string, CheckInAnswer>>({});
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const {
+    submitting: saving,
+    errorMessage: saveError,
+    run,
+    showError,
+  } = useSubmitState({
+    context: 'check_in',
+    fallbackMessage: '기록을 저장하지 못했어요. 선택한 내용은 이 화면에 그대로 있어요.',
+  });
+  const pendingCheckInRef = useRef<CheckIn | null>(null);
 
   function toggle(id: string, present: boolean, withSeverity: boolean) {
+    pendingCheckInRef.current = null;
     setAnswers((current) => ({
       ...current,
       [id]: { symptomId: id, present, severity: present && withSeverity ? 1 : undefined },
@@ -37,6 +47,7 @@ export default function CheckInPage() {
   }
 
   function setSeverity(id: string, severity: 1 | 2 | 3) {
+    pendingCheckInRef.current = null;
     setAnswers((current) => ({
       ...current,
       [id]: { symptomId: id, present: true, severity },
@@ -44,37 +55,34 @@ export default function CheckInPage() {
   }
 
   async function submit() {
-    if (saving) return;
-    if (!session?.procedure) {
-      setSaveError('시술 기록이 없어서 저장할 수 없어요. 시술일을 먼저 입력해 주세요.');
+    const procedure = session?.procedure;
+    if (!procedure) {
+      showError('시술 기록이 없어서 저장할 수 없어요. 시술일을 먼저 입력해 주세요.');
       return;
     }
 
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const procedureDay = getProcedureDay(session.procedure.performedAt, new Date());
-      const checkIn: CheckIn = {
-        id: crypto.randomUUID(),
-        checkedAt: new Date().toISOString(),
-        procedureDay,
-        answers: Object.values(answers),
-        rulePackVersion: v6RuleTable.version,
-      };
+    await run(async () => {
+      const procedureDay = getProcedureDay(procedure.performedAt, new Date());
+      const checkIn =
+        pendingCheckInRef.current ??
+        ({
+          id: crypto.randomUUID(),
+          checkedAt: new Date().toISOString(),
+          procedureDay,
+          answers: Object.values(answers),
+          rulePackVersion: v6RuleTable.version,
+        } satisfies CheckIn);
+      pendingCheckInRef.current = checkIn;
       const action = evaluateCheckIn(checkIn);
       await saveCheckIn(checkIn);
+      pendingCheckInRef.current = null;
       analytics.track({
         name: 'check_in_completed',
         selectedSymptomCount: checkIn.answers.filter((answer) => answer.present).length,
         action: action.type,
       });
       router.push('/check-in/result');
-    } catch (error) {
-      console.error(error);
-      setSaveError('기록을 저장하지 못했어요. 선택한 내용은 이 화면에 그대로 있어요.');
-    } finally {
-      setSaving(false);
-    }
+    });
   }
 
   return (
@@ -190,7 +198,7 @@ export default function CheckInPage() {
       <div className="sticky-actions">
         {saveError ? (
           <div className="stack" role="alert">
-            <p className="error">{saveError} 잠시 후 다시 시도해 주세요.</p>
+            <p className="error">{saveError}</p>
             {isAuthEnabled() ? (
               <p className="subcopy">
                 같은 문제가 계속되면 이 화면을 닫지 말고 새 창에서{' '}
@@ -209,6 +217,7 @@ export default function CheckInPage() {
         <button
           className="button full"
           type="button"
+          aria-busy={saving}
           disabled={saving}
           onClick={() => void submit()}
         >

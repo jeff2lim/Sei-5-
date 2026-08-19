@@ -1,11 +1,13 @@
 'use client';
 
 import type { CheckIn } from '@/domain/check-in';
+import { analytics, type SessionWriteOperation } from '@/domain/analytics';
 import type { ProcedureRecord, Sensitivity, UserProfile } from '@/domain/procedure';
 import type { Product, ProductCategory } from '@/domain/product';
 import type { ConsentState, OnboardingStep, RecoverySession } from '@/domain/session';
 import type { ProductRuleSelection } from '@/ruletable/types';
 import { recoveryRepository } from '@/repositories';
+import { SessionConflictError } from '@/repositories/recovery-repository';
 import { create } from 'zustand';
 
 type ProductDraft = {
@@ -21,11 +23,15 @@ type RecoveryState = {
   session: RecoverySession | null;
   productDraft: ProductDraft;
   hydrate: () => Promise<void>;
-  saveConsent: (consent: ConsentState) => Promise<void>;
+  saveConsent: (consent: ConsentState, nextStep?: OnboardingStep) => Promise<void>;
   saveOnboardingStep: (step: OnboardingStep) => Promise<void>;
   completeOnboarding: () => Promise<void>;
-  saveProcedure: (performedAt: string, sensitivity: Sensitivity) => Promise<void>;
-  saveProfile: (profile: UserProfile) => Promise<void>;
+  saveProcedure: (
+    performedAt: string,
+    sensitivity: Sensitivity,
+    nextStep?: OnboardingStep,
+  ) => Promise<void>;
+  saveProfile: (profile: UserProfile, nextStep?: OnboardingStep) => Promise<void>;
   setProductDraft: (draft: ProductDraft) => void;
   saveProduct: (selection: ProductRuleSelection) => Promise<Product>;
   updateProduct: (product: Product) => Promise<void>;
@@ -37,7 +43,46 @@ type RecoveryState = {
 
 const blankDraft: ProductDraft = { name: '', category: null };
 
-export const useRecoveryStore = create<RecoveryState>((set, get) => ({
+export const useRecoveryStore = create<RecoveryState>((set, get) => {
+  async function persistSession(
+    operationName: SessionWriteOperation,
+    operation: () => Promise<RecoverySession>,
+  ) {
+    const startedAt = performance.now();
+    try {
+      const session = await operation();
+      analytics.track({
+        name: 'session_write_completed',
+        operation: operationName,
+        durationMs: Math.round(performance.now() - startedAt),
+      });
+      set({ session, hydrated: true, hydrationError: null });
+      return session;
+    } catch (error) {
+      const errorCode =
+        error && typeof error === 'object' && 'code' in error && typeof error.code === 'string'
+          ? error.code
+          : error instanceof Error
+            ? error.name
+            : 'UNKNOWN';
+      analytics.track({
+        name: 'session_write_failed',
+        operation: operationName,
+        durationMs: Math.round(performance.now() - startedAt),
+        errorCode,
+      });
+      if (error instanceof SessionConflictError) {
+        set({
+          session: error.latestSession,
+          hydrated: true,
+          hydrationError: error.code,
+        });
+      }
+      throw error;
+    }
+  }
+
+  return {
   hydrated: false,
   hydrationError: null,
   session: null,
@@ -59,52 +104,73 @@ export const useRecoveryStore = create<RecoveryState>((set, get) => ({
     }
   },
 
-  async saveConsent(consent) {
-    await recoveryRepository.saveConsent(consent);
-    await get().hydrate();
+  async saveConsent(consent, nextStep) {
+    await persistSession('consent', () =>
+      recoveryRepository.mutateSession((session) => ({
+        ...session,
+        consent,
+        onboarding: nextStep
+          ? { status: 'in_progress', currentStep: nextStep, completedAt: null }
+          : session.onboarding,
+      })),
+    );
   },
 
   async saveOnboardingStep(currentStep) {
-    await recoveryRepository.saveOnboarding({
-      status: 'in_progress',
-      currentStep,
-      completedAt: null,
-    });
-    await get().hydrate();
+    await persistSession('onboarding_step', () =>
+      recoveryRepository.saveOnboarding({
+        status: 'in_progress',
+        currentStep,
+        completedAt: null,
+      }),
+    );
   },
 
   async completeOnboarding() {
-    await recoveryRepository.saveOnboarding({
-      status: 'completed',
-      currentStep: 'complete',
-      completedAt: new Date().toISOString(),
-    });
-    await get().hydrate();
+    await persistSession('onboarding_complete', () =>
+      recoveryRepository.saveOnboarding({
+        status: 'completed',
+        currentStep: 'complete',
+        completedAt: new Date().toISOString(),
+      }),
+    );
   },
 
-  async saveProcedure(performedAt, sensitivity) {
+  async saveProcedure(performedAt, sensitivity, nextStep) {
     const now = new Date().toISOString();
-    const currentSession = get().session;
-    const currentProcedure = currentSession?.procedure;
-    const procedure: ProcedureRecord = {
-      // 시술일 수정은 같은 기록을 갱신하고, 최초 등록만 새 id를 발급합니다.
-      id: currentProcedure?.id ?? crypto.randomUUID(),
-      procedureType: 'picotoning',
-      performedAt,
-      createdAt: currentProcedure?.createdAt ?? now,
-    };
-    await recoveryRepository.saveProcedure(procedure);
-    // saveProfile은 프로필 전체를 덮어쓰므로 기존 값을 유지해야 합니다.
-    await recoveryRepository.saveProfile({
-      ...(currentSession?.profile ?? { sensitivity: 'normal' }),
-      sensitivity,
-    });
-    await get().hydrate();
+    const newProcedureId = crypto.randomUUID();
+    await persistSession('procedure', () =>
+      recoveryRepository.mutateSession((session) => {
+        const currentProcedure = session.procedure;
+        const procedure: ProcedureRecord = {
+          // 시술일 수정은 같은 기록을 갱신하고, 최초 등록만 새 id를 발급합니다.
+          id: currentProcedure?.id ?? newProcedureId,
+          procedureType: 'picotoning',
+          performedAt,
+          createdAt: currentProcedure?.createdAt ?? now,
+        };
+        return {
+          ...session,
+          procedure,
+          profile: { ...session.profile, sensitivity },
+          onboarding: nextStep
+            ? { status: 'in_progress', currentStep: nextStep, completedAt: null }
+            : session.onboarding,
+        };
+      }),
+    );
   },
 
-  async saveProfile(profile) {
-    await recoveryRepository.saveProfile(profile);
-    await get().hydrate();
+  async saveProfile(profile, nextStep) {
+    await persistSession('profile', () =>
+      recoveryRepository.mutateSession((session) => ({
+        ...session,
+        profile,
+        onboarding: nextStep
+          ? { status: 'in_progress', currentStep: nextStep, completedAt: null }
+          : session.onboarding,
+      })),
+    );
   },
 
   setProductDraft(productDraft) {
@@ -129,25 +195,23 @@ export const useRecoveryStore = create<RecoveryState>((set, get) => ({
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     };
-    await recoveryRepository.saveProduct(product);
+    await persistSession('product_save', () => recoveryRepository.saveProduct(product));
     set({ productDraft: blankDraft });
-    await get().hydrate();
     return product;
   },
 
   async updateProduct(product) {
-    await recoveryRepository.saveProduct({ ...product, updatedAt: new Date().toISOString() });
-    await get().hydrate();
+    await persistSession('product_save', () =>
+      recoveryRepository.saveProduct({ ...product, updatedAt: new Date().toISOString() }),
+    );
   },
 
   async deleteProduct(id) {
-    await recoveryRepository.deleteProduct(id);
-    await get().hydrate();
+    await persistSession('product_delete', () => recoveryRepository.deleteProduct(id));
   },
 
   async saveCheckIn(checkIn) {
-    await recoveryRepository.saveCheckIn(checkIn);
-    await get().hydrate();
+    await persistSession('check_in', () => recoveryRepository.saveCheckIn(checkIn));
   },
 
   async exportData() {
@@ -163,4 +227,5 @@ export const useRecoveryStore = create<RecoveryState>((set, get) => ({
       productDraft: blankDraft,
     });
   },
-}));
+  };
+});

@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 import type { Product } from '@/domain/product';
 import type { CheckIn } from '@/domain/check-in';
 import { rulePackMeta } from '@/rules/loaders/bundled-rule-pack';
-import { evaluateAttribute, evaluateCheckIn, evaluateProduct } from '@/rules/engine/evaluate';
+import {
+  evaluateAttribute,
+  evaluateCategory,
+  evaluateCheckIn,
+  evaluateProduct,
+  evaluateProductCollection,
+} from '@/rules/engine/evaluate';
 
 const product = (attributeIds: string[]): Product => ({
   id: 'product-1',
@@ -29,6 +35,27 @@ describe('deterministic rule engine', () => {
   it('keeps missing attributes unknown instead of treating them as go', () => {
     expect(evaluateAttribute('not-in-pack', 3).level).toBe('unknown');
     expect(evaluateProduct(product([]), 3).level).toBe('unknown');
+  });
+
+  it('keeps an empty collection separate from an evaluated unknown product', () => {
+    expect(evaluateProductCollection([], 3)).toEqual({ status: 'empty' });
+
+    const evaluated = evaluateProductCollection([product([])], 3);
+    expect(evaluated.status).toBe('evaluated');
+    if (evaluated.status === 'evaluated') {
+      expect(evaluated.items[0].verdict.level).toBe('unknown');
+    }
+  });
+
+  it('keeps an empty category separate from an evaluated unknown category', () => {
+    expect(evaluateCategory('cleansing', [], 3)).toEqual({
+      status: 'empty',
+      category: 'cleansing',
+    });
+    expect(evaluateCategory('skincare', [product([])], 3)).toMatchObject({
+      status: 'evaluated',
+      level: 'unknown',
+    });
   });
 
   it('maps check-in answers directly to the highest priority action', () => {

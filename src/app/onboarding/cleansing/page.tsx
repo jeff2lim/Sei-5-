@@ -3,6 +3,7 @@
 import { AppShell } from '@/components/app-shell/app-shell';
 import { Topbar } from '@/components/common/topbar';
 import type { UserProfile } from '@/domain/procedure';
+import { useSubmitState } from '@/hooks/use-submit-state';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -11,30 +12,21 @@ export default function CleansingPage() {
   const router = useRouter();
   const session = useRecoveryStore((state) => state.session);
   const saveProfile = useRecoveryStore((state) => state.saveProfile);
-  const saveOnboardingStep = useRecoveryStore((state) => state.saveOnboardingStep);
   const [feel, setFeel] = useState<UserProfile['cleansingFeel']>(
     session?.profile.cleansingFeel ?? 'unknown',
   );
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const { submitting, errorMessage: submitError, run } = useSubmitState({
+    context: 'cleansing',
+  });
 
   async function submit() {
-    if (submitting) return;
-    setSubmitting(true);
-    setSubmitError(null);
-    try {
+    await run(async () => {
       await saveProfile({
         ...(session?.profile ?? { sensitivity: 'normal' }),
         cleansingFeel: feel,
-      });
-      await saveOnboardingStep('complete');
+      }, 'complete');
       router.push('/onboarding/complete');
-    } catch (error) {
-      console.error(error);
-      setSubmitError('저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
-    } finally {
-      setSubmitting(false);
-    }
+    });
   }
 
   return (
@@ -77,6 +69,7 @@ export default function CleansingPage() {
         <button
           className="button full"
           type="button"
+          aria-busy={submitting}
           disabled={submitting}
           onClick={() => void submit()}
         >
