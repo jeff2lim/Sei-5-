@@ -314,6 +314,41 @@ test.describe('home uses the browser local calendar date', () => {
     await expect(page.getByText('오늘 기록을 완료했어요.')).toBeVisible();
     await expect(page.getByRole('link', { name: '다시 체크하기' })).toBeVisible();
   });
+
+  test('re-evaluates today after the device timezone changes', async ({
+    page,
+    context,
+    browser,
+  }) => {
+    await page.clock.install({ time: new Date('2026-08-18T15:30:00.000Z') });
+    await seed(page, {
+      daysAgo: 1,
+      checkIns: [
+        {
+          id: 'check-timezone-change',
+          checkedAt: '2026-08-18T14:30:00.000Z',
+          procedureDay: 1,
+          answers: [{ symptomId: 'redness', present: false }],
+          rulePackVersion: '6.0.0',
+        },
+      ],
+    });
+
+    await page.goto('/home');
+    await expect(page.getByText('최대 5개 항목을 직접 확인해요.')).toBeVisible();
+
+    const storageState = await context.storageState();
+    const changedContext = await browser.newContext({
+      timezoneId: 'America/Los_Angeles',
+      storageState,
+    });
+    const changedPage = await changedContext.newPage();
+    await changedPage.clock.install({ time: new Date('2026-08-18T15:30:00.000Z') });
+    await changedPage.goto('http://127.0.0.1:3000/home');
+
+    await expect(changedPage.getByText('오늘 기록을 완료했어요.')).toBeVisible();
+    await changedContext.close();
+  });
 });
 
 test('failed check-in keeps answers and retry stores exactly one record', async ({ page }) => {

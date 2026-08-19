@@ -1,6 +1,7 @@
 'use client';
 
 import type { CheckIn } from '@/domain/check-in';
+import { analytics, type SessionWriteOperation } from '@/domain/analytics';
 import type { ProcedureRecord, Sensitivity, UserProfile } from '@/domain/procedure';
 import type { Product, ProductCategory } from '@/domain/product';
 import type { ConsentState, OnboardingStep, RecoverySession } from '@/domain/session';
@@ -43,12 +44,33 @@ type RecoveryState = {
 const blankDraft: ProductDraft = { name: '', category: null };
 
 export const useRecoveryStore = create<RecoveryState>((set, get) => {
-  async function persistSession(operation: () => Promise<RecoverySession>) {
+  async function persistSession(
+    operationName: SessionWriteOperation,
+    operation: () => Promise<RecoverySession>,
+  ) {
+    const startedAt = performance.now();
     try {
       const session = await operation();
+      analytics.track({
+        name: 'session_write_completed',
+        operation: operationName,
+        durationMs: Math.round(performance.now() - startedAt),
+      });
       set({ session, hydrated: true, hydrationError: null });
       return session;
     } catch (error) {
+      const errorCode =
+        error && typeof error === 'object' && 'code' in error && typeof error.code === 'string'
+          ? error.code
+          : error instanceof Error
+            ? error.name
+            : 'UNKNOWN';
+      analytics.track({
+        name: 'session_write_failed',
+        operation: operationName,
+        durationMs: Math.round(performance.now() - startedAt),
+        errorCode,
+      });
       if (error instanceof SessionConflictError) {
         set({
           session: error.latestSession,
@@ -83,7 +105,7 @@ export const useRecoveryStore = create<RecoveryState>((set, get) => {
   },
 
   async saveConsent(consent, nextStep) {
-    await persistSession(() =>
+    await persistSession('consent', () =>
       recoveryRepository.mutateSession((session) => ({
         ...session,
         consent,
@@ -95,7 +117,7 @@ export const useRecoveryStore = create<RecoveryState>((set, get) => {
   },
 
   async saveOnboardingStep(currentStep) {
-    await persistSession(() =>
+    await persistSession('onboarding_step', () =>
       recoveryRepository.saveOnboarding({
         status: 'in_progress',
         currentStep,
@@ -105,7 +127,7 @@ export const useRecoveryStore = create<RecoveryState>((set, get) => {
   },
 
   async completeOnboarding() {
-    await persistSession(() =>
+    await persistSession('onboarding_complete', () =>
       recoveryRepository.saveOnboarding({
         status: 'completed',
         currentStep: 'complete',
@@ -117,7 +139,7 @@ export const useRecoveryStore = create<RecoveryState>((set, get) => {
   async saveProcedure(performedAt, sensitivity, nextStep) {
     const now = new Date().toISOString();
     const newProcedureId = crypto.randomUUID();
-    await persistSession(() =>
+    await persistSession('procedure', () =>
       recoveryRepository.mutateSession((session) => {
         const currentProcedure = session.procedure;
         const procedure: ProcedureRecord = {
@@ -140,7 +162,7 @@ export const useRecoveryStore = create<RecoveryState>((set, get) => {
   },
 
   async saveProfile(profile, nextStep) {
-    await persistSession(() =>
+    await persistSession('profile', () =>
       recoveryRepository.mutateSession((session) => ({
         ...session,
         profile,
@@ -173,23 +195,23 @@ export const useRecoveryStore = create<RecoveryState>((set, get) => {
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     };
-    await persistSession(() => recoveryRepository.saveProduct(product));
+    await persistSession('product_save', () => recoveryRepository.saveProduct(product));
     set({ productDraft: blankDraft });
     return product;
   },
 
   async updateProduct(product) {
-    await persistSession(() =>
+    await persistSession('product_save', () =>
       recoveryRepository.saveProduct({ ...product, updatedAt: new Date().toISOString() }),
     );
   },
 
   async deleteProduct(id) {
-    await persistSession(() => recoveryRepository.deleteProduct(id));
+    await persistSession('product_delete', () => recoveryRepository.deleteProduct(id));
   },
 
   async saveCheckIn(checkIn) {
-    await persistSession(() => recoveryRepository.saveCheckIn(checkIn));
+    await persistSession('check_in', () => recoveryRepository.saveCheckIn(checkIn));
   },
 
   async exportData() {

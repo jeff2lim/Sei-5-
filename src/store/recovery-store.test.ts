@@ -68,4 +68,38 @@ describe('recovery store mutation updates', () => {
       hydrationError: 'SESSION_CONFLICT',
     });
   });
+
+  it('emits only allowlisted write metrics for success and failure', async () => {
+    const events: unknown[] = [];
+    const listener = (event: Event) => events.push((event as CustomEvent).detail);
+    window.addEventListener('recovery:analytics', listener);
+    repositoryMocks.mutateSession.mockImplementationOnce(async (update) =>
+      update(createEmptyRecoverySession()),
+    );
+    repositoryMocks.mutateSession.mockRejectedValueOnce(
+      Object.assign(new Error('민감한 원문'), { code: 'PGRST500', answers: ['redness'] }),
+    );
+
+    await useRecoveryStore.getState().saveProfile({ sensitivity: 'normal' });
+    await expect(
+      useRecoveryStore.getState().saveProfile({ sensitivity: 'high' }),
+    ).rejects.toBeTruthy();
+    window.removeEventListener('recovery:analytics', listener);
+
+    expect(events).toEqual([
+      expect.objectContaining({
+        name: 'session_write_completed',
+        operation: 'profile',
+        durationMs: expect.any(Number),
+      }),
+      expect.objectContaining({
+        name: 'session_write_failed',
+        operation: 'profile',
+        durationMs: expect.any(Number),
+        errorCode: 'PGRST500',
+      }),
+    ]);
+    expect(JSON.stringify(events)).not.toContain('민감한 원문');
+    expect(JSON.stringify(events)).not.toContain('redness');
+  });
 });

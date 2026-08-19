@@ -89,4 +89,38 @@ describe('SupabaseRecoveryRepository', () => {
 
     expect(rpc).not.toHaveBeenCalled();
   });
+
+  it('makes a retry idempotent when the first response is lost after the write', async () => {
+    const checkIn = {
+      id: 'check-in-response-lost',
+      checkedAt: '2026-08-20T00:00:00.000Z',
+      answers: [{ symptomId: 'redness', present: true }],
+      rulePackVersion: 'v6',
+    };
+    const empty = createEmptyRecoverySession();
+    const saved = { ...empty, checkIns: [checkIn] };
+    let row = { data: empty, revision: 1 };
+    const maybeSingle = vi.fn().mockImplementation(async () => ({ data: row, error: null }));
+    const eq = vi.fn().mockReturnValue({ maybeSingle });
+    const select = vi.fn().mockReturnValue({ eq });
+    const rpc = vi.fn().mockImplementation(async () => {
+      // 데이터베이스에는 반영됐지만 응답 전 네트워크가 끊긴 상황을 재현합니다.
+      row = { data: saved, revision: 2 };
+      return { data: null, error: new Error('response lost') };
+    });
+    const client = {
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null }),
+      },
+      from: vi.fn().mockReturnValue({ select }),
+      rpc,
+    } as unknown as SupabaseClient;
+    const repository = new SupabaseRecoveryRepository(() => client);
+
+    await expect(repository.saveCheckIn(checkIn)).rejects.toThrow('response lost');
+    await expect(repository.saveCheckIn(checkIn)).resolves.toEqual(saved);
+
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(row.data.checkIns).toHaveLength(1);
+  });
 });

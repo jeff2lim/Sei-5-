@@ -1,6 +1,16 @@
 import type { ContactActionType } from './check-in';
 import type { ProductCategory, VerdictLevel } from './product';
 
+export type SessionWriteOperation =
+  | 'consent'
+  | 'onboarding_step'
+  | 'onboarding_complete'
+  | 'procedure'
+  | 'profile'
+  | 'product_save'
+  | 'product_delete'
+  | 'check_in';
+
 export type AnalyticsEvent =
   | { name: 'onboarding_started' }
   | { name: 'procedure_saved'; procedureDay: number }
@@ -19,7 +29,14 @@ export type AnalyticsEvent =
   | { name: 'kakao_login_completed' }
   | { name: 'auth_prompt_skipped'; placement: string }
   | { name: 'local_data_imported' }
-  | { name: 'local_data_import_failed' };
+  | { name: 'local_data_import_failed' }
+  | { name: 'session_write_completed'; operation: SessionWriteOperation; durationMs: number }
+  | {
+      name: 'session_write_failed';
+      operation: SessionWriteOperation;
+      durationMs: number;
+      errorCode: string;
+    };
 
 export interface AnalyticsAdapter {
   track(event: AnalyticsEvent): void;
@@ -27,6 +44,9 @@ export interface AnalyticsAdapter {
 
 export const analytics: AnalyticsAdapter = {
   track(event) {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('recovery:analytics', { detail: event }));
+    }
     if (process.env.NODE_ENV === 'development') {
       console.info('[analytics]', event);
     }
