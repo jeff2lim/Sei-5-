@@ -7,7 +7,7 @@ import { LoadingScreen } from '@/components/common/loading-screen';
 import { VerdictBadge } from '@/components/verdict/verdict-badge';
 import type { VerdictLevel } from '@/domain/product';
 import { getProcedureDay } from '@/domain/procedure';
-import { evaluateProduct } from '@/rules/engine/evaluate';
+import { evaluateProductCollection } from '@/rules/engine/evaluate';
 import { resolveCombinationState, toCombinationUiProduct } from '@/ruletable/combine';
 import { ingredientGroups } from '@/ruletable/data';
 import { getNextProcedureDay } from '@/ruletable/date';
@@ -30,12 +30,16 @@ export default function ProductsPage() {
     session?.profile.nextProcedureAt,
   );
   const { selectedProductId, selectProduct } = useCombinationPick(session?.procedure?.id, day);
-  const rows = (session?.products ?? [])
-    .map((product) => ({
-      product,
-      verdict: evaluateProduct(product, day, sensitivity, nextProcedureDay),
-    }))
-    .sort((a, b) => rank[b.verdict.level] - rank[a.verdict.level]);
+  const productState = evaluateProductCollection(
+    session?.products ?? [],
+    day,
+    sensitivity,
+    nextProcedureDay,
+  );
+  const rows =
+    productState.status === 'evaluated'
+      ? [...productState.items].sort((a, b) => rank[b.verdict.level] - rank[a.verdict.level])
+      : [];
   const latestCheckIn = [...(session?.checkIns ?? [])]
     .filter((checkIn) => checkIn.procedureDay === day)
     .sort((a, b) => b.checkedAt.localeCompare(a.checkedAt))[0];
@@ -168,7 +172,7 @@ export default function ProductsPage() {
       </div>
 
       <section className="section">
-        {!rows.length ? (
+        {productState.status === 'empty' ? (
           <div className="empty-state">
             <PackagePlus size={32} aria-hidden="true" />
             <h2>등록한 제품이 없어요</h2>

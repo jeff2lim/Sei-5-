@@ -10,7 +10,7 @@ import { ProductRow } from '@/components/products/product-row';
 import { analytics } from '@/domain/analytics';
 import type { ProductCategory } from '@/domain/product';
 import { getProcedureDay } from '@/domain/procedure';
-import { evaluateProduct } from '@/rules/engine/evaluate';
+import { evaluateProductCollection } from '@/rules/engine/evaluate';
 import {
   combinationsForCategory,
   resolveCombinationState,
@@ -62,15 +62,13 @@ export default function GuidePage() {
     session?.profile.nextProcedureAt,
   );
   const { selectedProductId, selectProduct } = useCombinationPick(session?.procedure?.id, day);
-  const allDetails = (session?.products ?? []).map((product) => ({
-    product,
-    verdict: evaluateProduct(
-      product,
-      day,
-      session?.profile.sensitivity ?? 'normal',
-      nextProcedureDay,
-    ),
-  }));
+  const productState = evaluateProductCollection(
+    session?.products ?? [],
+    day,
+    session?.profile.sensitivity ?? 'normal',
+    nextProcedureDay,
+  );
+  const allDetails = productState.status === 'evaluated' ? productState.items : [];
   const details = allDetails.filter(({ product }) => product.category === category);
   const latestCheckIn = [...(session?.checkIns ?? [])]
     .filter((checkIn) => checkIn.procedureDay === day)
