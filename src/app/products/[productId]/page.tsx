@@ -6,13 +6,14 @@ import { Topbar } from '@/components/common/topbar';
 import { VerdictBadge, verdictLabel } from '@/components/verdict/verdict-badge';
 import { analytics } from '@/domain/analytics';
 import { getProcedureDay } from '@/domain/procedure';
+import { useSubmitState } from '@/hooks/use-submit-state';
 import { evaluateProduct } from '@/rules/engine/evaluate';
 import { getNextProcedureDay } from '@/ruletable/date';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { Info, Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 export default function ProductDetailPage() {
   const params = useParams<{ productId: string }>();
@@ -20,9 +21,16 @@ export default function ProductDetailPage() {
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const deleteProduct = useRecoveryStore((state) => state.deleteProduct);
-  const [deleting, setDeleting] = useState(false);
   const deleteDialogRef = useRef<HTMLDialogElement>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const {
+    submitting: deleting,
+    errorMessage: deleteError,
+    run: runDelete,
+    clearError: clearDeleteError,
+  } = useSubmitState({
+    context: 'product_delete',
+    fallbackMessage: '제품을 삭제하지 못했어요. 다시 시도해 주세요.',
+  });
   const product = session?.products.find((item) => item.id === params.productId);
   const day = session?.procedure ? getProcedureDay(session.procedure.performedAt, new Date()) : 0;
   const nextProcedureDay = getNextProcedureDay(
@@ -59,17 +67,12 @@ export default function ProductDetailPage() {
   const currentProduct = product;
 
   async function remove() {
-    setDeleteError(null);
+    clearDeleteError();
     deleteDialogRef.current?.close();
-    setDeleting(true);
-
-    try {
+    await runDelete(async () => {
       await deleteProduct(currentProduct.id);
       router.replace('/products');
-    } catch {
-      setDeleting(false);
-      setDeleteError('제품을 삭제하지 못했어요. 다시 시도해 주세요.');
-    }
+    });
   }
 
   return (
@@ -141,7 +144,7 @@ export default function ProductDetailPage() {
         className="button danger full section"
         type="button"
         onClick={() => {
-          setDeleteError(null);
+          clearDeleteError();
           deleteDialogRef.current?.showModal();
         }}
       >

@@ -4,6 +4,7 @@ import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
 import { Topbar } from '@/components/common/topbar';
 import { analytics } from '@/domain/analytics';
+import { useSubmitState } from '@/hooks/use-submit-state';
 import { ingredientGroups, ingredientSynonyms, sunscreenTypes } from '@/ruletable/data';
 import type { ProductRuleSelection } from '@/ruletable/types';
 import { useRecoveryStore } from '@/store/recovery-store';
@@ -45,7 +46,9 @@ export function ProductAttributesForm({
   const [scrubOrPeeling, setScrubOrPeeling] = useState(false);
   const [outingType, setOutingType] = useState<OutingType | null>(null);
   const [seeded, setSeeded] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const { submitting: saving, errorMessage: saveError, run } = useSubmitState({
+    context: isEditing ? 'product_edit' : 'product_create',
+  });
 
   // 수정 모드에서는 기존에 고른 값을 그대로 다시 보여 줍니다.
   useEffect(() => {
@@ -116,8 +119,7 @@ export function ProductAttributesForm({
   }
 
   async function submit() {
-    setSaving(true);
-    try {
+    await run(async () => {
       const nextSelection: ProductRuleSelection =
         draft.category === 'cleansing'
           ? {
@@ -146,9 +148,7 @@ export function ProductAttributesForm({
           (nextSelection.sunscreenTypeId ? 1 : 0),
       });
       router.push(isEditing ? `/products/${product.id}` : successHref);
-    } finally {
-      setSaving(false);
-    }
+    });
   }
 
   const canSave = draft.category !== 'outing' || outingType !== null;
@@ -261,9 +261,15 @@ export function ProductAttributesForm({
       ) : null}
 
       <div className="sticky-actions">
+        {saveError ? (
+          <p className="error" role="alert">
+            {saveError}
+          </p>
+        ) : null}
         <button
           className="button full"
           type="button"
+          aria-busy={saving}
           disabled={saving || !canSave}
           onClick={submit}
         >

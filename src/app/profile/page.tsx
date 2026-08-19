@@ -4,6 +4,7 @@ import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
 import { AuthStatusCard } from '@/components/auth/auth-status-card';
 import { toLocalDateKey } from '@/domain/date';
+import { useSubmitState } from '@/hooks/use-submit-state';
 import { useRecoveryStore } from '@/store/recovery-store';
 import {
   Bell,
@@ -18,7 +19,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -28,8 +29,15 @@ export default function ProfilePage() {
   const exportData = useRecoveryStore((state) => state.exportData);
   const deleteAllData = useRecoveryStore((state) => state.deleteAllData);
   const deleteDialogRef = useRef<HTMLDialogElement>(null);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const {
+    submitting: deleting,
+    errorMessage: deleteError,
+    run: runDelete,
+    clearError: clearDeleteError,
+  } = useSubmitState({
+    context: 'profile_delete_all_data',
+    fallbackMessage: '전체 데이터를 삭제하지 못했어요. 다시 시도해 주세요.',
+  });
   if (!hydrated) return <LoadingScreen />;
 
   async function downloadData() {
@@ -43,30 +51,22 @@ export default function ProfilePage() {
   }
 
   function openDeleteDialog() {
-    setDeleteError(null);
+    clearDeleteError();
     deleteDialogRef.current?.showModal();
   }
 
   function closeDeleteDialog() {
     if (deleting) return;
     deleteDialogRef.current?.close();
-    setDeleteError(null);
+    clearDeleteError();
   }
 
   async function clearData() {
-    if (deleting) return;
-
-    setDeleting(true);
-    setDeleteError(null);
-
-    try {
+    await runDelete(async () => {
       await deleteAllData();
       deleteDialogRef.current?.close();
       router.replace('/');
-    } catch {
-      setDeleting(false);
-      setDeleteError('전체 데이터를 삭제하지 못했어요. 다시 시도해 주세요.');
-    }
+    });
   }
 
   const menu = [
@@ -164,6 +164,7 @@ export default function ProfilePage() {
           <button
             className="button danger full"
             type="button"
+            aria-busy={deleting}
             disabled={deleting}
             onClick={() => void clearData()}
           >

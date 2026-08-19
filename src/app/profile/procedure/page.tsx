@@ -6,6 +6,7 @@ import { LoadingScreen } from '@/components/common/loading-screen';
 import { Topbar } from '@/components/common/topbar';
 import type { Sensitivity } from '@/domain/procedure';
 import { toLocalDateInputValue } from '@/domain/procedure';
+import { useSubmitState } from '@/hooks/use-submit-state';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -24,6 +25,7 @@ export default function EditProcedurePage() {
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const saveProcedure = useRecoveryStore((state) => state.saveProcedure);
+  const { submitting, errorMessage, run } = useSubmitState({ context: 'profile_procedure' });
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { performedAt: today(), sensitivity: 'normal' },
@@ -44,8 +46,10 @@ export default function EditProcedurePage() {
       return;
     }
 
-    await saveProcedure(values.performedAt, values.sensitivity as Sensitivity);
-    router.replace('/profile');
+    await run(async () => {
+      await saveProcedure(values.performedAt, values.sensitivity as Sensitivity);
+      router.replace('/profile');
+    });
   }
 
   if (!hydrated) return <LoadingScreen />;
@@ -91,8 +95,13 @@ export default function EditProcedurePage() {
         </fieldset>
 
         <div className="sticky-actions">
-          <button className="button full" type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? '저장 중...' : '변경사항 저장'}
+          {errorMessage ? (
+            <p className="error" role="alert">
+              {errorMessage}
+            </p>
+          ) : null}
+          <button className="button full" type="submit" aria-busy={submitting} disabled={submitting}>
+            {submitting ? '저장 중…' : '변경사항 저장'}
           </button>
         </div>
       </form>
