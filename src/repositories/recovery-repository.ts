@@ -6,16 +6,16 @@ import type { ConsentState, OnboardingState, RecoverySession } from '@/domain/se
 export interface RecoveryRepository {
   loadSession(): Promise<RecoverySession | null>;
   mutateSession(update: (session: RecoverySession) => RecoverySession): Promise<RecoverySession>;
-  saveProfile(profile: UserProfile): Promise<void>;
-  saveProcedure(procedure: ProcedureRecord): Promise<void>;
-  saveConsent(consent: ConsentState): Promise<void>;
-  saveOnboarding(onboarding: OnboardingState): Promise<void>;
+  saveProfile(profile: UserProfile): Promise<RecoverySession>;
+  saveProcedure(procedure: ProcedureRecord): Promise<RecoverySession>;
+  saveConsent(consent: ConsentState): Promise<RecoverySession>;
+  saveOnboarding(onboarding: OnboardingState): Promise<RecoverySession>;
   listProducts(): Promise<Product[]>;
   getProduct(id: string): Promise<Product | null>;
-  saveProduct(product: Product): Promise<void>;
-  deleteProduct(id: string): Promise<void>;
+  saveProduct(product: Product): Promise<RecoverySession>;
+  deleteProduct(id: string): Promise<RecoverySession>;
   listCheckIns(): Promise<CheckIn[]>;
-  saveCheckIn(checkIn: CheckIn): Promise<void>;
+  saveCheckIn(checkIn: CheckIn): Promise<RecoverySession>;
   exportData(): Promise<string>;
   deleteAllData(): Promise<void>;
 }

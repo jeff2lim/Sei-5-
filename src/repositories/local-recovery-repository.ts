@@ -107,19 +107,19 @@ export class LocalRecoveryRepository implements RecoveryRepository {
   }
 
   async saveProfile(profile: UserProfile) {
-    await this.mutateSession((session) => ({ ...session, profile }));
+    return this.mutateSession((session) => ({ ...session, profile }));
   }
 
   async saveProcedure(procedure: ProcedureRecord) {
-    await this.mutateSession((session) => ({ ...session, procedure }));
+    return this.mutateSession((session) => ({ ...session, procedure }));
   }
 
   async saveConsent(consent: ConsentState) {
-    await this.mutateSession((session) => ({ ...session, consent }));
+    return this.mutateSession((session) => ({ ...session, consent }));
   }
 
   async saveOnboarding(onboarding: OnboardingState) {
-    await this.mutateSession((session) => ({ ...session, onboarding }));
+    return this.mutateSession((session) => ({ ...session, onboarding }));
   }
 
   async listProducts() {
@@ -131,7 +131,7 @@ export class LocalRecoveryRepository implements RecoveryRepository {
   }
 
   async saveProduct(product: Product) {
-    await this.mutateSession((session) => ({
+    return this.mutateSession((session) => ({
       ...session,
       products: session.products.some((item) => item.id === product.id)
         ? session.products.map((item) => (item.id === product.id ? product : item))
@@ -140,7 +140,7 @@ export class LocalRecoveryRepository implements RecoveryRepository {
   }
 
   async deleteProduct(id: string) {
-    await this.mutateSession((session) => ({
+    return this.mutateSession((session) => ({
       ...session,
       products: session.products.filter((product) => product.id !== id),
     }));
@@ -151,7 +151,7 @@ export class LocalRecoveryRepository implements RecoveryRepository {
   }
 
   async saveCheckIn(checkIn: CheckIn) {
-    await this.mutateSession((session) => appendCheckInIdempotently(session, checkIn));
+    return this.mutateSession((session) => appendCheckInIdempotently(session, checkIn));
   }
 
   async exportData() {
