@@ -8,13 +8,22 @@ import {
   type OnboardingState,
   type RecoverySession,
 } from '@/domain/session';
-import type { RecoveryRepository } from './recovery-repository';
+import {
+  appendCheckInIdempotently,
+  type RecoveryRepository,
+} from './recovery-repository';
 
 const STORAGE_KEY = 'recovery-note:v1';
 
 type StoredSession = Partial<Omit<RecoverySession, 'onboarding' | 'schemaVersion'>> & {
   schemaVersion?: number;
+  storageRevision?: number;
   onboarding?: Partial<OnboardingState>;
+};
+
+type LocalSessionSnapshot = {
+  session: RecoverySession;
+  revision: number;
 };
 
 function migrateOnboarding(session: StoredSession): OnboardingState {
@@ -41,31 +50,55 @@ function migrateOnboarding(session: StoredSession): OnboardingState {
 }
 
 export class LocalRecoveryRepository implements RecoveryRepository {
-  private read(): RecoverySession {
-    if (typeof window === 'undefined') return createEmptyRecoverySession();
+  private readSnapshot(): LocalSessionSnapshot {
+    if (typeof window === 'undefined') {
+      return { session: createEmptyRecoverySession(), revision: 0 };
+    }
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return createEmptyRecoverySession();
+    if (!raw) return { session: createEmptyRecoverySession(), revision: 0 };
     try {
       const stored = JSON.parse(raw) as StoredSession;
+      const { storageRevision = 0, ...storedSession } = stored;
       const session: RecoverySession = {
         ...createEmptyRecoverySession(),
-        ...stored,
+        ...storedSession,
         schemaVersion: RECOVERY_SESSION_SCHEMA_VERSION,
         onboarding: migrateOnboarding(stored),
         profile: { ...createEmptyRecoverySession().profile, ...stored.profile },
       };
 
       if (stored.schemaVersion !== RECOVERY_SESSION_SCHEMA_VERSION || !stored.onboarding) {
-        this.write(session);
+        this.write(session, storageRevision);
       }
-      return session;
+      return { session, revision: storageRevision };
     } catch {
-      return createEmptyRecoverySession();
+      return { session: createEmptyRecoverySession(), revision: 0 };
     }
   }
 
-  private write(session: RecoverySession) {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  private read() {
+    return this.readSnapshot().session;
+  }
+
+  private write(session: RecoverySession, storageRevision: number) {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...session, storageRevision }));
+  }
+
+  private async withWriteLock<T>(operation: () => T | Promise<T>): Promise<T> {
+    if (typeof navigator !== 'undefined' && navigator.locks) {
+      return navigator.locks.request(`${STORAGE_KEY}:write`, operation);
+    }
+    return operation();
+  }
+
+  async mutateSession(update: (session: RecoverySession) => RecoverySession) {
+    return this.withWriteLock(() => {
+      const { session, revision } = this.readSnapshot();
+      const next = update(session);
+      if (next === session) return session;
+      this.write(next, revision + 1);
+      return next;
+    });
   }
 
   async loadSession() {
@@ -74,19 +107,19 @@ export class LocalRecoveryRepository implements RecoveryRepository {
   }
 
   async saveProfile(profile: UserProfile) {
-    this.write({ ...this.read(), profile });
+    await this.mutateSession((session) => ({ ...session, profile }));
   }
 
   async saveProcedure(procedure: ProcedureRecord) {
-    this.write({ ...this.read(), procedure });
+    await this.mutateSession((session) => ({ ...session, procedure }));
   }
 
   async saveConsent(consent: ConsentState) {
-    this.write({ ...this.read(), consent });
+    await this.mutateSession((session) => ({ ...session, consent }));
   }
 
   async saveOnboarding(onboarding: OnboardingState) {
-    this.write({ ...this.read(), onboarding });
+    await this.mutateSession((session) => ({ ...session, onboarding }));
   }
 
   async listProducts() {
@@ -98,16 +131,19 @@ export class LocalRecoveryRepository implements RecoveryRepository {
   }
 
   async saveProduct(product: Product) {
-    const session = this.read();
-    const products = session.products.some((item) => item.id === product.id)
-      ? session.products.map((item) => (item.id === product.id ? product : item))
-      : [...session.products, product];
-    this.write({ ...session, products });
+    await this.mutateSession((session) => ({
+      ...session,
+      products: session.products.some((item) => item.id === product.id)
+        ? session.products.map((item) => (item.id === product.id ? product : item))
+        : [...session.products, product],
+    }));
   }
 
   async deleteProduct(id: string) {
-    const session = this.read();
-    this.write({ ...session, products: session.products.filter((product) => product.id !== id) });
+    await this.mutateSession((session) => ({
+      ...session,
+      products: session.products.filter((product) => product.id !== id),
+    }));
   }
 
   async listCheckIns() {
@@ -115,8 +151,7 @@ export class LocalRecoveryRepository implements RecoveryRepository {
   }
 
   async saveCheckIn(checkIn: CheckIn) {
-    const session = this.read();
-    this.write({ ...session, checkIns: [...session.checkIns, checkIn] });
+    await this.mutateSession((session) => appendCheckInIdempotently(session, checkIn));
   }
 
   async exportData() {

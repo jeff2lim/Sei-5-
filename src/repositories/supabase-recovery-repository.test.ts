@@ -3,46 +3,90 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, it, vi } from 'vitest';
 import { SupabaseRecoveryRepository } from './supabase-recovery-repository';
 
+function createClient(row: unknown, rpcResult?: unknown) {
+  const maybeSingle = vi.fn().mockResolvedValue({ data: row, error: null });
+  const eq = vi.fn().mockReturnValue({ maybeSingle });
+  const select = vi.fn().mockReturnValue({ eq });
+  const rpc = vi.fn().mockResolvedValue({ data: rpcResult, error: null });
+  const client = {
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null }),
+    },
+    from: vi.fn().mockReturnValue({ select }),
+    rpc,
+  } as unknown as SupabaseClient;
+  return { client, eq, rpc };
+}
+
 describe('SupabaseRecoveryRepository', () => {
-  it('loads only the authenticated user row', async () => {
+  it('loads only the authenticated user row and its data', async () => {
     const session = createEmptyRecoverySession();
-    const maybeSingle = vi.fn().mockResolvedValue({ data: { data: session }, error: null });
-    const eq = vi.fn().mockReturnValue({ maybeSingle });
-    const select = vi.fn().mockReturnValue({ eq });
-    const from = vi.fn().mockReturnValue({ select });
-    const client = {
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null }),
-      },
-      from,
-    } as unknown as SupabaseClient;
+    const { client, eq } = createClient({ data: session, revision: 3 });
 
     const repository = new SupabaseRecoveryRepository(() => client);
 
     await expect(repository.loadSession()).resolves.toEqual(session);
-    expect(from).toHaveBeenCalledWith('recovery_sessions');
     expect(eq).toHaveBeenCalledWith('user_id', 'user-1');
   });
 
-  it('writes the authenticated user id and current schema version', async () => {
+  it('conditionally writes the current revision through the database function', async () => {
     const session = createEmptyRecoverySession();
-    const upsert = vi.fn().mockResolvedValue({ error: null });
-    const client = {
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null }),
-      },
-      from: vi.fn().mockReturnValue({ upsert }),
-    } as unknown as SupabaseClient;
+    const { client, rpc } = createClient(
+      { data: session, revision: 3 },
+      [{ applied: true, data: session, revision: 4 }],
+    );
 
     const repository = new SupabaseRecoveryRepository(() => client);
-    await repository.replaceSession(session);
+    await repository.mutateSession((current) => ({
+      ...current,
+      profile: { ...current.profile, sensitivity: 'high' },
+    }));
 
-    expect(upsert).toHaveBeenCalledWith(
+    expect(rpc).toHaveBeenCalledWith(
+      'replace_recovery_session_if_revision',
       expect.objectContaining({
-        user_id: 'user-1',
-        schema_version: 2,
-        data: session,
+        p_expected_revision: 3,
+        p_schema_version: 2,
+        p_data: expect.objectContaining({
+          profile: expect.objectContaining({ sensitivity: 'high' }),
+        }),
       }),
     );
+  });
+
+  it('returns the latest server session when a conditional write conflicts', async () => {
+    const session = createEmptyRecoverySession();
+    const latest = { ...session, profile: { ...session.profile, sensitivity: 'high' as const } };
+    const { client } = createClient(
+      { data: session, revision: 3 },
+      [{ applied: false, data: latest, revision: 4 }],
+    );
+    const repository = new SupabaseRecoveryRepository(() => client);
+
+    const result = repository.mutateSession((current) => ({
+      ...current,
+      profile: { ...current.profile, sensitivity: 'low' },
+    }));
+
+    await expect(result).rejects.toMatchObject({
+      code: 'SESSION_CONFLICT',
+      latestSession: latest,
+    });
+  });
+
+  it('does not call the database for an identical check-in retry', async () => {
+    const checkIn = {
+      id: 'check-in-1',
+      checkedAt: '2026-08-20T00:00:00.000Z',
+      answers: [],
+      rulePackVersion: 'v6',
+    };
+    const session = { ...createEmptyRecoverySession(), checkIns: [checkIn] };
+    const { client, rpc } = createClient({ data: session, revision: 3 });
+    const repository = new SupabaseRecoveryRepository(() => client);
+
+    await repository.saveCheckIn(checkIn);
+
+    expect(rpc).not.toHaveBeenCalled();
   });
 });

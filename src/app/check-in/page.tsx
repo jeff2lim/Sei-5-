@@ -13,7 +13,7 @@ import { useRecoveryStore } from '@/store/recovery-store';
 import { AlertTriangle, CameraOff, Info } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 const severityOptions = [
   { value: 1 as const, label: '약간' },
@@ -28,8 +28,10 @@ export default function CheckInPage() {
   const [answers, setAnswers] = useState<Record<string, CheckInAnswer>>({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const pendingCheckInRef = useRef<CheckIn | null>(null);
 
   function toggle(id: string, present: boolean, withSeverity: boolean) {
+    pendingCheckInRef.current = null;
     setAnswers((current) => ({
       ...current,
       [id]: { symptomId: id, present, severity: present && withSeverity ? 1 : undefined },
@@ -37,6 +39,7 @@ export default function CheckInPage() {
   }
 
   function setSeverity(id: string, severity: 1 | 2 | 3) {
+    pendingCheckInRef.current = null;
     setAnswers((current) => ({
       ...current,
       [id]: { symptomId: id, present: true, severity },
@@ -54,15 +57,19 @@ export default function CheckInPage() {
     setSaveError(null);
     try {
       const procedureDay = getProcedureDay(session.procedure.performedAt, new Date());
-      const checkIn: CheckIn = {
-        id: crypto.randomUUID(),
-        checkedAt: new Date().toISOString(),
-        procedureDay,
-        answers: Object.values(answers),
-        rulePackVersion: v6RuleTable.version,
-      };
+      const checkIn =
+        pendingCheckInRef.current ??
+        ({
+          id: crypto.randomUUID(),
+          checkedAt: new Date().toISOString(),
+          procedureDay,
+          answers: Object.values(answers),
+          rulePackVersion: v6RuleTable.version,
+        } satisfies CheckIn);
+      pendingCheckInRef.current = checkIn;
       const action = evaluateCheckIn(checkIn);
       await saveCheckIn(checkIn);
+      pendingCheckInRef.current = null;
       analytics.track({
         name: 'check_in_completed',
         selectedSymptomCount: checkIn.answers.filter((answer) => answer.present).length,

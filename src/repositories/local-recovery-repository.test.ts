@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { LocalRecoveryRepository } from './local-recovery-repository';
+import { CheckInIdConflictError } from './recovery-repository';
 
 const STORAGE_KEY = 'recovery-note:v1';
 
@@ -64,5 +65,50 @@ describe('LocalRecoveryRepository onboarding migration', () => {
       currentStep: 'complete',
       completedAt: null,
     });
+  });
+});
+
+describe('LocalRecoveryRepository consistent writes', () => {
+  beforeEach(() => window.localStorage.clear());
+
+  const checkIn = {
+    id: 'check-in-1',
+    checkedAt: '2026-08-20T00:00:00.000Z',
+    procedureDay: 10,
+    answers: [{ symptomId: 'redness', present: true, severity: 1 as const }],
+    rulePackVersion: 'v6',
+  };
+
+  it('stores an identical check-in retry only once', async () => {
+    const repository = new LocalRecoveryRepository();
+
+    await repository.saveCheckIn(checkIn);
+    await repository.saveCheckIn(checkIn);
+
+    await expect(repository.listCheckIns()).resolves.toEqual([checkIn]);
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}').storageRevision).toBe(1);
+  });
+
+  it('rejects reuse of a check-in id with different answers', async () => {
+    const repository = new LocalRecoveryRepository();
+    await repository.saveCheckIn(checkIn);
+
+    await expect(
+      repository.saveCheckIn({ ...checkIn, answers: [{ symptomId: 'redness', present: false }] }),
+    ).rejects.toBeInstanceOf(CheckInIdConflictError);
+  });
+
+  it('applies related onboarding fields in one revision', async () => {
+    const repository = new LocalRecoveryRepository();
+    await repository.mutateSession((session) => ({
+      ...session,
+      consent,
+      onboarding: { status: 'in_progress', currentStep: 'procedure', completedAt: null },
+    }));
+
+    const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? '{}');
+    expect(stored.storageRevision).toBe(1);
+    expect(stored.consent).toEqual(consent);
+    expect(stored.onboarding.currentStep).toBe('procedure');
   });
 });

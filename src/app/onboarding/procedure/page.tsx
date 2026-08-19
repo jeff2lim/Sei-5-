@@ -24,7 +24,6 @@ export default function ProcedurePage() {
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
   const saveProcedure = useRecoveryStore((state) => state.saveProcedure);
-  const saveOnboardingStep = useRecoveryStore((state) => state.saveOnboardingStep);
   // 마이에서 들어오면 온보딩이 아니라 시술 정보 수정 화면으로 동작합니다.
   const [isEditing, setIsEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -56,8 +55,11 @@ export default function ProcedurePage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      await saveProcedure(values.performedAt, values.sensitivity as Sensitivity);
-      if (!isEditing) await saveOnboardingStep('products');
+      await saveProcedure(
+        values.performedAt,
+        values.sensitivity as Sensitivity,
+        isEditing ? undefined : 'products',
+      );
       analytics.track({
         name: 'procedure_saved',
         procedureDay: getProcedureDay(values.performedAt, new Date()),

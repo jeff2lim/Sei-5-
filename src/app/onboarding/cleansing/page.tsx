@@ -11,7 +11,6 @@ export default function CleansingPage() {
   const router = useRouter();
   const session = useRecoveryStore((state) => state.session);
   const saveProfile = useRecoveryStore((state) => state.saveProfile);
-  const saveOnboardingStep = useRecoveryStore((state) => state.saveOnboardingStep);
   const [feel, setFeel] = useState<UserProfile['cleansingFeel']>(
     session?.profile.cleansingFeel ?? 'unknown',
   );
@@ -26,8 +25,7 @@ export default function CleansingPage() {
       await saveProfile({
         ...(session?.profile ?? { sensitivity: 'normal' }),
         cleansingFeel: feel,
-      });
-      await saveOnboardingStep('complete');
+      }, 'complete');
       router.push('/onboarding/complete');
     } catch (error) {
       console.error(error);
