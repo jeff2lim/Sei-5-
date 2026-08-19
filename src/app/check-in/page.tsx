@@ -5,11 +5,13 @@ import { Topbar } from '@/components/common/topbar';
 import { analytics } from '@/domain/analytics';
 import type { CheckIn, CheckInAnswer } from '@/domain/check-in';
 import { getProcedureDay } from '@/domain/procedure';
+import { isAuthEnabled } from '@/lib/supabase/config';
 import { evaluateCheckIn } from '@/rules/engine/evaluate';
 import { symptomDefinitions } from '@/ruletable/data';
 import { v6RuleTable } from '@/ruletable/resolve';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { AlertTriangle, CameraOff, Info } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -69,7 +71,7 @@ export default function CheckInPage() {
       router.push('/check-in/result');
     } catch (error) {
       console.error(error);
-      setSaveError('기록을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
+      setSaveError('기록을 저장하지 못했어요. 선택한 내용은 이 화면에 그대로 있어요.');
     } finally {
       setSaving(false);
     }
@@ -187,11 +189,29 @@ export default function CheckInPage() {
 
       <div className="sticky-actions">
         {saveError ? (
-          <p className="error" role="alert">
-            {saveError}
-          </p>
+          <div className="stack" role="alert">
+            <p className="error">{saveError} 잠시 후 다시 시도해 주세요.</p>
+            {isAuthEnabled() ? (
+              <p className="subcopy">
+                같은 문제가 계속되면 이 화면을 닫지 말고 새 창에서{' '}
+                <Link
+                  href="/auth/login?next=/check-in&placement=check_in_save_error"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  카카오 로그인
+                </Link>
+                후 다시 저장해 보세요.
+              </p>
+            ) : null}
+          </div>
         ) : null}
-        <button className="button full" type="button" disabled={saving} onClick={() => void submit()}>
+        <button
+          className="button full"
+          type="button"
+          disabled={saving}
+          onClick={() => void submit()}
+        >
           {saving ? '저장 중…' : '체크 완료'}
         </button>
       </div>

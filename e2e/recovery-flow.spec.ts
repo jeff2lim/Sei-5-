@@ -94,7 +94,11 @@ test('user can register a skincare product with a v6 ingredient group', async ({
 const isoDaysAgo = (days: number) => {
   const date = new Date();
   date.setDate(date.getDate() - days);
-  return date.toISOString().slice(0, 10);
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
 };
 
 type SeedOptions = {
@@ -109,7 +113,11 @@ const seed = (page: import('@playwright/test').Page, options: SeedOptions = {}) 
     const performedAt = (() => {
       const date = new Date();
       date.setDate(date.getDate() - (seedOptions.daysAgo ?? 0));
-      return date.toISOString().slice(0, 10);
+      return [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0'),
+      ].join('-');
     })();
     window.localStorage.setItem(
       'recovery-note:v1',
@@ -260,24 +268,94 @@ test('calendar opens the check-in record for a checked day', async ({ page }) =>
   await expect(page).toHaveURL(/\/check-in\/result\?id=check-1$/);
 });
 
-test('home marks today as checked in using the local calendar date', async ({ page }) => {
-  const checkedAt = new Date();
-  await seed(page, {
-    daysAgo: 1,
-    checkIns: [
-      {
-        id: 'check-today',
-        checkedAt: checkedAt.toISOString(),
-        procedureDay: 1,
-        answers: [{ symptomId: 'redness', present: false }],
-        rulePackVersion: '6.0.0',
-      },
-    ],
+test.describe('home uses the browser local calendar date', () => {
+  test.use({ timezoneId: 'Asia/Seoul' });
+
+  test('does not treat a previous-day check-in as today at KST 00:30', async ({ page }) => {
+    await page.clock.install({ time: new Date('2026-08-18T15:30:00.000Z') });
+    await seed(page, {
+      daysAgo: 1,
+      checkIns: [
+        {
+          id: 'check-yesterday',
+          // 2026-08-18 23:30 KST. Its UTC date matches the frozen current UTC date,
+          // but its browser-local calendar date is the previous day.
+          checkedAt: '2026-08-18T14:30:00.000Z',
+          procedureDay: 1,
+          answers: [{ symptomId: 'redness', present: false }],
+          rulePackVersion: '6.0.0',
+        },
+      ],
+    });
+
+    await page.goto('/home');
+    await expect(page.getByText('최대 5개 항목을 직접 확인해요.')).toBeVisible();
+    await expect(page.getByRole('link', { name: '상태 체크 시작' })).toBeVisible();
   });
 
-  await page.goto('/home');
-  await expect(page.getByText('오늘 기록을 완료했어요.')).toBeVisible();
-  await expect(page.getByRole('link', { name: '다시 체크하기' })).toBeVisible();
+  test('marks an earlier check-in on the same local day as complete', async ({ page }) => {
+    await page.clock.install({ time: new Date('2026-08-19T00:30:00.000Z') });
+    await seed(page, {
+      daysAgo: 1,
+      checkIns: [
+        {
+          id: 'check-today',
+          // 2026-08-19 05:00 KST. Its UTC date differs from the frozen current UTC date,
+          // while both timestamps are on the same browser-local calendar date.
+          checkedAt: '2026-08-18T20:00:00.000Z',
+          procedureDay: 1,
+          answers: [{ symptomId: 'redness', present: false }],
+          rulePackVersion: '6.0.0',
+        },
+      ],
+    });
+
+    await page.goto('/home');
+    await expect(page.getByText('오늘 기록을 완료했어요.')).toBeVisible();
+    await expect(page.getByRole('link', { name: '다시 체크하기' })).toBeVisible();
+  });
+});
+
+test('failed check-in keeps answers and retry stores exactly one record', async ({ page }) => {
+  await seed(page, { daysAgo: 1 });
+  await page.goto('/check-in');
+
+  const firstPresentButton = page.getByRole('button', { name: '있어요' }).first();
+  await firstPresentButton.click();
+  await expect(firstPresentButton).toHaveAttribute('aria-pressed', 'true');
+
+  await page.evaluate(() => {
+    const originalSetItem = Storage.prototype.setItem;
+    Object.defineProperty(window, '__restoreLocalStorageSetItem', {
+      configurable: true,
+      value: () => {
+        Storage.prototype.setItem = originalSetItem;
+      },
+    });
+    Storage.prototype.setItem = () => {
+      throw new DOMException('Simulated storage failure', 'QuotaExceededError');
+    };
+  });
+
+  await page.getByRole('button', { name: '체크 완료' }).click();
+  await expect(page.locator('.sticky-actions').getByRole('alert')).toContainText(
+    '선택한 내용은 이 화면에 그대로 있어요.',
+  );
+  await expect(firstPresentButton).toHaveAttribute('aria-pressed', 'true');
+
+  await page.evaluate(() => {
+    const restore = (window as typeof window & { __restoreLocalStorageSetItem?: () => void })
+      .__restoreLocalStorageSetItem;
+    restore?.();
+  });
+  await page.getByRole('button', { name: '체크 완료' }).click();
+  await expect(page).toHaveURL(/\/check-in\/result$/);
+
+  const storedCheckIns = await page.evaluate(() => {
+    const session = JSON.parse(window.localStorage.getItem('recovery-note:v1') ?? '{}');
+    return session.checkIns ?? [];
+  });
+  expect(storedCheckIns).toHaveLength(1);
 });
 
 test('home shows an empty-product state that is distinct from an unknown verdict', async ({
