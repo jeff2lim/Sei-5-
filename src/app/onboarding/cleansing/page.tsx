@@ -15,11 +15,26 @@ export default function CleansingPage() {
   const [feel, setFeel] = useState<UserProfile['cleansingFeel']>(
     session?.profile.cleansingFeel ?? 'unknown',
   );
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   async function submit() {
-    await saveProfile({ ...(session?.profile ?? { sensitivity: 'normal' }), cleansingFeel: feel });
-    await saveOnboardingStep('complete');
-    router.push('/onboarding/complete');
+    if (submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await saveProfile({
+        ...(session?.profile ?? { sensitivity: 'normal' }),
+        cleansingFeel: feel,
+      });
+      await saveOnboardingStep('complete');
+      router.push('/onboarding/complete');
+    } catch (error) {
+      console.error(error);
+      setSubmitError('저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -54,8 +69,18 @@ export default function CleansingPage() {
         ))}
       </fieldset>
       <div className="sticky-actions">
-        <button className="button full" type="button" onClick={submit}>
-          다음
+        {submitError ? (
+          <p className="error" role="alert">
+            {submitError}
+          </p>
+        ) : null}
+        <button
+          className="button full"
+          type="button"
+          disabled={submitting}
+          onClick={() => void submit()}
+        >
+          {submitting ? '저장 중…' : '다음'}
         </button>
       </div>
     </AppShell>

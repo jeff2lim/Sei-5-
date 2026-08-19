@@ -74,6 +74,8 @@ export default function ConsentPage() {
   const isEditing = consentMode === 'edit';
   const [values, setValues] = useState<Record<ConsentKey, boolean>>(emptyConsentValues);
   const [draftLoaded, setDraftLoaded] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   useEffect(() => {
     if (!hydrated || draftLoaded) return;
 
@@ -135,12 +137,21 @@ export default function ConsentPage() {
   }
 
   async function submit() {
-    if (!requiredComplete) return;
-    const consent: ConsentState = { ...values, updatedAt: new Date().toISOString() };
-    await saveConsent(consent);
-    if (!isEditing) await saveOnboardingStep('procedure');
-    window.sessionStorage.removeItem(CONSENT_DRAFT_KEY);
-    router.push(isEditing ? '/profile' : '/onboarding/procedure');
+    if (!requiredComplete || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const consent: ConsentState = { ...values, updatedAt: new Date().toISOString() };
+      await saveConsent(consent);
+      if (!isEditing) await saveOnboardingStep('procedure');
+      window.sessionStorage.removeItem(CONSENT_DRAFT_KEY);
+      router.push(isEditing ? '/profile' : '/onboarding/procedure');
+    } catch (error) {
+      console.error(error);
+      setSubmitError('저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (!hydrated || !draftLoaded || consentMode === null) {
@@ -207,8 +218,18 @@ export default function ConsentPage() {
       </div>
 
       <div className="sticky-actions">
-        <button className="button full" type="button" disabled={!requiredComplete} onClick={submit}>
-          {isEditing ? '동의 내역 저장' : '동의하고 계속'}
+        {submitError ? (
+          <p className="error" role="alert">
+            {submitError}
+          </p>
+        ) : null}
+        <button
+          className="button full"
+          type="button"
+          disabled={!requiredComplete || submitting}
+          onClick={() => void submit()}
+        >
+          {submitting ? '저장 중…' : isEditing ? '동의 내역 저장' : '동의하고 계속'}
         </button>
       </div>
     </AppShell>

@@ -54,8 +54,9 @@ test('draft warning and bottom navigation stay visible on mobile', async ({ page
   });
   await page.goto('/home');
   await expect(page.locator('.draft-banner')).toContainText('내부 검증 중인 안내');
-  await expect(page.getByRole('navigation', { name: '하단 탐색' })).toBeVisible();
-  await page.getByRole('link', { name: '내 제품' }).click();
+  const bottomNav = page.getByRole('navigation', { name: '하단 탐색' });
+  await expect(bottomNav).toBeVisible();
+  await bottomNav.getByRole('link', { name: '내 제품' }).click();
   await expect(page).toHaveURL(/\/products$/);
 });
 
@@ -93,7 +94,11 @@ test('user can register a skincare product with a v6 ingredient group', async ({
 const isoDaysAgo = (days: number) => {
   const date = new Date();
   date.setDate(date.getDate() - days);
-  return date.toISOString().slice(0, 10);
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
 };
 
 type SeedOptions = {
@@ -108,7 +113,11 @@ const seed = (page: import('@playwright/test').Page, options: SeedOptions = {}) 
     const performedAt = (() => {
       const date = new Date();
       date.setDate(date.getDate() - (seedOptions.daysAgo ?? 0));
-      return date.toISOString().slice(0, 10);
+      return [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0'),
+      ].join('-');
     })();
     window.localStorage.setItem(
       'recovery-note:v1',
@@ -257,4 +266,137 @@ test('calendar opens the check-in record for a checked day', async ({ page }) =>
   await page.goto('/records');
   await page.getByRole('button', { name: /피부 체크한 날, 기록 보기/ }).click();
   await expect(page).toHaveURL(/\/check-in\/result\?id=check-1$/);
+});
+
+test.describe('home uses the browser local calendar date', () => {
+  test.use({ timezoneId: 'Asia/Seoul' });
+
+  test('does not treat a previous-day check-in as today at KST 00:30', async ({ page }) => {
+    await page.clock.install({ time: new Date('2026-08-18T15:30:00.000Z') });
+    await seed(page, {
+      daysAgo: 1,
+      checkIns: [
+        {
+          id: 'check-yesterday',
+          // 2026-08-18 23:30 KST. Its UTC date matches the frozen current UTC date,
+          // but its browser-local calendar date is the previous day.
+          checkedAt: '2026-08-18T14:30:00.000Z',
+          procedureDay: 1,
+          answers: [{ symptomId: 'redness', present: false }],
+          rulePackVersion: '6.0.0',
+        },
+      ],
+    });
+
+    await page.goto('/home');
+    await expect(page.getByText('최대 5개 항목을 직접 확인해요.')).toBeVisible();
+    await expect(page.getByRole('link', { name: '상태 체크 시작' })).toBeVisible();
+  });
+
+  test('marks an earlier check-in on the same local day as complete', async ({ page }) => {
+    await page.clock.install({ time: new Date('2026-08-19T00:30:00.000Z') });
+    await seed(page, {
+      daysAgo: 1,
+      checkIns: [
+        {
+          id: 'check-today',
+          // 2026-08-19 05:00 KST. Its UTC date differs from the frozen current UTC date,
+          // while both timestamps are on the same browser-local calendar date.
+          checkedAt: '2026-08-18T20:00:00.000Z',
+          procedureDay: 1,
+          answers: [{ symptomId: 'redness', present: false }],
+          rulePackVersion: '6.0.0',
+        },
+      ],
+    });
+
+    await page.goto('/home');
+    await expect(page.getByText('오늘 기록을 완료했어요.')).toBeVisible();
+    await expect(page.getByRole('link', { name: '다시 체크하기' })).toBeVisible();
+  });
+});
+
+test('failed check-in keeps answers and retry stores exactly one record', async ({ page }) => {
+  await seed(page, { daysAgo: 1 });
+  await page.goto('/check-in');
+
+  const firstPresentButton = page.getByRole('button', { name: '있어요' }).first();
+  await firstPresentButton.click();
+  await expect(firstPresentButton).toHaveAttribute('aria-pressed', 'true');
+
+  await page.evaluate(() => {
+    const originalSetItem = Storage.prototype.setItem;
+    Object.defineProperty(window, '__restoreLocalStorageSetItem', {
+      configurable: true,
+      value: () => {
+        Storage.prototype.setItem = originalSetItem;
+      },
+    });
+    Storage.prototype.setItem = () => {
+      throw new DOMException('Simulated storage failure', 'QuotaExceededError');
+    };
+  });
+
+  await page.getByRole('button', { name: '체크 완료' }).click();
+  await expect(page.locator('.sticky-actions').getByRole('alert')).toContainText(
+    '선택한 내용은 이 화면에 그대로 있어요.',
+  );
+  await expect(firstPresentButton).toHaveAttribute('aria-pressed', 'true');
+
+  await page.evaluate(() => {
+    const restore = (window as typeof window & { __restoreLocalStorageSetItem?: () => void })
+      .__restoreLocalStorageSetItem;
+    restore?.();
+  });
+  await page.getByRole('button', { name: '체크 완료' }).click();
+  await expect(page).toHaveURL(/\/check-in\/result$/);
+
+  const storedCheckIns = await page.evaluate(() => {
+    const session = JSON.parse(window.localStorage.getItem('recovery-note:v1') ?? '{}');
+    return session.checkIns ?? [];
+  });
+  expect(storedCheckIns).toHaveLength(1);
+});
+
+test('home shows an empty-product state that is distinct from an unknown verdict', async ({
+  page,
+}) => {
+  await seed(page, { daysAgo: 1, products: [] });
+
+  await page.goto('/home');
+  await expect(page.getByText('제품을 등록해 주세요').first()).toBeVisible();
+  await expect(page.getByText('등록 필요').first()).toBeVisible();
+  const registerLink = page.getByRole('link', { name: '내 제품 등록하기' });
+  await expect(registerLink).toBeVisible();
+  await expect(registerLink).toHaveAttribute('href', '/products');
+});
+
+test('rule-pack version is not exposed on the home or profile screens', async ({ page }) => {
+  await seed(page, {
+    daysAgo: 1,
+    products: [
+      {
+        id: 'prod-1',
+        name: '기존 세럼',
+        category: 'skincare',
+        ruleSelection: {
+          ingredientGroupIds: ['niacinamide'],
+          cleansingMethodIds: [],
+          baseMakeupIds: [],
+        },
+        attributeIds: ['niacinamide'],
+        createdAt: '2026-07-01T00:00:00.000Z',
+        updatedAt: '2026-07-01T00:00:00.000Z',
+      },
+    ],
+  });
+
+  await page.goto('/home');
+  await expect(page.getByText(/룰팩/)).toHaveCount(0);
+  await expect(
+    page.getByText('이 안내는 입력한 시술일과 제품 정보를 바탕으로 정리했어요.'),
+  ).toBeVisible();
+
+  await page.goto('/profile');
+  await expect(page.getByText(/룰팩/)).toHaveCount(0);
 });
