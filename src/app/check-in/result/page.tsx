@@ -2,6 +2,7 @@
 
 import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
+import { toLocalDateKey } from '@/domain/date';
 import { evaluateCheckIn } from '@/rules/engine/evaluate';
 import { consecutiveDowngradeDays, hasDowngradeTrigger } from '@/ruletable/resolve';
 import { useRecoveryStore } from '@/store/recovery-store';
@@ -58,7 +59,7 @@ function CheckInResultPageContent() {
   const level = action.type === 'CONTACT_CLINIC_PROMPTLY' ? 'stop' : urgent ? 'care' : 'go';
   const consecutiveDays = consecutiveDowngradeDays(
     checkIns.map((entry) => ({
-      date: entry.checkedAt.slice(0, 10),
+      date: toLocalDateKey(new Date(entry.checkedAt)),
       downgraded: hasDowngradeTrigger(
         entry.procedureDay ?? 0,
         entry.answers.map((answer) => ({

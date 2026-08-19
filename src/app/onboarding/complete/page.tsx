@@ -16,6 +16,7 @@ export default function CompletePage() {
   const session = useRecoveryStore((state) => state.session);
   const completeOnboarding = useRecoveryStore((state) => state.completeOnboarding);
   const [completing, setCompleting] = useState(false);
+  const [completeError, setCompleteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAuthEnabled()) {
@@ -30,12 +31,20 @@ export default function CompletePage() {
   async function startRecovery(destination: string) {
     if (completing) return;
     setCompleting(true);
-    await completeOnboarding();
-    analytics.track({
-      name: 'onboarding_completed',
-      productCount: session?.products.length ?? 0,
-    });
-    router.push(destination);
+    setCompleteError(null);
+    try {
+      await completeOnboarding();
+      analytics.track({
+        name: 'onboarding_completed',
+        productCount: session?.products.length ?? 0,
+      });
+      router.push(destination);
+    } catch (error) {
+      console.error(error);
+      setCompleteError('저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setCompleting(false);
+    }
   }
 
   return (
@@ -63,6 +72,11 @@ export default function CompletePage() {
         </div>
       </section>
       <div className="sticky-actions">
+        {completeError ? (
+          <p className="error" role="alert">
+            {completeError}
+          </p>
+        ) : null}
         {isAuthEnabled() ? (
           <>
             <button

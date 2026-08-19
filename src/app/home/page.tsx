@@ -4,6 +4,7 @@ import { AppShell } from '@/components/app-shell/app-shell';
 import { LoadingScreen } from '@/components/common/loading-screen';
 import { VerdictBadge } from '@/components/verdict/verdict-badge';
 import { analytics } from '@/domain/analytics';
+import { isSameLocalDate } from '@/domain/date';
 import type { ProductCategory, VerdictLevel } from '@/domain/product';
 import { getProcedureDay, getRecoveryMilestone } from '@/domain/procedure';
 import { evaluateCategory } from '@/rules/engine/evaluate';
@@ -16,6 +17,7 @@ import {
   ClipboardCheck,
   Droplets,
   Info,
+  PackagePlus,
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
@@ -107,8 +109,8 @@ export default function HomePage() {
   const showPrep = nextProcedureDay !== null && (currentDay >= 14 || inPrep);
   const prepWarnings = activePrepBehaviorWarnings(daysToNext);
 
-  const todayCheck = session.checkIns.some(
-    (checkIn) => checkIn.checkedAt.slice(0, 10) === new Date().toISOString().slice(0, 10),
+  const todayCheck = session.checkIns.some((checkIn) =>
+    isSameLocalDate(checkIn.checkedAt, new Date()),
   );
 
   // 회복기와 회복 완료 화면 양쪽에서 같은 진입점을 씁니다.
@@ -329,7 +331,9 @@ export default function HomePage() {
                 : '자극을 줄이고, 피부 느낌을 천천히 확인하세요.'}
         </h2>
         <p className="subcopy">
-          이 안내는 입력한 속성과 룰팩 {rulePackMeta.version}을 기준으로 표시됩니다.
+          {session.products.length
+            ? '이 안내는 입력한 시술일과 제품 정보를 바탕으로 정리했어요.'
+            : '입력한 시술일과 피부 정보를 바탕으로 오늘의 기본 안내를 정리했어요.'}
         </p>
       </section>
 
@@ -350,6 +354,7 @@ export default function HomePage() {
         <div className="stack">
           {categories.map(({ id, label, icon: Icon }, index) => {
             const verdict = categoryVerdicts[index];
+            const hasProducts = verdict.products.length > 0;
             return (
               <Link className="category-card" href={`/guide/${id}`} key={id}>
                 <span className="category-icon">
@@ -357,20 +362,25 @@ export default function HomePage() {
                 </span>
                 <span className="list-row-main">
                   <strong>{label}</strong>
-                  <span>
-                    {verdict.products.length
-                      ? `${verdict.products.length}개 제품`
-                      : '등록 제품 없음'}
-                  </span>
+                  <span>{hasProducts ? `${verdict.products.length}개 제품` : '제품을 등록해 주세요'}</span>
                 </span>
                 <span style={{ display: 'grid', justifyItems: 'end', gap: 7 }}>
-                  <VerdictBadge level={verdict.level} />
+                  {hasProducts ? (
+                    <VerdictBadge level={verdict.level} />
+                  ) : (
+                    <span className="badge">등록 필요</span>
+                  )}
                   <ChevronRight size={17} color="var(--ink-soft)" aria-hidden="true" />
                 </span>
               </Link>
             );
           })}
         </div>
+        {session.products.length === 0 ? (
+          <Link className="button secondary full" href="/products" style={{ marginTop: 12 }}>
+            <PackagePlus size={18} aria-hidden="true" /> 내 제품 등록하기
+          </Link>
+        ) : null}
       </section>
 
       {checkInCard}

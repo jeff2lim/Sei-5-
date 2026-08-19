@@ -25,6 +25,7 @@ export default function CheckInPage() {
   const saveCheckIn = useRecoveryStore((state) => state.saveCheckIn);
   const [answers, setAnswers] = useState<Record<string, CheckInAnswer>>({});
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   function toggle(id: string, present: boolean, withSeverity: boolean) {
     setAnswers((current) => ({
@@ -41,11 +42,16 @@ export default function CheckInPage() {
   }
 
   async function submit() {
+    if (saving) return;
+    if (!session?.procedure) {
+      setSaveError('시술 기록이 없어서 저장할 수 없어요. 시술일을 먼저 입력해 주세요.');
+      return;
+    }
+
     setSaving(true);
+    setSaveError(null);
     try {
-      const procedureDay = session?.procedure
-        ? getProcedureDay(session.procedure.performedAt, new Date())
-        : 0;
+      const procedureDay = getProcedureDay(session.procedure.performedAt, new Date());
       const checkIn: CheckIn = {
         id: crypto.randomUUID(),
         checkedAt: new Date().toISOString(),
@@ -61,6 +67,9 @@ export default function CheckInPage() {
         action: action.type,
       });
       router.push('/check-in/result');
+    } catch (error) {
+      console.error(error);
+      setSaveError('기록을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
     } finally {
       setSaving(false);
     }
@@ -177,7 +186,12 @@ export default function CheckInPage() {
       </div>
 
       <div className="sticky-actions">
-        <button className="button full" type="button" disabled={saving} onClick={submit}>
+        {saveError ? (
+          <p className="error" role="alert">
+            {saveError}
+          </p>
+        ) : null}
+        <button className="button full" type="button" disabled={saving} onClick={() => void submit()}>
           {saving ? '저장 중…' : '체크 완료'}
         </button>
       </div>

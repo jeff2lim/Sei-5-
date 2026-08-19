@@ -54,8 +54,9 @@ test('draft warning and bottom navigation stay visible on mobile', async ({ page
   });
   await page.goto('/home');
   await expect(page.locator('.draft-banner')).toContainText('내부 검증 중인 안내');
-  await expect(page.getByRole('navigation', { name: '하단 탐색' })).toBeVisible();
-  await page.getByRole('link', { name: '내 제품' }).click();
+  const bottomNav = page.getByRole('navigation', { name: '하단 탐색' });
+  await expect(bottomNav).toBeVisible();
+  await bottomNav.getByRole('link', { name: '내 제품' }).click();
   await expect(page).toHaveURL(/\/products$/);
 });
 
@@ -257,4 +258,67 @@ test('calendar opens the check-in record for a checked day', async ({ page }) =>
   await page.goto('/records');
   await page.getByRole('button', { name: /피부 체크한 날, 기록 보기/ }).click();
   await expect(page).toHaveURL(/\/check-in\/result\?id=check-1$/);
+});
+
+test('home marks today as checked in using the local calendar date', async ({ page }) => {
+  const checkedAt = new Date();
+  await seed(page, {
+    daysAgo: 1,
+    checkIns: [
+      {
+        id: 'check-today',
+        checkedAt: checkedAt.toISOString(),
+        procedureDay: 1,
+        answers: [{ symptomId: 'redness', present: false }],
+        rulePackVersion: '6.0.0',
+      },
+    ],
+  });
+
+  await page.goto('/home');
+  await expect(page.getByText('오늘 기록을 완료했어요.')).toBeVisible();
+  await expect(page.getByRole('link', { name: '다시 체크하기' })).toBeVisible();
+});
+
+test('home shows an empty-product state that is distinct from an unknown verdict', async ({
+  page,
+}) => {
+  await seed(page, { daysAgo: 1, products: [] });
+
+  await page.goto('/home');
+  await expect(page.getByText('제품을 등록해 주세요').first()).toBeVisible();
+  await expect(page.getByText('등록 필요').first()).toBeVisible();
+  const registerLink = page.getByRole('link', { name: '내 제품 등록하기' });
+  await expect(registerLink).toBeVisible();
+  await expect(registerLink).toHaveAttribute('href', '/products');
+});
+
+test('rule-pack version is not exposed on the home or profile screens', async ({ page }) => {
+  await seed(page, {
+    daysAgo: 1,
+    products: [
+      {
+        id: 'prod-1',
+        name: '기존 세럼',
+        category: 'skincare',
+        ruleSelection: {
+          ingredientGroupIds: ['niacinamide'],
+          cleansingMethodIds: [],
+          baseMakeupIds: [],
+        },
+        attributeIds: ['niacinamide'],
+        createdAt: '2026-07-01T00:00:00.000Z',
+        updatedAt: '2026-07-01T00:00:00.000Z',
+      },
+    ],
+  });
+
+  await page.goto('/home');
+  await expect(page.getByText(/룰팩/)).toHaveCount(0);
+  await expect(
+    page.getByText('이 안내는 입력한 시술일과 제품 정보를 바탕으로 정리했어요.'),
+  ).toBeVisible();
+
+  await page.goto('/profile');
+  await expect(page.getByText(/룰팩/)).toHaveCount(0);
 });

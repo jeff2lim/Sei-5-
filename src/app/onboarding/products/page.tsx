@@ -31,6 +31,8 @@ export default function OnboardingProductsPage() {
   } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   function openDeleteDialog(productId: string, productName: string) {
     setPendingDelete({
@@ -67,8 +69,18 @@ export default function OnboardingProductsPage() {
   }
 
   async function continueToCleansing() {
-    await saveOnboardingStep('cleansing');
-    router.push('/onboarding/cleansing');
+    if (submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await saveOnboardingStep('cleansing');
+      router.push('/onboarding/cleansing');
+    } catch (error) {
+      console.error(error);
+      setSubmitError('저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setSubmitting(false);
+    }
   }
   if (!hydrated) return <LoadingScreen navigation={false} />;
 
@@ -127,6 +139,11 @@ export default function OnboardingProductsPage() {
       </section>
 
       <div className="sticky-actions">
+        {submitError ? (
+          <p className="error" role="alert">
+            {submitError}
+          </p>
+        ) : null}
         <Link
           className="button secondary full"
           href="/onboarding/products/new/category"
@@ -137,9 +154,10 @@ export default function OnboardingProductsPage() {
         <button
           type="button"
           className={products.length ? 'button full' : 'button product-skip full'}
+          disabled={submitting}
           onClick={() => void continueToCleansing()}
         >
-          {products.length ? '다음' : '제품 없이 넘어가기'}
+          {submitting ? '저장 중…' : products.length ? '다음' : '제품 없이 넘어가기'}
         </button>
       </div>
       <dialog
