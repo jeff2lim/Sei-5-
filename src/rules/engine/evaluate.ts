@@ -14,6 +14,60 @@ const rank: Record<VerdictLevel, number> = {
   consult: 4,
 };
 
+const ingredientBenefits: Record<string, string> = {
+  ceramide: '피부 장벽 강화와 보습',
+  hyaluronic_acid: '수분 보충과 보습',
+  panthenol: '보습과 진정',
+  cica: '피부 진정과 회복',
+  egf: '피부 재생과 회복',
+  pdrn: '피부 재생과 회복',
+  exosome: '피부 진정과 회복',
+  zinc: '피지 조절과 진정',
+  niacinamide: '피부 장벽 강화와 톤 개선',
+  brightening_functional: '색소 관리와 톤 개선',
+  vitamin_c: '항산화와 톤 개선',
+  acne_active: '트러블 관리',
+  retinoid: '피부 결 개선',
+  exfoliating_acid: '각질 정돈',
+};
+
+const ingredientStopReasons: Record<string, string> = {
+  egf: '회복 초기의 예민한 피부에는 자극이 될 수 있어 지금은 쉬어야 해요.',
+  pdrn: '회복 초기의 예민한 피부에는 자극이 될 수 있어 지금은 쉬어야 해요.',
+  exosome: '회복 초기의 예민한 피부에는 자극이 될 수 있어 지금은 쉬어야 해요.',
+  zinc: '회복 직후에는 따갑거나 건조하게 느껴질 수 있어 지금은 쉬어야 해요.',
+  niacinamide: '회복 직후에는 따갑거나 붉어질 수 있어 지금은 쉬어야 해요.',
+  brightening_functional: '회복 직후의 피부에 따가움과 붉은기를 키울 수 있어 지금은 쉬어야 해요.',
+  vitamin_c: '산성 성분이 회복 중인 피부를 자극할 수 있어 지금은 쉬어야 해요.',
+  acne_active: '활성 성분이 회복 중인 피부의 자극을 키울 수 있어 지금은 쉬어야 해요.',
+  retinoid: '피부 턴오버를 촉진해 회복 중 자극과 건조를 키울 수 있어 지금은 쉬어야 해요.',
+  exfoliating_acid: '각질을 벗겨 회복 중인 피부의 자극을 키울 수 있어 지금은 쉬어야 해요.',
+};
+
+function detailReason(detail: ReturnType<typeof resolveTarget>, fallback: string) {
+  if (detail.prepText) return detail.prepText;
+  if (detail.conditionText) return detail.conditionText;
+  if (detail.targetType !== 'ingredient_group') return fallback;
+
+  if (detail.verdict === 'go') {
+    const benefit = ingredientBenefits[detail.targetId];
+    return benefit
+      ? `${benefit}에 도움을 주는 성분이에요.`
+      : `${detail.label}은 오늘 사용할 수 있어요.`;
+  }
+  if (detail.verdict === 'care') {
+    return `${ingredientBenefits[detail.targetId] ?? detail.label}에 도움을 주지만, 회복 중인 피부에는 소량부터 조심해서 사용해야 해요.`;
+  }
+  if (detail.verdict === 'stop') {
+    return (
+      ingredientStopReasons[detail.targetId] ??
+      '회복 중인 피부의 자극을 키울 수 있어 지금은 쉬어야 해요.'
+    );
+  }
+  if (detail.verdict === 'consult') return '병원에서 받은 사용 안내를 우선해 주세요.';
+  return '현재 연결된 판정 정보가 부족해요.';
+}
+
 const legacyAliases: Record<string, { type: TargetType; id: string }> = {
   'gentle-cleanser': { type: 'cleansing_method', id: 'mild_acidic_foam' },
   'oil-balm': { type: 'cleansing_method', id: 'cleansing_oil' },
@@ -118,7 +172,7 @@ export function evaluateProduct(
           (timeline) =>
             timeline.target_id === detail.targetId && timeline.sensitivity === sensitivity,
         )?.reopen_d_day ?? undefined,
-      reason: detail.prepText ?? detail.conditionText ?? resolved.primaryText,
+      reason: detailReason(detail, resolved.primaryText),
     })),
     rulePackVersion: v6RuleTable.version,
   };
@@ -143,12 +197,7 @@ export function evaluateCategory(
   nextProcedureDay: number | null = null,
 ): CategoryVerdict {
   const matchingProducts = products.filter((product) => product.category === category);
-  const verdicts = evaluateProducts(
-    matchingProducts,
-    procedureDay,
-    sensitivity,
-    nextProcedureDay,
-  );
+  const verdicts = evaluateProducts(matchingProducts, procedureDay, sensitivity, nextProcedureDay);
   const level = verdicts.reduce<VerdictLevel>(
     (current, verdict) => (rank[verdict.level] > rank[current] ? verdict.level : current),
     'unknown',

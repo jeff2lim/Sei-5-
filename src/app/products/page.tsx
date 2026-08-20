@@ -18,6 +18,23 @@ import { useCallback, useEffect, useState } from 'react';
 
 const rank: Record<VerdictLevel, number> = { consult: 4, stop: 3, care: 2, unknown: 1, go: 0 };
 
+const ingredientBenefits: Record<string, string> = {
+  ceramide: '피부 장벽 강화와 보습',
+  hyaluronic_acid: '수분 보충과 보습',
+  panthenol: '보습과 진정',
+  cica: '피부 진정과 회복',
+  egf: '피부 재생과 회복',
+  pdrn: '피부 재생과 회복',
+  exosome: '피부 진정과 회복',
+  zinc: '피지 조절과 진정',
+  niacinamide: '피부 장벽 강화와 톤 개선',
+  brightening_functional: '색소 관리와 톤 개선',
+  vitamin_c: '항산화와 톤 개선',
+  acne_active: '트러블 관리',
+  retinoid: '피부 결 개선',
+  exfoliating_acid: '각질 정돈',
+};
+
 export default function ProductsPage() {
   const hydrated = useRecoveryStore((state) => state.hydrated);
   const session = useRecoveryStore((state) => state.session);
@@ -83,7 +100,7 @@ export default function ProductsPage() {
   const productGroups = [
     {
       level: 'consult',
-      label: '병원 확인이 필요해요',
+      label: '병원 제공 제품이에요',
     },
     {
       level: 'stop',
@@ -108,7 +125,7 @@ export default function ProductsPage() {
       const matching = rows.flatMap(({ product, verdict }) => {
         const detail = verdict.details.find((item) => item.attributeId === attribute.id);
 
-        return detail ? [{ product, detail }] : [];
+        return detail ? [{ product, detail, verdict }] : [];
       });
 
       const mostConservative = [...matching].sort(
@@ -119,7 +136,32 @@ export default function ProductsPage() {
         attribute,
         products: matching,
         level: mostConservative?.detail.level,
-        reason: mostConservative?.detail.reason,
+        reason:
+          mostConservative?.detail.level === 'go'
+            ? (() => {
+                const blocker = matching
+                  .flatMap(({ verdict }) => verdict.details)
+                  .filter(
+                    (detail) =>
+                      detail.attributeId !== attribute.id &&
+                      detail.targetType === 'ingredient_group' &&
+                      (detail.level === 'consult' ||
+                        detail.level === 'stop' ||
+                        detail.level === 'care'),
+                  )
+                  .sort((a, b) => rank[b.level] - rank[a.level])[0];
+                const benefit = ingredientBenefits[attribute.id] ?? '피부 관리';
+
+                if (!blocker) return `${benefit}에 도움을 주는 성분이에요.`;
+                if (blocker.level === 'care') {
+                  return `${benefit}에 도움을 주지만 ${blocker.label}와 함께 들어 있어 이 제품은 조심해서 써야 해요.`;
+                }
+                if (blocker.level === 'consult') {
+                  return `${benefit}에 도움을 주지만 병원 제공 성분과 함께 들어 있어 병원 안내를 우선해야 해요.`;
+                }
+                return `${benefit}에 도움을 주지만 ${blocker.label}와 함께 들어 있어 이 제품은 아직 쉬어야 해요.`;
+              })()
+            : mostConservative?.detail.reason,
       };
     })
     .filter((row) => row.products.length > 0)
@@ -133,11 +175,10 @@ export default function ProductsPage() {
     <AppShell>
       <p className="eyebrow">My products · D+{day}</p>
       <h1 className="headline">내 제품</h1>
-      <p className="subcopy">병원 확인 → 중단 → 주의 → 정보 없음 → 가능 순서로 정렬돼요.</p>
 
       <section className="section summary-grid" aria-label="제품 판정 요약">
         {[
-          { label: '병원 확인', count: counts[0], level: 'consult' },
+          { label: '병원 제공', count: counts[0], level: 'consult' },
           { label: '중단', count: counts[1], level: 'stop' },
           { label: '주의', count: counts[2], level: 'care' },
           { label: '정보 없음', count: counts[3], level: 'unknown' },

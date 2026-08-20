@@ -40,7 +40,7 @@ const RECOVERY_WINDOW_DAYS = 14;
 function getRecoveryCompleteLabel(level: VerdictLevel) {
   switch (level) {
     case 'consult':
-      return '병원 확인';
+      return '병원 제공';
     case 'go':
       return '재개 가능';
     case 'care':
@@ -161,7 +161,6 @@ export default function HomePage() {
     return (
       <AppShell>
         <header>
-          <p className="eyebrow">Picotoning · D+{day}</p>
           <h1 className="headline">
             {isRecoveryCompleteMilestone
               ? '14일의 회복 여정을 잘 마쳤어요.'
@@ -240,11 +239,11 @@ export default function HomePage() {
                     <strong>{product.name}</strong>
                     <span>
                       {verdict.prepText ??
-                      (verdict.level === 'consult'
-                        ? '사용 전에 병원 확인이 필요한 항목이에요.'
-                        : verdict.level === 'stop'
-                          ? '아직은 사용을 쉬어가는 항목이에요.'
-                          : '무리하지 말고 천천히 재개하세요.')}
+                        (verdict.level === 'consult'
+                          ? '병원에서 받은 사용 안내를 우선해 주세요.'
+                          : verdict.level === 'stop'
+                            ? '아직은 사용을 쉬어가는 항목이에요.'
+                            : '무리하지 말고 천천히 재개하세요.')}
                     </span>
                   </div>
 
@@ -268,7 +267,6 @@ export default function HomePage() {
                 </span>
               </div>
             ))}
-
           </div>
         </section>
 
@@ -278,8 +276,8 @@ export default function HomePage() {
           <div className="notice section">
             <Info size={18} aria-hidden="true" />
             <span>
-              2주 간격으로 시술받으시면 레티놀·필링 제품은 시술 기간 내내 쉬는 게 맞아요.
-              시술을 다 마친 뒤에 다시 시작하세요.
+              2주 간격으로 시술받으시면 레티놀·필링 제품은 시술 기간 내내 쉬는 게 맞아요. 시술을 다
+              마친 뒤에 다시 시작하세요.
             </span>
           </div>
         ) : null}
@@ -300,11 +298,6 @@ export default function HomePage() {
   return (
     <AppShell>
       <header>
-        <p className="eyebrow">
-          {showPrep && daysToNext !== null
-            ? `Picotoning prep · D−${daysToNext}`
-            : `Picotoning · D+${currentDay}`}
-        </p>
         <h1 className="headline">
           {showPrep
             ? '다음 시술 준비 안내예요.'
@@ -316,24 +309,22 @@ export default function HomePage() {
       </header>
 
       <section className="section hero-card">
-        <span className="badge">
-          {showPrep && daysToNext !== null ? `D−${daysToNext}` : `D+${currentDay}`}
-        </span>
-        <h2 className="headline" style={{ marginTop: 14 }}>
+        <div className="today-summary-head">
+          <span className="today-day">
+            {showPrep && daysToNext !== null ? `D−${daysToNext}` : `D+${currentDay}`}
+          </span>
+          <h2 className="today-summary-title">오늘의 요약</h2>
+        </div>
+        <p className="today-summary-copy">
           {showPrep
             ? '시술 전까지 자외선 차단이 가장 중요해요. 지우기 쉬운 걸 바르고 순하게 지우세요.'
             : currentDay === 0
-            ? '오늘은 이것만 하면 돼요 — 미온수 세안 · 보습 · 외출 자제'
-            : currentDay === 7
-              ? '회복기를 마쳤어요. 이제 한꺼번에 말고 순서대로 다시 시작해요.'
-              : currentDay >= 14
-                ? '재개기를 마쳤어요. 남아 있는 주의 항목을 확인해 주세요.'
-                : '자극을 줄이고, 피부 느낌을 천천히 확인하세요.'}
-        </h2>
-        <p className="subcopy">
-          {session.products.length
-            ? '이 안내는 입력한 시술일과 제품 정보를 바탕으로 정리했어요.'
-            : '입력한 시술일과 피부 정보를 바탕으로 오늘의 기본 안내를 정리했어요.'}
+              ? '미온수로 가볍게 세안하고, 보습에 집중하며 외출은 가급적 줄여주세요.'
+              : currentDay === 7
+                ? '회복기를 마쳤어요. 이제 한꺼번에 말고 순서대로 다시 시작해요.'
+                : currentDay >= 14
+                  ? '재개기를 마쳤어요. 남아 있는 주의 항목을 확인해 주세요.'
+                  : '자극을 줄이고, 피부 느낌을 천천히 확인하세요.'}
         </p>
       </section>
 
@@ -362,7 +353,9 @@ export default function HomePage() {
                 </span>
                 <span className="list-row-main">
                   <strong>{label}</strong>
-                  <span>{hasProducts ? `${verdict.products.length}개 제품` : '제품을 등록해 주세요'}</span>
+                  <span>
+                    {hasProducts ? `${verdict.products.length}개 제품` : '제품을 등록해 주세요'}
+                  </span>
                 </span>
                 <span style={{ display: 'grid', justifyItems: 'end', gap: 7 }}>
                   {hasProducts ? (

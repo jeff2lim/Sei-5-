@@ -220,6 +220,36 @@ a {
   border-radius: var(--radius-lg);
 }
 
+.today-summary-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.today-day {
+  color: var(--teal);
+  font-family: var(--font-mono), monospace;
+  font-size: clamp(30px, 9vw, 40px);
+  font-weight: 700;
+  letter-spacing: -0.06em;
+  line-height: 1;
+}
+
+.today-summary-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.today-summary-copy {
+  margin: 18px 0 0;
+  color: var(--ink);
+  font-family: var(--font-title), 'Gowun Dodum', sans-serif;
+  font-size: 21px;
+  letter-spacing: -0.025em;
+  line-height: 1.5;
+}
+
 .hero-mark {
   display: grid;
   width: 52px;
@@ -935,13 +965,18 @@ a {
 }
 
 .guide-pager {
+  position: sticky;
+  z-index: 20;
+  top: max(0px, env(safe-area-inset-top));
   display: grid;
   grid-template-columns: 44px 1fr 44px;
   align-items: center;
   margin-bottom: 16px;
   padding: 6px 8px;
-  background: var(--paper);
+  background: rgb(246 247 244 / 96%);
   border-radius: 12px;
+  box-shadow: 0 8px 18px rgb(28 35 33 / 7%);
+  backdrop-filter: blur(12px);
 }
 
 .guide-pager-label {
