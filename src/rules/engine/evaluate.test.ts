@@ -48,6 +48,16 @@ describe('deterministic rule engine', () => {
     expect(evaluateProduct(product(['hydrating']), 0).rulePackVersion).toBe('6.0.0');
   });
 
+  it('explains each ingredient itself instead of copying the product-level blocker', () => {
+    const verdict = evaluateProduct(product(['hydrating', 'zinc']), 0);
+    const ceramide = verdict.details.find((detail) => detail.attributeId === 'ceramide');
+    const zinc = verdict.details.find((detail) => detail.attributeId === 'zinc');
+
+    expect(ceramide?.reason).toContain('피부 장벽 강화와 보습');
+    expect(ceramide?.reason).not.toContain('징크 때문에');
+    expect(zinc?.reason).toContain('따갑거나 건조');
+  });
+
   it('exposes the prep gate through the app-facing evaluator', () => {
     const verdict = evaluateProduct(product(['retinoid']), 11, 'normal', 14);
     expect(verdict.level).toBe('stop');

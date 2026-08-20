@@ -5,7 +5,7 @@ const labels: Record<VerdictLevel, string> = {
   go: '가능',
   care: '주의',
   stop: '중단',
-  consult: '병원 확인',
+  consult: '병원 제공',
   unknown: '판정 정보 없음',
 };
 
