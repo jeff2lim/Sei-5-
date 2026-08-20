@@ -24,7 +24,8 @@ test('new user can finish onboarding with no products and enter home', async ({ 
   await expect(page.getByRole('heading', { name: '회복 관리 준비가 끝났어요.' })).toBeVisible();
   await page.getByRole('button', { name: /회복 관리 시작/ }).click();
   await expect(page).toHaveURL(/\/home$/);
-  await expect(page.getByText('Picotoning · D+0', { exact: true })).toBeVisible();
+  await expect(page.getByText('D+0', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '오늘의 요약' })).toBeVisible();
 });
 
 test('draft warning and bottom navigation stay visible on mobile', async ({ page }) => {
@@ -152,7 +153,7 @@ test('after the D+14 window home shows the completion screen and still reaches c
   await expect(
     page.getByRole('heading', { name: '14일의 회복 여정을 잘 마쳤어요.' }),
   ).toBeVisible();
-  await expect(page.getByText('Picotoning · D+20', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Picotoning · D\+20/)).toHaveCount(0);
 
   // 회복 완료 화면에서도 상태 체크로 갈 수 있어야 합니다.
   await page.getByRole('link', { name: '상태 체크 시작' }).click();
@@ -163,8 +164,39 @@ test('within the window home keeps the daily guidance screen', async ({ page }) 
   await seed(page, { daysAgo: 10 });
 
   await page.goto('/home');
-  await expect(page.getByText('Picotoning · D+10', { exact: true })).toBeVisible();
+  await expect(page.getByText('D+10', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '오늘의 요약' })).toBeVisible();
   await expect(page.getByRole('heading', { name: '오늘의 회복 안내예요.' })).toBeVisible();
+});
+
+test('가이드 단계 제목은 스크롤해도 상단에 남아 있다', async ({ page }) => {
+  await seed(page, {
+    daysAgo: 0,
+    products: [
+      {
+        id: 'prod-1',
+        name: '테스트 보습 크림',
+        category: 'skincare',
+        ruleSelection: {
+          ingredientGroupIds: ['retinoid'],
+          cleansingMethodIds: [],
+          baseMakeupIds: [],
+        },
+        attributeIds: ['retinoid'],
+        createdAt: '2026-07-01T00:00:00.000Z',
+        updatedAt: '2026-07-01T00:00:00.000Z',
+      },
+    ],
+  });
+
+  await page.goto('/guide/skincare');
+  const pager = page.getByRole('navigation', { name: '행동안내 이동' });
+  await expect(pager).toBeVisible();
+  await expect(pager).toHaveCSS('position', 'sticky');
+
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  const position = await pager.boundingBox();
+  expect(position?.y ?? 999).toBeLessThanOrEqual(40);
 });
 
 test('D+7 shows the first-week recovery milestone', async ({ page }) => {
@@ -231,9 +263,7 @@ test('product can be edited in place instead of deleted and re-added', async ({ 
   await expect(page.getByLabel('제품 이름')).toHaveValue('기존 세럼');
   await page.getByLabel('제품 이름').fill('이름 바꾼 세럼');
   await page.getByRole('button', { name: '속성 선택하기' }).click();
-  await expect(
-    page.getByRole('checkbox', { name: /^나이아신아마이드 성분표/ }),
-  ).toBeChecked();
+  await expect(page.getByRole('checkbox', { name: /^나이아신아마이드 성분표/ })).toBeChecked();
   await page.getByRole('button', { name: '변경 저장' }).click();
 
   await expect(page).toHaveURL(/\/products\/prod-1$/);
@@ -395,7 +425,7 @@ test('rule-pack version is not exposed on the home or profile screens', async ({
   await expect(page.getByText(/룰팩/)).toHaveCount(0);
   await expect(
     page.getByText('이 안내는 입력한 시술일과 제품 정보를 바탕으로 정리했어요.'),
-  ).toBeVisible();
+  ).toHaveCount(0);
 
   await page.goto('/profile');
   await expect(page.getByText(/룰팩/)).toHaveCount(0);
