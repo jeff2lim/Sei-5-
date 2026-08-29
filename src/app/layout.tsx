@@ -1,6 +1,7 @@
 import '@/styles/globals.css';
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
+import { Analytics } from '@vercel/analytics/next';
 import { StoreHydrator } from '@/components/common/store-hydrator';
 
 const bodyFont = localFont({
@@ -86,6 +87,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <StoreHydrator />
         <div className="viewport">{children}</div>
+        <Analytics />
       </body>
     </html>
   );
