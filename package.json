@@ -25,6 +25,7 @@
     "@hookform/resolvers": "^5.7.1",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.2",
+    "@vercel/analytics": "^2.0.1",
     "lucide-react": "^0.577.0",
     "next": "^15.5.0",
     "react": "^19.1.1",
