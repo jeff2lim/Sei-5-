@@ -7,7 +7,7 @@ import { analytics } from '@/domain/analytics';
 import { isSameLocalDate } from '@/domain/date';
 import type { ProductCategory, VerdictLevel } from '@/domain/product';
 import { getProcedureDay, getRecoveryMilestone } from '@/domain/procedure';
-import { evaluateCategory } from '@/rules/engine/evaluate';
+import { evaluateCategory, symptomsForDay } from '@/rules/engine/evaluate';
 import { rulePackMeta } from '@/rules/loaders/bundled-rule-pack';
 import { getNextProcedureDay } from '@/ruletable/date';
 import { activePrepBehaviorWarnings } from '@/ruletable/resolve';
@@ -74,9 +74,11 @@ export default function HomePage() {
               day,
               session?.profile.sensitivity ?? 'normal',
               nextProcedureDay,
+              // 오늘 체크인한 증상을 제품 판정에 반영합니다.
+              symptomsForDay(session?.checkIns, day),
             ),
           ),
-    [day, nextProcedureDay, session?.products, session?.profile.sensitivity],
+    [day, nextProcedureDay, session?.products, session?.profile.sensitivity, session?.checkIns],
   );
 
   useEffect(() => {

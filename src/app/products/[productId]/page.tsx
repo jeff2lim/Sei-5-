@@ -6,7 +6,8 @@ import { Topbar } from '@/components/common/topbar';
 import { VerdictBadge, verdictLabel } from '@/components/verdict/verdict-badge';
 import { analytics } from '@/domain/analytics';
 import { getProcedureDay } from '@/domain/procedure';
-import { evaluateProduct } from '@/rules/engine/evaluate';
+import { evaluateProduct, symptomsForDay } from '@/rules/engine/evaluate';
+import { RULE_WINDOW } from '@/ruletable/resolve';
 import { getNextProcedureDay } from '@/ruletable/date';
 import { useRecoveryStore } from '@/store/recovery-store';
 import { Info, Pencil, Trash2 } from 'lucide-react';
@@ -35,6 +36,8 @@ export default function ProductDetailPage() {
         day,
         session?.profile.sensitivity ?? 'normal',
         nextProcedureDay,
+        // 오늘 체크인한 증상을 판정에 반영합니다.
+        symptomsForDay(session?.checkIns, day),
       )
     : null;
 
@@ -85,6 +88,16 @@ export default function ProductDetailPage() {
       </div>
 
       {verdict.prepText ? <div className="notice section">{verdict.prepText}</div> : null}
+
+      {/* D+14 이후에는 D+14 판정을 그대로 보여주므로, 홈 화면과 같은 문구로 그 사실을 밝힙니다. */}
+      {verdict.dayCoverage === 'after_window' ? (
+        <div className="notice section">
+          <Info size={18} aria-hidden="true" />
+          <span>
+            이 안내는 룰테이블의 마지막 날인 D+{RULE_WINDOW.lastDay} 기준으로 계속 표시됩니다.
+          </span>
+        </div>
+      ) : null}
 
       <section className="section">
         <h2 className="section-title">결정 근거</h2>

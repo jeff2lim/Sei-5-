@@ -56,3 +56,13 @@
 - 위험: `team_provisional`, `extrapolated`, `needs_review` 값은 임상 확정 전 실제 환자 안내 금지
 - 테스트: 룰 엔진 포함 Vitest 44개, 모바일 Playwright 3개, 프로덕션 빌드 통과
 - 다음: `needs_review` 8개 전문의 스팟 검수와 근거 인용 보강
+
+## Phase 12 — 판정 엔진 정합성 수정
+
+- 변경: 증상 체크인을 제품 판정에 연결, 부분 unknown 보존, 카테고리 집계 초기값, 범위 밖 경과일 표시
+- 구현: `evaluateProduct(…, symptoms)`와 `symptomsForDay`, `evaluationStatus`·`unknownAttributeIds`·`missingInputs`·`dayCoverage`·`symptomAdjustment` 필드, `resolveDayCoverage`
+- 동작 변화: go + 룰 미연결 대상 → unknown / 전부 go인 카테고리 → go / 시술일 이전·잘못된 날짜 → unknown / D+14 이후는 D+14 판정 유지하되 `after_window`로 표시
+- 위험: 성분 없이 제형만 판정한 제품은 판정을 바꾸지 않고 `partial`로만 표시함. 판정 자체를 내릴지는 임상 결정 필요
+- 경고 증상(물집 등): 룰 미연결(unknown) 대상도 기능성·메이크업·오일 세안이면 stop으로 잠금. 한 단계 하향은 unknown 유지, 병원 제공(consult)은 증상과 무관하게 유지
+- 테스트: Vitest 96개, 룰 검증기에 계약 3개 추가
+- 다음: 제형만 판정한 제품의 처리 방침 확정, D+14 이후 안내 방침 확정

@@ -10,7 +10,7 @@ import { ProductRow } from '@/components/products/product-row';
 import { analytics } from '@/domain/analytics';
 import type { ProductCategory } from '@/domain/product';
 import { getProcedureDay } from '@/domain/procedure';
-import { evaluateProduct } from '@/rules/engine/evaluate';
+import { evaluateProduct, symptomsForDay } from '@/rules/engine/evaluate';
 import {
   combinationsForCategory,
   resolveCombinationState,
@@ -62,6 +62,8 @@ export default function GuidePage() {
     session?.profile.nextProcedureAt,
   );
   const { selectedProductId, selectProduct } = useCombinationPick(session?.procedure?.id, day);
+  // 오늘 체크인한 증상. 제품 판정과 병용 안내가 같은 입력을 씁니다.
+  const symptoms = symptomsForDay(session?.checkIns, day);
   const allDetails = (session?.products ?? []).map((product) => ({
     product,
     verdict: evaluateProduct(
@@ -69,23 +71,17 @@ export default function GuidePage() {
       day,
       session?.profile.sensitivity ?? 'normal',
       nextProcedureDay,
+      symptoms,
     ),
   }));
   const details = allDetails.filter(({ product }) => product.category === category);
-  const latestCheckIn = [...(session?.checkIns ?? [])]
-    .filter((checkIn) => checkIn.procedureDay === day)
-    .sort((a, b) => b.checkedAt.localeCompare(a.checkedAt))[0];
   const combinationState = resolveCombinationState({
     day,
     sensitivity: session?.profile.sensitivity ?? 'normal',
     userProducts: allDetails.map(({ product, verdict }) =>
       toCombinationUiProduct(product, verdict.level),
     ),
-    symptoms: latestCheckIn?.answers.map((answer) => ({
-      id: answer.symptomId,
-      present: answer.present,
-      severity: answer.severity,
-    })),
+    symptoms,
     nextProcedureDay,
     selectedProductId,
   });
