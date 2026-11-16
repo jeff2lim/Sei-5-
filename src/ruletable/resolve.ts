@@ -339,8 +339,8 @@ export function resolveProduct(
         : current,
     null,
   );
-  if (symptomAdjustment === 'warning_lock') notes.push(WARNING_LOCK_NOTE);
-  if (symptomAdjustment === 'downgraded_one_step') notes.push(DOWNGRADE_NOTE);
+  // 조정 이유 문장은 조정된 대상의 '결정 근거' 설명에만 넣습니다.
+  // 제품 notes에도 넣으면 제품 상세 화면에서 같은 문장이 두 번 보입니다.
 
   // advisory는 참고용이라 원래 unknown입니다. 그 외에 unknown인 대상만 '룰 미연결'로 셉니다.
   const judgedDetails = details.filter((detail) => detail.judgmentMode !== 'advisory');

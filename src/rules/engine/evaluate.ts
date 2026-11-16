@@ -182,14 +182,18 @@ export function evaluateProduct(
     nextProcedureDay,
     symptoms,
   );
-  const decisiveTimeline = v6RuleTable.timelines.find(
-    (timeline) =>
-      timeline.target_id === resolved.decidingTarget && timeline.sensitivity === sensitivity,
-  );
+  // 증상 때문에 조정된 판정 옆에 룰테이블의 재개일(예: 이미 지난 "D+5 재개 안내")을
+  // 붙이면 서로 다른 말을 하게 되므로, 조정된 경우에는 재개일을 내보내지 않습니다.
+  const resumeDayFor = (targetId: string | null, adjusted: boolean) =>
+    adjusted || !targetId
+      ? undefined
+      : (v6RuleTable.timelines.find(
+          (timeline) => timeline.target_id === targetId && timeline.sensitivity === sensitivity,
+        )?.reopen_d_day ?? undefined);
   return {
     productId: product.id,
     level: resolved.verdict,
-    resumeDay: decisiveTimeline?.reopen_d_day ?? undefined,
+    resumeDay: resumeDayFor(resolved.decidingTarget, resolved.symptomAdjustment !== null),
     decisiveAttributeId: resolved.decidingTarget ?? undefined,
     decidingAxis: resolved.decidingAxis,
     prepText: resolved.prepText ?? undefined,
@@ -201,11 +205,7 @@ export function evaluateProduct(
       level: detail.verdict,
       baseLevel: detail.baseVerdict,
       symptomAdjustment: detail.symptomAdjustment,
-      resumeDay:
-        v6RuleTable.timelines.find(
-          (timeline) =>
-            timeline.target_id === detail.targetId && timeline.sensitivity === sensitivity,
-        )?.reopen_d_day ?? undefined,
+      resumeDay: resumeDayFor(detail.targetId, detail.symptomAdjustment !== null),
       reason: detailReason(detail, resolved.primaryText),
     })),
     evaluationStatus: resolved.evaluationStatus,

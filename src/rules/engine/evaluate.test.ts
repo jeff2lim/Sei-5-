@@ -146,6 +146,15 @@ describe('deterministic rule engine', () => {
       expect(adjusted.details[0].reason).toContain('오늘 입력한 반응');
     });
 
+    it('drops the resume day and does not repeat the reason in product notes', () => {
+      const base = evaluateProduct(product(['niacinamide']), 10);
+      const adjusted = evaluateProduct(product(['niacinamide']), 10, 'normal', null, strongRedness);
+      expect(base.resumeDay).toBeDefined();
+      expect(adjusted.resumeDay).toBeUndefined();
+      expect(adjusted.details[0].resumeDay).toBeUndefined();
+      expect(adjusted.notes ?? []).toEqual([]);
+    });
+
     it('locks functional ingredients to stop on a warning symptom', () => {
       const adjusted = evaluateProduct(product(['niacinamide']), 10, 'normal', null, blister);
       expect(adjusted.level).toBe('stop');

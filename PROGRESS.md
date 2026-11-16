@@ -63,5 +63,5 @@
 - 구현: `evaluateProduct(…, symptoms)`와 `symptomsForDay`, `evaluationStatus`·`unknownAttributeIds`·`missingInputs`·`dayCoverage`·`symptomAdjustment` 필드, `resolveDayCoverage`
 - 동작 변화: go + 룰 미연결 대상 → unknown / 전부 go인 카테고리 → go / 시술일 이전·잘못된 날짜 → unknown / D+14 이후는 D+14 판정 유지하되 `after_window`로 표시
 - 위험: 성분 없이 제형만 판정한 제품은 판정을 바꾸지 않고 `partial`로만 표시함. 판정 자체를 내릴지는 임상 결정 필요
-- 테스트: Vitest 93개, 룰 검증기에 계약 3개 추가
+- 테스트: Vitest 94개, 룰 검증기에 계약 3개 추가
 - 다음: 제형만 판정한 제품의 처리 방침 확정, D+14 이후 안내 방침 확정
