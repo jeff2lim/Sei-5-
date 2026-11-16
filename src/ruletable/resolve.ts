@@ -264,9 +264,12 @@ function applySymptoms(
   nextProcedureDay: number | null,
 ): ResolvedTarget {
   if (!symptoms.length || detail.judgmentMode === 'advisory') return detail;
-  // unknown은 어떤 경우에도 다른 판정으로 바꾸지 않고(unknown 보존),
   // consult(병원 제공)는 병원 안내가 우선이므로 증상으로 덮어쓰지 않습니다.
-  if (detail.verdict === 'unknown' || detail.verdict === 'consult') return detail;
+  // unknown은 덜 보수적인 쪽으로는 절대 바꾸지 않습니다. 한 단계 하향은
+  // adjustVerdictBySymptoms가 unknown을 그대로 두고, 경고 증상(section_b)일 때만
+  // 기능성·메이크업·오일 세안 대상을 stop으로 잠급니다. 물집이 생긴 환자에게
+  // 성분을 모르는 제품이 '중단' 대신 '판정 정보 없음'으로 보이지 않게 하기 위해서입니다.
+  if (detail.verdict === 'consult') return detail;
   const adjusted = adjustVerdictBySymptoms(
     detail.verdict,
     { type: detail.targetType, id: detail.targetId, policy: detail.policy },
@@ -343,9 +346,10 @@ export function resolveProduct(
   // 제품 notes에도 넣으면 제품 상세 화면에서 같은 문장이 두 번 보입니다.
 
   // advisory는 참고용이라 원래 unknown입니다. 그 외에 unknown인 대상만 '룰 미연결'로 셉니다.
+  // 경고 증상으로 stop이 됐어도 룰이 연결되지 않은 사실은 그대로이므로 baseVerdict로 셉니다.
   const judgedDetails = details.filter((detail) => detail.judgmentMode !== 'advisory');
   const unknownTargetIds = judgedDetails
-    .filter((detail) => detail.verdict === 'unknown')
+    .filter((detail) => detail.baseVerdict === 'unknown')
     .map((detail) => detail.targetId);
   const evaluationStatus: EvaluationStatus =
     judgedDetails.length === 0 || unknownTargetIds.length === judgedDetails.length
@@ -421,7 +425,12 @@ export function resolveProduct(
     verdict,
     decidingAxis,
     decidingTarget: decisive?.targetId ?? null,
-    primaryText: verdictText(verdict, decisive?.label ?? product.productName),
+    // 룰이 없는 대상이 경고 증상으로 잠긴 경우, 그 대상 이름(룰 미연결 시 내부 id일 수 있음)
+    // 대신 제품명을 씁니다. 중단 이유는 성분이 아니라 오늘의 증상이기 때문입니다.
+    primaryText: verdictText(
+      verdict,
+      decisive && decisive.baseVerdict !== 'unknown' ? decisive.label : product.productName,
+    ),
     secondaryText: decisive?.conditionText ?? null,
     prepText: decisive?.prepText ?? null,
     notes,

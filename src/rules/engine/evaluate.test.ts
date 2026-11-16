@@ -167,9 +167,33 @@ describe('deterministic rule engine', () => {
       expect(adjusted.symptomAdjustment).toBeNull();
     });
 
-    it('never turns unknown into another verdict', () => {
-      const adjusted = evaluateProduct(product(['not-in-pack']), 10, 'normal', null, blister);
+    it('keeps unknown on a recovery-symptom downgrade', () => {
+      const adjusted = evaluateProduct(product(['not-in-pack']), 10, 'normal', null, strongRedness);
       expect(adjusted.level).toBe('unknown');
+      expect(adjusted.symptomAdjustment).toBeNull();
+    });
+
+    it('locks unknown to stop on a warning symptom, never to anything less', () => {
+      const adjusted = evaluateProduct(product(['not-in-pack']), 10, 'normal', null, blister);
+      expect(adjusted.level).toBe('stop');
+      expect(adjusted.symptomAdjustment).toBe('warning_lock');
+      expect(adjusted.resumeDay).toBeUndefined();
+      // 룰 미연결이라는 사실은 그대로 남깁니다.
+      expect(adjusted.unknownAttributeIds).toEqual(['not-in-pack']);
+      expect(adjusted.details[0].baseLevel).toBe('unknown');
+    });
+
+    it('stops a restorative + unknown product on a warning symptom', () => {
+      const base = evaluateProduct(product(['hydrating', 'not-in-pack']), 10);
+      const adjusted = evaluateProduct(
+        product(['hydrating', 'not-in-pack']),
+        10,
+        'normal',
+        null,
+        blister,
+      );
+      expect(base.level).toBe('unknown');
+      expect(adjusted.level).toBe('stop');
     });
 
     it('carries the adjustment into the category rollup', () => {
