@@ -313,6 +313,29 @@ export function validateRuleTable(): ValidationReport {
     report.errors.push('unknown 출력 계약이 잘못됐습니다.');
   }
 
+  // 부분 unknown이 go에 가려지면 안 됩니다(README 안전 경계).
+  const partialUnknown = resolveProduct(
+    {
+      productId: 'validation-partial-unknown',
+      productName: '일부 미연결',
+      ingredientGroupIds: ['ceramide', 'missing'],
+      cleansingMethodIds: [],
+      baseMakeupIds: [],
+    },
+    10,
+    'normal',
+  );
+  if (partialUnknown.verdict === 'go' || partialUnknown.evaluationStatus !== 'partial') {
+    report.errors.push('일부 unknown 대상이 go로 승격됐습니다.');
+  }
+  // 범위 밖 날짜는 표시 없이 처리하면 안 됩니다.
+  if (resolveTarget('ingredient_group', 'retinoid', -1, 'normal').verdict !== 'unknown') {
+    report.errors.push('시술일 이전 날짜에 D+0 판정이 적용됐습니다.');
+  }
+  if (resolveTarget('ingredient_group', 'retinoid', 15, 'normal').dayCoverage !== 'after_window') {
+    report.errors.push('D+14 이후 날짜가 범위 밖으로 표시되지 않았습니다.');
+  }
+
   validateCombinations(report);
   validateOverlapGate(report);
 

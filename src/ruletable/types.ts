@@ -150,11 +150,35 @@ export type ProductRuleInput = ProductRuleSelection & {
   productName: string;
 };
 
+/**
+ * 경과일이 룰테이블 범위(D+0~D+14) 안인지 나타냅니다.
+ * - in_window: 해당 날짜 셀을 그대로 사용
+ * - after_window: D+14 이후. D+14 셀을 사용하되 그 사실을 호출자에게 알림
+ * - before_procedure: 시술일 이전(음수). 판정을 연결하지 않음(unknown)
+ * - invalid: NaN·Infinity 등. 판정을 연결하지 않음(unknown)
+ */
+export type DayCoverage = 'in_window' | 'after_window' | 'before_procedure' | 'invalid';
+
+/**
+ * 판정이 입력을 얼마나 덮었는지 나타냅니다. verdict와 별개로 봅니다.
+ * - complete: 선택한 판정 대상이 모두 룰에 연결됨
+ * - partial: 일부 대상이 unknown이거나, 성분 정보 없이 제형만 판정함
+ * - unresolved: 판정 대상이 없거나 전부 unknown
+ */
+export type EvaluationStatus = 'complete' | 'partial' | 'unresolved';
+
+export type SymptomAdjustment = 'warning_lock' | 'downgraded_one_step';
+
 export type ResolvedTarget = {
   targetType: TargetType;
   targetId: string;
   label: string;
   verdict: DisplayVerdict;
+  /** 증상 반영 전, 룰테이블이 낸 판정 */
+  baseVerdict: DisplayVerdict;
+  /** 증상 때문에 verdict가 baseVerdict보다 보수적으로 바뀐 경우에만 값이 있음 */
+  symptomAdjustment: SymptomAdjustment | null;
+  dayCoverage: DayCoverage;
   conditionText: string | null;
   policy: SensitivityPolicy | null;
   judgmentMode: JudgmentMode;
@@ -174,6 +198,14 @@ export type ProductRuleResult = {
   prepText: string | null;
   notes: string[];
   details: ResolvedTarget[];
+  evaluationStatus: EvaluationStatus;
+  /** 룰에 연결되지 않은 판정 대상(advisory 제외) */
+  unknownTargetIds: string[];
+  /** 판정에 쓰지 못한 입력. 현재는 성분 미입력만 표시 */
+  missingInputs: Array<'ingredients'>;
+  dayCoverage: DayCoverage;
+  /** 제품 판정에 반영된 가장 강한 증상 조정 */
+  symptomAdjustment: SymptomAdjustment | null;
 };
 
 export type CombinationTarget = {

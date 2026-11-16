@@ -3,8 +3,15 @@ import type { Product, ProductCategory, VerdictLevel } from '@/domain/product';
 import type { Sensitivity } from '@/domain/procedure';
 import type { AttributeVerdict, CategoryVerdict, ProductVerdict } from '@/domain/verdict';
 import { baseMakeup, cleansingMethods, ingredientGroups, sunscreenTypes } from '@/ruletable/data';
-import { evaluateSymptoms, resolveProduct, resolveTarget, v6RuleTable } from '@/ruletable/resolve';
-import type { ProductRuleSelection, TargetType } from '@/ruletable/types';
+import {
+  DOWNGRADE_NOTE,
+  evaluateSymptoms,
+  resolveProduct,
+  resolveTarget,
+  v6RuleTable,
+  WARNING_LOCK_NOTE,
+} from '@/ruletable/resolve';
+import type { ProductRuleSelection, SymptomAnswerV5, TargetType } from '@/ruletable/types';
 
 const rank: Record<VerdictLevel, number> = {
   go: 0,
@@ -45,6 +52,10 @@ const ingredientStopReasons: Record<string, string> = {
 };
 
 function detailReason(detail: ReturnType<typeof resolveTarget>, fallback: string) {
+  // 증상 때문에 조정된 항목은 원래 판정의 설명(예: "오늘 사용할 수 있어요")을 붙이면
+  // 배지와 문장이 서로 반대 말을 하게 되므로, 조정 이유를 설명으로 씁니다.
+  if (detail.symptomAdjustment === 'warning_lock') return WARNING_LOCK_NOTE;
+  if (detail.symptomAdjustment === 'downgraded_one_step') return DOWNGRADE_NOTE;
   if (detail.prepText) return detail.prepText;
   if (detail.conditionText) return detail.conditionText;
   if (detail.targetType !== 'ingredient_group') return fallback;
@@ -133,11 +144,31 @@ function migrateLegacySelection(product: Product): ProductRuleSelection {
   return selection;
 }
 
+/**
+ * 해당 경과일에 기록한 가장 최근 체크인의 증상을 엔진 입력 형태로 꺼냅니다.
+ * 제품·가이드 화면이 병용 안내에 쓰던 선택 기준(같은 경과일의 최신 기록)과 같습니다.
+ * 체크인이 없으면 빈 배열 → 증상 조정 없음.
+ */
+export function symptomsForDay(
+  checkIns: CheckIn[] | undefined,
+  procedureDay: number,
+): SymptomAnswerV5[] {
+  const latest = [...(checkIns ?? [])]
+    .filter((checkIn) => checkIn.procedureDay === procedureDay)
+    .sort((a, b) => b.checkedAt.localeCompare(a.checkedAt))[0];
+  return (latest?.answers ?? []).map((answer) => ({
+    id: answer.symptomId,
+    present: answer.present,
+    severity: answer.severity,
+  }));
+}
+
 export function evaluateProduct(
   product: Product,
   procedureDay: number,
   sensitivity: Sensitivity = 'normal',
   nextProcedureDay: number | null = null,
+  symptoms: SymptomAnswerV5[] = [],
 ): ProductVerdict {
   const selection = product.ruleSelection ?? migrateLegacySelection(product);
   const resolved = resolveProduct(
@@ -149,6 +180,7 @@ export function evaluateProduct(
     procedureDay,
     sensitivity,
     nextProcedureDay,
+    symptoms,
   );
   const decisiveTimeline = v6RuleTable.timelines.find(
     (timeline) =>
@@ -167,6 +199,8 @@ export function evaluateProduct(
       targetType: detail.targetType,
       label: detail.label,
       level: detail.verdict,
+      baseLevel: detail.baseVerdict,
+      symptomAdjustment: detail.symptomAdjustment,
       resumeDay:
         v6RuleTable.timelines.find(
           (timeline) =>
@@ -174,6 +208,11 @@ export function evaluateProduct(
         )?.reopen_d_day ?? undefined,
       reason: detailReason(detail, resolved.primaryText),
     })),
+    evaluationStatus: resolved.evaluationStatus,
+    unknownAttributeIds: resolved.unknownTargetIds,
+    missingInputs: resolved.missingInputs,
+    dayCoverage: resolved.dayCoverage,
+    symptomAdjustment: resolved.symptomAdjustment,
     rulePackVersion: v6RuleTable.version,
   };
 }
@@ -183,9 +222,10 @@ export function evaluateProducts(
   procedureDay: number,
   sensitivity: Sensitivity = 'normal',
   nextProcedureDay: number | null = null,
+  symptoms: SymptomAnswerV5[] = [],
 ): ProductVerdict[] {
   return products.map((product) =>
-    evaluateProduct(product, procedureDay, sensitivity, nextProcedureDay),
+    evaluateProduct(product, procedureDay, sensitivity, nextProcedureDay, symptoms),
   );
 }
 
@@ -195,19 +235,29 @@ export function evaluateCategory(
   procedureDay: number,
   sensitivity: Sensitivity = 'normal',
   nextProcedureDay: number | null = null,
+  symptoms: SymptomAnswerV5[] = [],
 ): CategoryVerdict {
   const matchingProducts = products.filter((product) => product.category === category);
-  const verdicts = evaluateProducts(matchingProducts, procedureDay, sensitivity, nextProcedureDay);
+  const verdicts = evaluateProducts(
+    matchingProducts,
+    procedureDay,
+    sensitivity,
+    nextProcedureDay,
+    symptoms,
+  );
+  // 예전에는 초기값이 'unknown'(순위 1)이라 모든 제품이 go(순위 0)여도 카테고리가
+  // unknown으로 남았습니다. 첫 제품의 판정에서 시작하도록 바꿉니다. 제품이 없으면 unknown.
   const level = verdicts.reduce<VerdictLevel>(
     (current, verdict) => (rank[verdict.level] > rank[current] ? verdict.level : current),
-    'unknown',
+    verdicts[0]?.level ?? 'unknown',
   );
   return { category, level, products: verdicts };
 }
 
 export function evaluateCheckIn(checkIn: CheckIn): ContactAction {
+  // 경과일은 '예상 소실일을 넘겼는지' 비교에만 쓰이므로 자르지 않고 그대로 넘깁니다.
   const result = evaluateSymptoms(
-    Math.max(0, Math.min(14, checkIn.procedureDay ?? 0)),
+    Number.isFinite(checkIn.procedureDay) ? (checkIn.procedureDay as number) : 0,
     checkIn.answers.map((answer) => ({
       id: answer.symptomId,
       present: answer.present,

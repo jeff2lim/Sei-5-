@@ -7,7 +7,7 @@ import { LoadingScreen } from '@/components/common/loading-screen';
 import { VerdictBadge } from '@/components/verdict/verdict-badge';
 import type { VerdictLevel } from '@/domain/product';
 import { getProcedureDay } from '@/domain/procedure';
-import { evaluateProduct } from '@/rules/engine/evaluate';
+import { evaluateProduct, symptomsForDay } from '@/rules/engine/evaluate';
 import { resolveCombinationState, toCombinationUiProduct } from '@/ruletable/combine';
 import { ingredientGroups } from '@/ruletable/data';
 import { getNextProcedureDay } from '@/ruletable/date';
@@ -47,26 +47,21 @@ export default function ProductsPage() {
     session?.profile.nextProcedureAt,
   );
   const { selectedProductId, selectProduct } = useCombinationPick(session?.procedure?.id, day);
+  // 오늘 체크인한 증상. 제품 판정과 병용 안내가 같은 입력을 씁니다.
+  const symptoms = symptomsForDay(session?.checkIns, day);
   const rows = (session?.products ?? [])
     .map((product) => ({
       product,
-      verdict: evaluateProduct(product, day, sensitivity, nextProcedureDay),
+      verdict: evaluateProduct(product, day, sensitivity, nextProcedureDay, symptoms),
     }))
     .sort((a, b) => rank[b.verdict.level] - rank[a.verdict.level]);
-  const latestCheckIn = [...(session?.checkIns ?? [])]
-    .filter((checkIn) => checkIn.procedureDay === day)
-    .sort((a, b) => b.checkedAt.localeCompare(a.checkedAt))[0];
   const combinationState = resolveCombinationState({
     day,
     sensitivity,
     userProducts: rows.map(({ product, verdict }) =>
       toCombinationUiProduct(product, verdict.level),
     ),
-    symptoms: latestCheckIn?.answers.map((answer) => ({
-      id: answer.symptomId,
-      present: answer.present,
-      severity: answer.severity,
-    })),
+    symptoms,
     nextProcedureDay,
     selectedProductId,
   });

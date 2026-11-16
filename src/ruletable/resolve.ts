@@ -12,12 +12,15 @@ import {
 } from './data';
 import { expandRuleTable } from './expand';
 import type {
+  DayCoverage,
   DisplayVerdict,
+  EvaluationStatus,
   ProductRuleInput,
   ProductRuleResult,
   ResolvedTarget,
   Sensitivity,
   SensitivityPolicy,
+  SymptomAdjustment,
   SymptomAnswerV5,
   SymptomEvaluation,
   TargetType,
@@ -84,6 +87,29 @@ function targetDefinition(targetType: TargetType, targetId: string) {
   return null;
 }
 
+/** 룰테이블 v6 본 타임라인이 덮는 경과일 범위 */
+export const RULE_WINDOW = { firstDay: 0, lastDay: 14 } as const;
+
+/**
+ * 경과일을 룰테이블 조회용 날짜로 바꿉니다.
+ * 예전에는 Math.max(0, Math.min(14, day))로 조용히 잘라서
+ * D−3이 D+0(stop)으로, D+60이 D+14로 아무 표시 없이 처리됐습니다.
+ * 이제는 범위 밖이라는 사실(coverage)을 함께 돌려주고,
+ * 시술일 이전·잘못된 값은 조회 자체를 하지 않습니다(tableDay = null → unknown).
+ */
+export function resolveDayCoverage(day: number): {
+  coverage: DayCoverage;
+  tableDay: number | null;
+} {
+  if (!Number.isFinite(day)) return { coverage: 'invalid', tableDay: null };
+  const wholeDay = Math.floor(day);
+  if (wholeDay < RULE_WINDOW.firstDay) return { coverage: 'before_procedure', tableDay: null };
+  if (wholeDay > RULE_WINDOW.lastDay) {
+    return { coverage: 'after_window', tableDay: RULE_WINDOW.lastDay };
+  }
+  return { coverage: 'in_window', tableDay: wholeDay };
+}
+
 export function resolveTarget(
   targetType: TargetType,
   rawTargetId: string,
@@ -93,12 +119,16 @@ export function resolveTarget(
 ): ResolvedTarget {
   const targetId = legacyTargetAliases[rawTargetId] ?? rawTargetId;
   const definition = targetDefinition(targetType, targetId);
+  const { coverage, tableDay } = resolveDayCoverage(day);
   if (!definition) {
     return {
       targetType,
       targetId,
       label: targetId,
       verdict: 'unknown',
+      baseVerdict: 'unknown',
+      symptomAdjustment: null,
+      dayCoverage: coverage,
       conditionText: null,
       policy: null,
       judgmentMode: 'judged',
@@ -115,6 +145,9 @@ export function resolveTarget(
       targetId,
       label: definition.label,
       verdict: 'unknown',
+      baseVerdict: 'unknown',
+      symptomAdjustment: null,
+      dayCoverage: coverage,
       conditionText: null,
       policy: definition.policy,
       judgmentMode: definition.mode,
@@ -125,14 +158,16 @@ export function resolveTarget(
       prepText: null,
     };
   }
-  const safeDay = Math.max(0, Math.min(14, day));
-  const cell = v6RuleTable.cells.find(
-    (candidate) =>
-      candidate.target_type === targetType &&
-      candidate.target_id === targetId &&
-      candidate.sensitivity === sensitivity &&
-      candidate.d_day === safeDay,
-  );
+  const cell =
+    tableDay === null
+      ? undefined
+      : v6RuleTable.cells.find(
+          (candidate) =>
+            candidate.target_type === targetType &&
+            candidate.target_id === targetId &&
+            candidate.sensitivity === sensitivity &&
+            candidate.d_day === tableDay,
+        );
   const daysToNext = nextProcedureDay === null ? null : nextProcedureDay - day;
   const prepCell =
     daysToNext !== null && daysToNext >= 1 && daysToNext <= 7
@@ -158,11 +193,14 @@ export function resolveTarget(
     targetId,
     label: definition.label,
     verdict,
+    baseVerdict: verdict,
+    symptomAdjustment: null,
+    dayCoverage: coverage,
     conditionText: prepWins ? prepCell.condition_text : (cell?.condition_text ?? null),
     policy: definition.policy,
     judgmentMode: definition.mode,
     deferred: cell?.deferred ?? false,
-    phaseName: prepCell ? 'prep' : safeDay <= 7 ? 'recovery' : 'ramp_up',
+    phaseName: prepCell ? 'prep' : (tableDay ?? 0) <= 7 ? 'recovery' : 'ramp_up',
     daysToNext: prepCell ? daysToNext : null,
     prepGated: prepWins,
     prepText: prepWins
@@ -202,44 +240,73 @@ function verdictText(verdict: DisplayVerdict, label: string) {
   return '판정 정보가 없는 제품은 안전하다는 뜻이 아니라, 현재 룰이 연결되지 않은 상태입니다.';
 }
 
+/** 경고 증상(section_b)으로 판정이 stop으로 잠겼을 때 함께 보여주는 안내. 체크인 결과 화면과 같은 문장입니다. */
+export const WARNING_LOCK_NOTE =
+  '오늘은 진정과 보호를 이어가고, 기능성 제품과 메이크업은 중단한 뒤 시술받은 병원에 확인해 주세요.';
+export const DOWNGRADE_NOTE =
+  '오늘 입력한 반응 때문에 한 단계 조심스럽게 안내했어요. 내일 괜찮아지면 원래대로 돌아와요.';
+
+const adjustmentRank: Record<SymptomAdjustment, number> = {
+  downgraded_one_step: 1,
+  warning_lock: 2,
+};
+
+/**
+ * 오늘 체크인한 증상을 개별 판정 대상에 반영합니다.
+ * adjustVerdictBySymptoms는 원래 있었지만 앱 어디에서도 호출되지 않아
+ * 증상을 입력해도 제품 판정이 그대로였습니다. 여기서 연결합니다.
+ * advisory(향료 등 참고용) 대상은 애초에 판정하지 않으므로 건드리지 않습니다.
+ */
+function applySymptoms(
+  detail: ResolvedTarget,
+  day: number,
+  symptoms: SymptomAnswerV5[],
+  nextProcedureDay: number | null,
+): ResolvedTarget {
+  if (!symptoms.length || detail.judgmentMode === 'advisory') return detail;
+  // unknown은 어떤 경우에도 다른 판정으로 바꾸지 않고(unknown 보존),
+  // consult(병원 제공)는 병원 안내가 우선이므로 증상으로 덮어쓰지 않습니다.
+  if (detail.verdict === 'unknown' || detail.verdict === 'consult') return detail;
+  const adjusted = adjustVerdictBySymptoms(
+    detail.verdict,
+    { type: detail.targetType, id: detail.targetId, policy: detail.policy },
+    day,
+    symptoms,
+    nextProcedureDay,
+  );
+  if (adjusted.verdict === detail.verdict) return detail;
+  return {
+    ...detail,
+    verdict: adjusted.verdict,
+    symptomAdjustment:
+      adjusted.evaluation.verdictAdjustment === 'downgraded_one_step'
+        ? 'downgraded_one_step'
+        : 'warning_lock',
+  };
+}
+
 export function resolveProduct(
   product: ProductRuleInput,
   day: number,
   sensitivity: Sensitivity,
   nextProcedureDay: number | null = null,
+  symptoms: SymptomAnswerV5[] = [],
 ): ProductRuleResult {
-  const ingredientDetails = product.ingredientGroupIds.map((id) =>
-    resolveTarget('ingredient_group', id, day, sensitivity, nextProcedureDay),
-  );
+  const resolve = (targetType: TargetType, id: string) =>
+    applySymptoms(
+      resolveTarget(targetType, id, day, sensitivity, nextProcedureDay),
+      day,
+      symptoms,
+      nextProcedureDay,
+    );
+  const ingredientDetails = product.ingredientGroupIds.map((id) => resolve('ingredient_group', id));
   const formatDetails = [
-    ...product.cleansingMethodIds.map((id) =>
-      resolveTarget('cleansing_method', id, day, sensitivity, nextProcedureDay),
-    ),
-    ...(product.sunscreenTypeId
-      ? [
-          resolveTarget(
-            'sunscreen_type',
-            product.sunscreenTypeId,
-            day,
-            sensitivity,
-            nextProcedureDay,
-          ),
-        ]
-      : []),
-    ...product.baseMakeupIds.map((id) =>
-      resolveTarget('base_makeup', id, day, sensitivity, nextProcedureDay),
-    ),
+    ...product.cleansingMethodIds.map((id) => resolve('cleansing_method', id)),
+    ...(product.sunscreenTypeId ? [resolve('sunscreen_type', product.sunscreenTypeId)] : []),
+    ...product.baseMakeupIds.map((id) => resolve('base_makeup', id)),
     ...(product.productCategoryId &&
     productCategories.find((category) => category.id === product.productCategoryId)?.timeline_id
-      ? [
-          resolveTarget(
-            'product_category',
-            product.productCategoryId,
-            day,
-            sensitivity,
-            nextProcedureDay,
-          ),
-        ]
+      ? [resolve('product_category', product.productCategoryId)]
       : []),
   ];
   const details = [...ingredientDetails, ...formatDetails];
@@ -258,9 +325,42 @@ export function resolveProduct(
   ) {
     notes.push('이 제품 하나만 쓰고 다른 기능성 제품은 오늘 쉬어주세요.');
   }
-  if (product.ingredientGroupIds.length === 0 && formatDetails.length > 0) {
+  const missingInputs: Array<'ingredients'> =
+    product.ingredientGroupIds.length === 0 && formatDetails.length > 0 ? ['ingredients'] : [];
+  if (missingInputs.length) {
     notes.push('성분을 모르시면 회복기엔 쉬어가는 걸 권해요. 제형 판정만 적용했습니다.');
   }
+
+  const symptomAdjustment = details.reduce<SymptomAdjustment | null>(
+    (current, detail) =>
+      detail.symptomAdjustment &&
+      (!current || adjustmentRank[detail.symptomAdjustment] > adjustmentRank[current])
+        ? detail.symptomAdjustment
+        : current,
+    null,
+  );
+  if (symptomAdjustment === 'warning_lock') notes.push(WARNING_LOCK_NOTE);
+  if (symptomAdjustment === 'downgraded_one_step') notes.push(DOWNGRADE_NOTE);
+
+  // advisory는 참고용이라 원래 unknown입니다. 그 외에 unknown인 대상만 '룰 미연결'로 셉니다.
+  const judgedDetails = details.filter((detail) => detail.judgmentMode !== 'advisory');
+  const unknownTargetIds = judgedDetails
+    .filter((detail) => detail.verdict === 'unknown')
+    .map((detail) => detail.targetId);
+  const evaluationStatus: EvaluationStatus =
+    judgedDetails.length === 0 || unknownTargetIds.length === judgedDetails.length
+      ? 'unresolved'
+      : unknownTargetIds.length > 0 || missingInputs.length > 0
+        ? 'partial'
+        : 'complete';
+  const dayCoverage = resolveDayCoverage(day).coverage;
+  const coverageFields = {
+    evaluationStatus,
+    unknownTargetIds,
+    missingInputs,
+    dayCoverage,
+    symptomAdjustment,
+  };
 
   const consult = details.find((detail) => detail.verdict === 'consult');
   if (consult) {
@@ -273,6 +373,7 @@ export function resolveProduct(
       prepText: consult.prepText,
       notes,
       details,
+      ...coverageFields,
     };
   }
 
@@ -281,12 +382,17 @@ export function resolveProduct(
   const available = [ingredientVerdict, formatVerdict].filter(
     (verdict): verdict is Verdict => verdict !== 'unknown',
   );
-  const verdict = available.length
+  const knownVerdict = available.length
     ? available.reduce<Verdict>(
         (current, candidate) => (severity[candidate] > severity[current] ? candidate : current),
         available[0],
       )
     : 'unknown';
+  // 예전에는 unknown 대상을 집계에서 빼기만 해서, 세라마이드(go) + 룰에 없는 성분(unknown)이
+  // 최종 go로 나왔습니다. README의 "unknown을 go로 바꾸지 않습니다"와 어긋납니다.
+  // 순위는 앱 쪽과 같게 go < unknown < care < stop: go만 unknown에 밀리고, care·stop은 유지됩니다.
+  const verdict: DisplayVerdict =
+    knownVerdict === 'go' && unknownTargetIds.length > 0 ? 'unknown' : knownVerdict;
   const decidingIngredient = ingredientVerdict === verdict;
   const decidingFormat = formatVerdict === verdict;
   const prepDecisive = details.some((detail) => detail.prepGated && detail.verdict === verdict);
@@ -320,6 +426,7 @@ export function resolveProduct(
     prepText: decisive?.prepText ?? null,
     notes,
     details,
+    ...coverageFields,
   };
 }
 
@@ -537,16 +644,14 @@ export function adjustVerdictBySymptoms(
   }
   if (target.policy === 'restorative' || target.type === 'sunscreen_type')
     return { verdict, evaluation };
-  const downgraded = verdict === 'go' ? 'care' : verdict === 'care' ? 'stop' : verdict;
+  const downgraded: DisplayVerdict =
+    verdict === 'go' ? 'care' : verdict === 'care' ? 'stop' : verdict;
   return {
     verdict: downgraded,
     evaluation: {
       ...evaluation,
       verdictAdjustment: 'downgraded_one_step' as const,
-      notes: [
-        ...evaluation.notes,
-        '오늘 입력한 반응 때문에 한 단계 조심스럽게 안내했어요. 내일 괜찮아지면 원래대로 돌아와요.',
-      ],
+      notes: [...evaluation.notes, DOWNGRADE_NOTE],
     },
   };
 }

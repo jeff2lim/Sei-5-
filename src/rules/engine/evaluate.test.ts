@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 import type { Product } from '@/domain/product';
 import type { CheckIn } from '@/domain/check-in';
 import { rulePackMeta } from '@/rules/loaders/bundled-rule-pack';
-import { evaluateAttribute, evaluateCheckIn, evaluateProduct } from '@/rules/engine/evaluate';
+import {
+  evaluateAttribute,
+  evaluateCategory,
+  evaluateCheckIn,
+  evaluateProduct,
+  symptomsForDay,
+} from '@/rules/engine/evaluate';
 
 const product = (attributeIds: string[]): Product => ({
   id: 'product-1',
@@ -63,5 +69,139 @@ describe('deterministic rule engine', () => {
     expect(verdict.level).toBe('stop');
     expect(verdict.decidingAxis).toBe('prep_gate');
     expect(verdict.prepText).toContain('다음 시술이 3일 남아서');
+  });
+
+  describe('category rollup', () => {
+    it('reports go when every product in the category is go', () => {
+      const category = evaluateCategory('skincare', [product(['hydrating'])], 10);
+      expect(category.products[0].level).toBe('go');
+      expect(category.level).toBe('go');
+    });
+
+    it('stays unknown only when there is nothing to judge', () => {
+      expect(evaluateCategory('skincare', [], 10).level).toBe('unknown');
+    });
+  });
+
+  describe('unknown preservation', () => {
+    it('does not let a go ingredient hide an ingredient with no rule', () => {
+      const verdict = evaluateProduct(product(['hydrating', 'not-in-pack']), 10);
+      expect(verdict.level).toBe('unknown');
+      expect(verdict.evaluationStatus).toBe('partial');
+      expect(verdict.unknownAttributeIds).toEqual(['not-in-pack']);
+    });
+
+    it('keeps a more conservative verdict but still reports the gap', () => {
+      const verdict = evaluateProduct(product(['retinoid', 'not-in-pack']), 2);
+      expect(verdict.level).toBe('stop');
+      expect(verdict.evaluationStatus).toBe('partial');
+    });
+
+    it('marks format-only verdicts as partial', () => {
+      const verdict = evaluateProduct(product(['gentle-cleanser']), 3);
+      expect(verdict.missingInputs).toEqual(['ingredients']);
+      expect(verdict.evaluationStatus).toBe('partial');
+    });
+
+    it('reports complete when every selected target has a rule', () => {
+      const verdict = evaluateProduct(product(['hydrating', 'niacinamide']), 10);
+      expect(verdict.evaluationStatus).toBe('complete');
+      expect(verdict.unknownAttributeIds).toEqual([]);
+    });
+  });
+
+  describe('days outside the rule window', () => {
+    it('flags days after D+14 instead of silently reusing D+14', () => {
+      const atEnd = evaluateProduct(product(['retinoid']), 14);
+      const later = evaluateProduct(product(['retinoid']), 60);
+      expect(atEnd.dayCoverage).toBe('in_window');
+      expect(later.dayCoverage).toBe('after_window');
+      expect(later.level).toBe(atEnd.level);
+    });
+
+    it('does not apply D+0 rules to a day before the procedure', () => {
+      const verdict = evaluateProduct(product(['retinoid']), -3);
+      expect(verdict.level).toBe('unknown');
+      expect(verdict.dayCoverage).toBe('before_procedure');
+    });
+
+    it('reports an invalid day explicitly', () => {
+      const verdict = evaluateProduct(product(['retinoid']), Number.NaN);
+      expect(verdict.level).toBe('unknown');
+      expect(verdict.dayCoverage).toBe('invalid');
+    });
+  });
+
+  describe('symptom check-in reaches the product verdict', () => {
+    const strongRedness = [{ id: 'redness', present: true, severity: 3 as const }];
+    const blister = [{ id: 'blister', present: true }];
+
+    it('downgrades one step on a strong recovery symptom', () => {
+      const base = evaluateProduct(product(['niacinamide']), 10);
+      const adjusted = evaluateProduct(product(['niacinamide']), 10, 'normal', null, strongRedness);
+      expect(base.level).toBe('go');
+      expect(adjusted.level).toBe('care');
+      expect(adjusted.symptomAdjustment).toBe('downgraded_one_step');
+      expect(adjusted.details[0].baseLevel).toBe('go');
+      expect(adjusted.details[0].reason).toContain('오늘 입력한 반응');
+    });
+
+    it('locks functional ingredients to stop on a warning symptom', () => {
+      const adjusted = evaluateProduct(product(['niacinamide']), 10, 'normal', null, blister);
+      expect(adjusted.level).toBe('stop');
+      expect(adjusted.symptomAdjustment).toBe('warning_lock');
+    });
+
+    it('leaves restorative ingredients alone', () => {
+      const adjusted = evaluateProduct(product(['hydrating']), 10, 'normal', null, blister);
+      expect(adjusted.level).toBe('go');
+      expect(adjusted.symptomAdjustment).toBeNull();
+    });
+
+    it('never turns unknown into another verdict', () => {
+      const adjusted = evaluateProduct(product(['not-in-pack']), 10, 'normal', null, blister);
+      expect(adjusted.level).toBe('unknown');
+    });
+
+    it('carries the adjustment into the category rollup', () => {
+      const category = evaluateCategory(
+        'skincare',
+        [product(['niacinamide'])],
+        10,
+        'normal',
+        null,
+        strongRedness,
+      );
+      expect(category.level).toBe('care');
+    });
+
+    it('uses the latest check-in recorded on the same procedure day', () => {
+      const checkIns: CheckIn[] = [
+        {
+          id: 'old-day',
+          checkedAt: '2026-07-05T09:00:00.000Z',
+          procedureDay: 4,
+          answers: [{ symptomId: 'blister', present: true }],
+          rulePackVersion: rulePackMeta.version,
+        },
+        {
+          id: 'morning',
+          checkedAt: '2026-07-06T00:00:00.000Z',
+          procedureDay: 5,
+          answers: [{ symptomId: 'redness', present: true, severity: 3 }],
+          rulePackVersion: rulePackMeta.version,
+        },
+        {
+          id: 'evening',
+          checkedAt: '2026-07-06T10:00:00.000Z',
+          procedureDay: 5,
+          answers: [{ symptomId: 'redness', present: true, severity: 1 }],
+          rulePackVersion: rulePackMeta.version,
+        },
+      ];
+      expect(symptomsForDay(checkIns, 5)).toEqual([{ id: 'redness', present: true, severity: 1 }]);
+      expect(symptomsForDay(checkIns, 6)).toEqual([]);
+      expect(symptomsForDay(undefined, 5)).toEqual([]);
+    });
   });
 });
